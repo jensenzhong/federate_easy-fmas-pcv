@@ -1,0 +1,2 @@
+scenario,model_type,training_samples,test_samples,hidden_dims,dropout,learning_rate,weight_decay,batch_size,best_epoch,best_val_loss,test_mape,test_rmse,test_mae,test_mpe,test_nrmse
+A_Prime_Neural_Network,PyTorch_MLP,550,70,"[128, 128, 64, 32]",0.1,0.001,0.0001,32,86,19.496867179870605,0.50576335,1406208.5,1018121.0,0.19836104,0.1577456

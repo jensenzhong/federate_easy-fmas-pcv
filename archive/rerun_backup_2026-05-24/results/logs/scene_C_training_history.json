@@ -1,0 +1,940 @@
+{
+  "training_config": {
+    "default_strategy": "size_only",
+    "default_lr": 0.0005,
+    "default_local_epochs": 20,
+    "strategies_config": {
+      "size_only": {
+        "description": "权重与客户端样本数成正比",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "perf_only": {
+        "description": "权重与1/val_mape成正比，表现好的客户端权重更大",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "hybrid": {
+        "description": "结合样本数和性能的加权",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "fairness_clip": {
+        "description": "限制大客户端权重上限，保护小客户端贡献",
+        "lambda_hybrid": 0.3,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      }
+    }
+  },
+  "training_summary": {
+    "total_rounds": 20,
+    "best_round": 20,
+    "best_val_mape": "0.40589976"
+  },
+  "round_history": [
+    {
+      "round": 0,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1566.158251953125,
+          "val_mape": "0.99990875",
+          "val_rmse": "3987421.5",
+          "val_mae": "3241735.2",
+          "val_mpe": "-0.99990875"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1602.8050048828125,
+          "val_mape": "0.9999754",
+          "val_rmse": "4608825.5",
+          "val_mae": "3894989.5",
+          "val_mpe": "-0.9999754"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1353.9193359375,
+          "val_mape": "0.99999595",
+          "val_rmse": "2321843.5",
+          "val_mae": "1997765.8",
+          "val_mpe": "-0.99999595"
+        }
+      },
+      "global_val": {
+        "mape": "0.9999809",
+        "mae": "2983858.0",
+        "rmse": "3907211.8",
+        "mpe": "-0.9999809",
+        "nrmse": "0.35126776",
+        "r2": -1.398935079574585
+      }
+    },
+    {
+      "round": 1,
+      "strategy_name": "perf_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3333547939440754,
+        "Client 2": 0.3333408036094197,
+        "Client 3": 0.33330440244650483
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1471.4498291015625,
+          "val_mape": "0.999799",
+          "val_rmse": "3986765.5",
+          "val_mae": "3241250.5",
+          "val_mpe": "-0.999799"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1500.835400390625,
+          "val_mape": "0.999841",
+          "val_rmse": "4607628.0",
+          "val_mae": "3894196.8",
+          "val_mpe": "-0.999841"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1288.911376953125,
+          "val_mape": "0.9999502",
+          "val_rmse": "2321635.0",
+          "val_mae": "1997620.5",
+          "val_mpe": "-0.9999502"
+        }
+      },
+      "global_val": {
+        "mape": "0.99991506",
+        "mae": "2983437.2",
+        "rmse": "3906343.0",
+        "mpe": "-0.99991506",
+        "nrmse": "0.35118967",
+        "r2": -1.3978683948516846
+      }
+    },
+    {
+      "round": 2,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.33562654743729725,
+        "Client 2": 0.3379115806281566,
+        "Client 3": 0.32646187193454607
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1398.8338134765625,
+          "val_mape": "0.9995779",
+          "val_rmse": "3985075.5",
+          "val_mae": "3240106.0",
+          "val_mpe": "-0.9995779"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1403.126806640625,
+          "val_mape": "0.9995663",
+          "val_rmse": "4606476.5",
+          "val_mae": "3893078.8",
+          "val_mpe": "-0.9995663"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1225.185498046875,
+          "val_mape": "0.99977136",
+          "val_rmse": "2320880.0",
+          "val_mae": "1997076.0",
+          "val_mpe": "-0.99977136"
+        }
+      },
+      "global_val": {
+        "mape": "0.99973744",
+        "mae": "2982567.5",
+        "rmse": "3904920.0",
+        "mpe": "-0.99973744",
+        "nrmse": "0.35106173",
+        "r2": -1.3961215019226074
+      }
+    },
+    {
+      "round": 3,
+      "strategy_name": "fairness_clip",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3365269383589347,
+        "Client 2": 0.33974336363300683,
+        "Client 3": 0.32372969800805856
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1303.6239990234376,
+          "val_mape": "0.99911237",
+          "val_rmse": "3982014.5",
+          "val_mae": "3237952.0",
+          "val_mpe": "-0.99911237"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1312.17392578125,
+          "val_mape": "0.9989118",
+          "val_rmse": "4603796.0",
+          "val_mae": "3890526.0",
+          "val_mpe": "-0.9989118"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1103.9897705078124,
+          "val_mape": "0.9992308",
+          "val_rmse": "2318865.0",
+          "val_mae": "1995559.5",
+          "val_mpe": "-0.9992308"
+        }
+      },
+      "global_val": {
+        "mape": "0.99925244",
+        "mae": "2980666.5",
+        "rmse": "3902365.5",
+        "mpe": "-0.99925244",
+        "nrmse": "0.35083207",
+        "r2": -1.3929877281188965
+      }
+    },
+    {
+      "round": 4,
+      "strategy_name": "fairness_clip",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.33649250456308344,
+        "Client 2": 0.3398087731913871,
+        "Client 3": 0.3236987222455294
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1220.315478515625,
+          "val_mape": "0.9986126",
+          "val_rmse": "3978447.2",
+          "val_mae": "3235526.2",
+          "val_mpe": "-0.9986126"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1254.0689453125,
+          "val_mape": "0.997416",
+          "val_rmse": "4597418.0",
+          "val_mae": "3884421.0",
+          "val_mpe": "-0.997416"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1043.2489501953125,
+          "val_mape": "0.99869645",
+          "val_rmse": "2316933.0",
+          "val_mae": "1994120.0",
+          "val_mpe": "-0.99869645"
+        }
+      },
+      "global_val": {
+        "mape": "0.9985662",
+        "mae": "2978070.2",
+        "rmse": "3898957.8",
+        "mpe": "-0.9985662",
+        "nrmse": "0.3505257",
+        "r2": -1.388810396194458
+      }
+    },
+    {
+      "round": 5,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.33548466295647694,
+        "Client 2": 0.3381615217093108,
+        "Client 3": 0.32635381533421215
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1151.4535400390625,
+          "val_mape": "0.99738765",
+          "val_rmse": "3970117.0",
+          "val_mae": "3229711.5",
+          "val_mpe": "-0.99738765"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1167.616162109375,
+          "val_mape": "0.995035",
+          "val_rmse": "4588711.0",
+          "val_mae": "3875459.0",
+          "val_mpe": "-0.995035"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 967.11357421875,
+          "val_mape": "0.99737823",
+          "val_rmse": "2312363.8",
+          "val_mae": "1990638.9",
+          "val_mpe": "-0.99737823"
+        }
+      },
+      "global_val": {
+        "mape": "0.9971419",
+        "mae": "2973074.0",
+        "rmse": "3892964.0",
+        "mpe": "-0.9971419",
+        "nrmse": "0.34998685",
+        "r2": -1.3814716339111328
+      }
+    },
+    {
+      "round": 6,
+      "strategy_name": "fairness_clip",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3363759419326802,
+        "Client 2": 0.3399640515943469,
+        "Client 3": 0.32366000647297294
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1028.6107543945313,
+          "val_mape": "0.99510676",
+          "val_rmse": "3956195.2",
+          "val_mae": "3219372.0",
+          "val_mpe": "-0.99510676"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1036.1757080078125,
+          "val_mape": "0.99121755",
+          "val_rmse": "4571003.5",
+          "val_mae": "3859256.5",
+          "val_mpe": "-0.99121755"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 876.8651977539063,
+          "val_mape": "0.99441504",
+          "val_rmse": "2302062.8",
+          "val_mae": "1982865.5",
+          "val_mpe": "-0.99441504"
+        }
+      },
+      "global_val": {
+        "mape": "0.9948735",
+        "mae": "2964778.5",
+        "rmse": "3882579.8",
+        "mpe": "-0.9948735",
+        "nrmse": "0.3490533",
+        "r2": -1.368783712387085
+      }
+    },
+    {
+      "round": 7,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.33503769441402487,
+        "Client 2": 0.3388125787203614,
+        "Client 3": 0.3261497268656137
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 947.8537963867187,
+          "val_mape": "0.99209636",
+          "val_rmse": "3937083.5",
+          "val_mae": "3205621.2",
+          "val_mpe": "-0.99209636"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 937.36552734375,
+          "val_mape": "0.9832648",
+          "val_rmse": "4538683.0",
+          "val_mae": "3827886.0",
+          "val_mpe": "-0.9832648"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 784.6148681640625,
+          "val_mape": "0.9906383",
+          "val_rmse": "2288947.8",
+          "val_mae": "1972863.5",
+          "val_mpe": "-0.9906383"
+        }
+      },
+      "global_val": {
+        "mape": "0.99069583",
+        "mae": "2949922.8",
+        "rmse": "3863569.2",
+        "mpe": "-0.99069583",
+        "nrmse": "0.3473442",
+        "r2": -1.3456435203552246
+      }
+    },
+    {
+      "round": 8,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3347046514193218,
+        "Client 2": 0.3392617235716927,
+        "Client 3": 0.3260336250089855
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 844.4960693359375,
+          "val_mape": "0.98708844",
+          "val_rmse": "3902622.8",
+          "val_mae": "3181753.2",
+          "val_mpe": "-0.98708844"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 870.5059814453125,
+          "val_mape": "0.97372997",
+          "val_rmse": "4490556.5",
+          "val_mae": "3786171.0",
+          "val_mpe": "-0.97372997"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 717.8395385742188,
+          "val_mape": "0.9843484",
+          "val_rmse": "2271159.5",
+          "val_mae": "1958154.0",
+          "val_mpe": "-0.9843484"
+        }
+      },
+      "global_val": {
+        "mape": "0.98422736",
+        "mae": "2926435.5",
+        "rmse": "3833344.0",
+        "mpe": "-0.98422736",
+        "nrmse": "0.34462687",
+        "r2": -1.309086561203003
+      }
+    },
+    {
+      "round": 9,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3339928038231046,
+        "Client 2": 0.3395980556356309,
+        "Client 3": 0.3264091405412645
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 742.38115234375,
+          "val_mape": "0.9817007",
+          "val_rmse": "3865518.0",
+          "val_mae": "3155960.5",
+          "val_mpe": "-0.9817007"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 748.9893798828125,
+          "val_mape": "0.96233",
+          "val_rmse": "4432244.5",
+          "val_mae": "3736028.8",
+          "val_mpe": "-0.96233"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 621.355859375,
+          "val_mape": "0.9725741",
+          "val_rmse": "2242263.0",
+          "val_mae": "1934358.9",
+          "val_mpe": "-0.9725741"
+        }
+      },
+      "global_val": {
+        "mape": "0.97635806",
+        "mae": "2898175.5",
+        "rmse": "3797322.8",
+        "mpe": "-0.97635806",
+        "nrmse": "0.34138846",
+        "r2": -1.2658944129943848
+      }
+    },
+    {
+      "round": 10,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.333719034112577,
+        "Client 2": 0.34003383635562545,
+        "Client 3": 0.3262471295317975
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 644.1022094726562,
+          "val_mape": "0.9697591",
+          "val_rmse": "3800912.2",
+          "val_mae": "3106330.0",
+          "val_mpe": "-0.9697591"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 635.3838623046875,
+          "val_mape": "0.94659704",
+          "val_rmse": "4375330.0",
+          "val_mae": "3678915.0",
+          "val_mpe": "-0.94659704"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 525.1581787109375,
+          "val_mape": "0.96008354",
+          "val_rmse": "2208144.8",
+          "val_mae": "1906566.6",
+          "val_mpe": "-0.96008354"
+        }
+      },
+      "global_val": {
+        "mape": "0.96402615",
+        "mae": "2856403.0",
+        "rmse": "3744251.8",
+        "mpe": "-0.96402615",
+        "nrmse": "0.33661726",
+        "r2": -1.2030010223388672
+      }
+    },
+    {
+      "round": 11,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.33297967630402714,
+        "Client 2": 0.34141502390891465,
+        "Client 3": 0.3256052997870582
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 569.3747314453125,
+          "val_mape": "0.95514756",
+          "val_rmse": "3725567.8",
+          "val_mae": "3048438.0",
+          "val_mpe": "-0.95514756"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 546.1790832519531,
+          "val_mape": "0.92061806",
+          "val_rmse": "4269128.0",
+          "val_mae": "3577011.8",
+          "val_mpe": "-0.92061806"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 450.8413879394531,
+          "val_mape": "0.945019",
+          "val_rmse": "2154631.8",
+          "val_mae": "1865930.9",
+          "val_mpe": "-0.945019"
+        }
+      },
+      "global_val": {
+        "mape": "0.94584465",
+        "mae": "2800660.2",
+        "rmse": "3678113.0",
+        "mpe": "-0.94584465",
+        "nrmse": "0.33067122",
+        "r2": -1.1258602142333984
+      }
+    },
+    {
+      "round": 12,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.33146417833492503,
+        "Client 2": 0.3422453822424455,
+        "Client 3": 0.3262904394226294
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 456.8574279785156,
+          "val_mape": "0.93908954",
+          "val_rmse": "3658449.8",
+          "val_mae": "2989103.0",
+          "val_mpe": "-0.93908954"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 459.92884521484376,
+          "val_mape": "0.89242345",
+          "val_rmse": "4154971.5",
+          "val_mae": "3468729.2",
+          "val_mpe": "-0.89242345"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 334.6923461914063,
+          "val_mape": "0.91675824",
+          "val_rmse": "2076455.6",
+          "val_mae": "1802761.1",
+          "val_mpe": "-0.91675824"
+        }
+      },
+      "global_val": {
+        "mape": "0.9162116",
+        "mae": "2717568.0",
+        "rmse": "3584142.0",
+        "mpe": "-0.9162116",
+        "nrmse": "0.322223",
+        "r2": -1.0186221599578857
+      }
+    },
+    {
+      "round": 13,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3310309077979888,
+        "Client 2": 0.34227526462270025,
+        "Client 3": 0.326693827579311
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 362.088525390625,
+          "val_mape": "0.90387774",
+          "val_rmse": "3479900.0",
+          "val_mae": "2851348.8",
+          "val_mpe": "-0.90387774"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 365.92681884765625,
+          "val_mape": "0.8565217",
+          "val_rmse": "4025812.8",
+          "val_mae": "3343463.2",
+          "val_mpe": "-0.8565217"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 278.1178863525391,
+          "val_mape": "0.877904",
+          "val_rmse": "2068211.0",
+          "val_mae": "1774724.2",
+          "val_mpe": "-0.877904"
+        }
+      },
+      "global_val": {
+        "mape": "0.88246393",
+        "mae": "2632482.0",
+        "rmse": "3492823.5",
+        "mpe": "-0.88246393",
+        "nrmse": "0.31401327",
+        "r2": -0.9170697927474976
+      }
+    },
+    {
+      "round": 14,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3300524512112233,
+        "Client 2": 0.33980185318684836,
+        "Client 3": 0.3301456956019283
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 266.2651763916016,
+          "val_mape": "0.85712004",
+          "val_rmse": "3322707.5",
+          "val_mae": "2718709.5",
+          "val_mpe": "-0.85712004"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 275.50792541503904,
+          "val_mape": "0.8191562",
+          "val_rmse": "3885373.0",
+          "val_mae": "3206476.8",
+          "val_mpe": "-0.8191562"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 180.13686828613282,
+          "val_mape": "0.81069493",
+          "val_rmse": "1930660.4",
+          "val_mae": "1652205.4",
+          "val_mpe": "-0.81069493"
+        }
+      },
+      "global_val": {
+        "mape": "0.8297434",
+        "mae": "2489315.8",
+        "rmse": "3323234.0",
+        "mpe": "-0.8297434",
+        "nrmse": "0.29876676",
+        "r2": -0.7354274988174438
+      }
+    },
+    {
+      "round": 15,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3276714624579624,
+        "Client 2": 0.3386492832089315,
+        "Client 3": 0.33367925433310597
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 210.7913818359375,
+          "val_mape": "0.79511636",
+          "val_rmse": "3142999.8",
+          "val_mae": "2540033.2",
+          "val_mpe": "-0.79511636"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 200.49753112792968,
+          "val_mape": "0.7538222",
+          "val_rmse": "3610953.5",
+          "val_mae": "2955184.5",
+          "val_mpe": "-0.7538222"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 155.8271224975586,
+          "val_mape": "0.7258761",
+          "val_rmse": "1787055.5",
+          "val_mae": "1515583.2",
+          "val_mpe": "-0.7258761"
+        }
+      },
+      "global_val": {
+        "mape": "0.7538836",
+        "mae": "2298079.2",
+        "rmse": "3130315.5",
+        "mpe": "-0.7538836",
+        "nrmse": "0.2814229",
+        "r2": -0.539787769317627
+      }
+    },
+    {
+      "round": 16,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3220433432085353,
+        "Client 2": 0.3402434946561198,
+        "Client 3": 0.33771316213534486
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 137.43177337646483,
+          "val_mape": "0.7213916",
+          "val_rmse": "2876049.0",
+          "val_mae": "2299939.2",
+          "val_mpe": "-0.7213916"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 133.8301742553711,
+          "val_mape": "0.65345246",
+          "val_rmse": "3311149.5",
+          "val_mae": "2616396.5",
+          "val_mpe": "-0.65345246"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 96.30819854736328,
+          "val_mape": "0.62081504",
+          "val_rmse": "1574557.2",
+          "val_mae": "1309330.0",
+          "val_mpe": "-0.60077715"
+        }
+      },
+      "global_val": {
+        "mape": "0.65016437",
+        "mae": "2043397.0",
+        "rmse": "2883485.8",
+        "mpe": "-0.6493069",
+        "nrmse": "0.2592323",
+        "r2": -0.30653250217437744
+      }
+    },
+    {
+      "round": 17,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.32435158679979836,
+        "Client 2": 0.33929224279524284,
+        "Client 3": 0.3363561704049587
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 97.07836151123047,
+          "val_mape": "0.58711416",
+          "val_rmse": "2481141.5",
+          "val_mae": "1908299.0",
+          "val_mpe": "-0.5826403"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 89.85966644287109,
+          "val_mape": "0.542895",
+          "val_rmse": "2966129.2",
+          "val_mae": "2250205.0",
+          "val_mpe": "-0.5419761"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 50.363351821899414,
+          "val_mape": "0.5168188",
+          "val_rmse": "1298567.0",
+          "val_mae": "1066105.0",
+          "val_mpe": "-0.42120144"
+        }
+      },
+      "global_val": {
+        "mape": "0.53455365",
+        "mae": "1742255.6",
+        "rmse": "2587273.8",
+        "mpe": "-0.5003218",
+        "nrmse": "0.23260215",
+        "r2": -0.0518876314163208
+      }
+    },
+    {
+      "round": 18,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3272199804472577,
+        "Client 2": 0.35150842284243355,
+        "Client 3": 0.32127159671030875
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 64.28430938720703,
+          "val_mape": "0.4892148",
+          "val_rmse": "2148370.0",
+          "val_mae": "1584028.6",
+          "val_mpe": "-0.4404277"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 56.882955932617186,
+          "val_mape": "0.42949867",
+          "val_rmse": "2575412.2",
+          "val_mae": "1847837.0",
+          "val_mpe": "-0.39868322"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 37.92612495422363,
+          "val_mape": "0.479567",
+          "val_rmse": "997166.94",
+          "val_mae": "824541.25",
+          "val_mpe": "-0.12770015"
+        }
+      },
+      "global_val": {
+        "mape": "0.4438585",
+        "mae": "1467912.8",
+        "rmse": "2294493.0",
+        "mpe": "-0.31226373",
+        "nrmse": "0.20628045",
+        "r2": 0.17270946502685547
+      }
+    },
+    {
+      "round": 19,
+      "strategy_name": "hybrid",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.32438964218091526,
+        "Client 2": 0.3414131081199142,
+        "Client 3": 0.33419724969917053
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 35.810554885864256,
+          "val_mape": "0.40440843",
+          "val_rmse": "1910193.1",
+          "val_mae": "1315483.9",
+          "val_mpe": "-0.29598847"
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 34.49636001586914,
+          "val_mape": "0.36938003",
+          "val_rmse": "2274445.8",
+          "val_mae": "1589591.4",
+          "val_mpe": "-0.24759623"
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 33.33998603820801,
+          "val_mape": "0.36048406",
+          "val_rmse": "800585.94",
+          "val_mae": "607974.75",
+          "val_mpe": "-0.020108966"
+        }
+      },
+      "global_val": {
+        "mape": "0.40589976",
+        "mae": "1265257.9",
+        "rmse": "2050509.1",
+        "mpe": "-0.14651124",
+        "nrmse": "0.18434572",
+        "r2": 0.33929431438446045
+      }
+    }
+  ]
+}

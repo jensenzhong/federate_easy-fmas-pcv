@@ -1,0 +1,45 @@
+2026-02-25 17:04:14 - Centralized_NN - INFO - Starting Scenario A-Prime: NN Centralized Baseline
+2026-02-25 17:04:21 - Centralized_NN - INFO - Epoch [20/800] Train: 929.933767, Val: 947.440704
+2026-02-25 17:04:24 - Centralized_NN - INFO - Epoch [40/800] Train: 218.042514, Val: 242.237984
+2026-02-25 17:04:26 - Centralized_NN - INFO - Epoch [60/800] Train: 72.236617, Val: 72.734600
+2026-02-25 17:04:29 - Centralized_NN - INFO - Epoch [80/800] Train: 33.833662, Val: 24.688236
+2026-02-25 17:04:31 - Centralized_NN - INFO - Epoch [100/800] Train: 36.503311, Val: 21.444346
+2026-02-25 17:04:34 - Centralized_NN - INFO - Epoch [120/800] Train: 30.824594, Val: 23.044058
+2026-02-25 17:04:36 - Centralized_NN - INFO - Epoch [140/800] Train: 32.378053, Val: 21.114350
+2026-02-25 17:04:39 - Centralized_NN - INFO - Epoch [160/800] Train: 34.341166, Val: 22.070188
+2026-02-25 17:04:39 - Centralized_NN - INFO - Early stopping at epoch 166
+2026-02-25 17:04:39 - Centralized_NN - INFO - Final Test Results: MAPE: 50.58% | RMSE: $1,406,208.50 | MAE: $1,018,121.00 | MPE: 19.84% | NRMSE: 15.77%
+2026-02-25 17:04:39 - Centralized_NN - INFO - ==================================================
+2026-02-25 17:04:39 - Centralized_NN - INFO - Scenario A-Prime completed successfully
+2026-02-25 17:04:39 - Centralized_NN - INFO - Best NN Test MAPE: 50.58%
+2026-02-25 17:04:39 - Centralized_NN - INFO - ==================================================
+2026-02-26 18:00:48 - Centralized_NN - INFO - Starting Scenario A-Prime: NN Centralized Baseline
+2026-02-26 18:00:52 - Centralized_NN - INFO - Epoch [20/800] Train: 929.933767, Val: 947.440704
+2026-02-26 18:00:53 - Centralized_NN - INFO - Epoch [40/800] Train: 218.042514, Val: 242.237984
+2026-02-26 18:00:54 - Centralized_NN - INFO - Epoch [60/800] Train: 72.236617, Val: 72.734600
+2026-02-26 18:00:55 - Centralized_NN - INFO - Epoch [80/800] Train: 33.833662, Val: 24.688236
+2026-02-26 18:00:56 - Centralized_NN - INFO - Epoch [100/800] Train: 36.503311, Val: 21.444346
+2026-02-26 18:00:58 - Centralized_NN - INFO - Epoch [120/800] Train: 30.824594, Val: 23.044058
+2026-02-26 18:00:59 - Centralized_NN - INFO - Epoch [140/800] Train: 32.378053, Val: 21.114350
+2026-02-26 18:01:01 - Centralized_NN - INFO - Epoch [160/800] Train: 34.341166, Val: 22.070188
+2026-02-26 18:01:01 - Centralized_NN - INFO - Early stopping at epoch 166
+2026-02-26 18:01:01 - Centralized_NN - INFO - Final Test Results: MAPE: 50.58% | RMSE: $1,406,208.50 | MAE: $1,018,121.00 | MPE: 19.84% | NRMSE: 15.77%
+2026-02-26 18:01:01 - Centralized_NN - INFO - ==================================================
+2026-02-26 18:01:01 - Centralized_NN - INFO - Scenario A-Prime completed successfully
+2026-02-26 18:01:01 - Centralized_NN - INFO - Best NN Test MAPE: 50.58%
+2026-02-26 18:01:01 - Centralized_NN - INFO - ==================================================
+2026-03-17 21:46:22 - Centralized_NN - INFO - Starting Scenario A-Prime: NN Centralized Baseline
+2026-03-17 21:46:33 - Centralized_NN - INFO - Epoch [20/800] Train: 929.933767, Val: 947.440704
+2026-03-17 21:46:37 - Centralized_NN - INFO - Epoch [40/800] Train: 218.042514, Val: 242.237984
+2026-03-17 21:46:40 - Centralized_NN - INFO - Epoch [60/800] Train: 72.236617, Val: 72.734600
+2026-03-17 21:46:43 - Centralized_NN - INFO - Epoch [80/800] Train: 33.833662, Val: 24.688236
+2026-03-17 21:46:45 - Centralized_NN - INFO - Epoch [100/800] Train: 36.503311, Val: 21.444346
+2026-03-17 21:46:48 - Centralized_NN - INFO - Epoch [120/800] Train: 30.824594, Val: 23.044058
+2026-03-17 21:46:50 - Centralized_NN - INFO - Epoch [140/800] Train: 32.378053, Val: 21.114350
+2026-03-17 21:46:53 - Centralized_NN - INFO - Epoch [160/800] Train: 34.341166, Val: 22.070188
+2026-03-17 21:46:54 - Centralized_NN - INFO - Early stopping at epoch 166
+2026-03-17 21:46:54 - Centralized_NN - INFO - Final Test Results: MAPE: 50.58% | RMSE: $1,406,208.50 | MAE: $1,018,121.00 | MPE: 19.84% | NRMSE: 15.77%
+2026-03-17 21:46:54 - Centralized_NN - INFO - ==================================================
+2026-03-17 21:46:54 - Centralized_NN - INFO - Scenario A-Prime completed successfully
+2026-03-17 21:46:54 - Centralized_NN - INFO - Best NN Test MAPE: 50.58%
+2026-03-17 21:46:54 - Centralized_NN - INFO - ==================================================

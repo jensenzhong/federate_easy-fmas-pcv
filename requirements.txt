@@ -1,0 +1,28 @@
+# 联邦学习高速公路成本预测项目依赖包
+# 核心深度学习和联邦学习框架
+torch>=2.0.0
+flwr>=1.6.0
+
+# 数据处理与传统机器学习
+scikit-learn>=1.3.0
+pandas>=2.0.0
+numpy>=1.24.0
+
+# 配置管理
+pyyaml>=6.0
+
+# 可视化
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# 工具库
+tensorboard>=2.13.0
+tqdm>=4.65.0
+
+# 场景C: LLM预测（待添加）
+# openai>=1.0.0  # 或其他LLM API库
+
+# 归档：原场景C (MAS-FL)相关依赖已移至过程文件
+# stable-baselines3>=2.1.0
+# gymnasium>=0.29.0
+

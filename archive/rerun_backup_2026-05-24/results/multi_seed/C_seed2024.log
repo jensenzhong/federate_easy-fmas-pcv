@@ -1,0 +1,345 @@
+Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --use_llm --seed 2024
+Return code: 0
+Elapsed: 72.1s
+
+================================================================================
+SCENARIO C: MAS-FL (Multi-Agent System Federated Learning)
+================================================================================
+
+[Config] Seed: 2024, Device: cpu
+[Config] Use LLM: True
+
+[Data] Loading datasets...
+[Data] Train: 438, Val: 68, Test: 70
+
+================================================================================
+SCENARIO C: MAS-FL with LLM Decision (Phase 3)
+================================================================================
+
+LLM will analyze training history and choose optimal strategy each round.
+
+[Model] Architecture: 10 -> [128, 128, 64, 32] -> 1
+[Model] Parameters: 28,993
+[Agent] Client 1: 148 train, 38 val
+[Agent] Client 2: 150 train, 38 val
+[Agent] Client 3: 140 train, 36 val
+
+[LLM] Initializing LLM Planner...
+[LLM] Provider: deepseek
+
+[Training] Base LR: 0.0005, Base Epochs: 20
+[Training] Rounds: 20
+============================================================
+Starting MAS-FL Training (Phase 3: LLM-Guided)
+============================================================
+  Rounds: 20
+  Clients: ['Client 1', 'Client 2', 'Client 3']
+  Base Learning Rate: 0.0005
+  Base Local Epochs: 20
+  LLM call interval: every 1 round(s)
+  [LLM] Round 1 (Exploration Phase): strategy=size_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��1�֣�ʹ��size_only(��׼FedAvg)��������
+
+  [LLM Decision] Round 1: strategy=size_only, lr=0.000500, epochs=20, mode=new
+
+[Round 1] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1592.297437, val_mape=100.00%
+    Client 2: 150 samples, train_loss=1628.662964, val_mape=100.00%
+    Client 3: 140 samples, train_loss=1392.454443, val_mape=100.00%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=100.00%, RMSE=$3,907,348.50
+    >>> New best model! Val MAPE=100.00%
+  [LLM] Round 2 (Exploration Phase): strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��2�֣�����perf_only���ԣ�̽�����������ۺϵ�Ч��
+
+  [LLM Decision] Round 2: strategy=perf_only, lr=0.000500, epochs=20, mode=new
+
+[Round 2] Strategy: perf_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1539.915161, val_mape=100.00%
+    Client 2: 150 samples, train_loss=1572.845264, val_mape=100.00%
+    Client 3: 140 samples, train_loss=1334.860596, val_mape=100.00%
+    Weights: Client 1=0.333, Client 2=0.333, Client 3=0.333
+    Global Val: MAPE=100.00%, RMSE=$3,907,215.75
+    >>> New best model! Val MAPE=100.00%
+  [LLM] Round 3 (Exploration Phase): strategy=hybrid, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��3�֣�����hybrid���ԣ�̽����Ͼۺϵ�Ч��
+
+  [LLM Decision] Round 3: strategy=hybrid, lr=0.000500, epochs=20, mode=new
+
+[Round 3] Strategy: hybrid, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1458.105200, val_mape=99.99%
+    Client 2: 150 samples, train_loss=1494.004346, val_mape=99.99%
+    Client 3: 140 samples, train_loss=1247.244604, val_mape=99.99%
+    Weights: Client 1=0.336, Client 2=0.338, Client 3=0.326
+    Global Val: MAPE=99.99%, RMSE=$3,906,827.75
+    >>> New best model! Val MAPE=99.99%
+  [LLM] Round 4 (Exploration Phase): strategy=fairness_clip, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��4�֣�����fairness_clip���ԣ�������в��Ե�̽��
+
+  [LLM Decision] Round 4: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 4] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1373.994922, val_mape=99.98%
+    Client 2: 150 samples, train_loss=1402.434326, val_mape=99.97%
+    Client 3: 140 samples, train_loss=1178.139722, val_mape=99.97%
+    Weights: Client 1=0.337, Client 2=0.340, Client 3=0.324
+    Global Val: MAPE=99.98%, RMSE=$3,905,997.25
+    >>> New best model! Val MAPE=99.98%
+  [LLM] Requesting strategy decision for round 5...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 5: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 5] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1322.334985, val_mape=99.95%
+    Client 2: 150 samples, train_loss=1312.609351, val_mape=99.92%
+    Client 3: 140 samples, train_loss=1115.064624, val_mape=99.94%
+    Weights: Client 1=0.337, Client 2=0.340, Client 3=0.324
+    Global Val: MAPE=99.95%, RMSE=$3,904,523.50
+    >>> New best model! Val MAPE=99.95%
+  [LLM] Requesting strategy decision for round 6...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 6: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 6] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1213.124561, val_mape=99.91%
+    Client 2: 150 samples, train_loss=1244.981885, val_mape=99.84%
+    Client 3: 140 samples, train_loss=1063.844946, val_mape=99.90%
+    Weights: Client 1=0.337, Client 2=0.340, Client 3=0.324
+    Global Val: MAPE=99.90%, RMSE=$3,902,073.00
+    >>> New best model! Val MAPE=99.90%
+  [LLM] Requesting strategy decision for round 7...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 7: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 7] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1126.645093, val_mape=99.81%
+    Client 2: 150 samples, train_loss=1142.408765, val_mape=99.66%
+    Client 3: 140 samples, train_loss=973.989502, val_mape=99.81%
+    Weights: Client 1=0.336, Client 2=0.340, Client 3=0.324
+    Global Val: MAPE=99.77%, RMSE=$3,896,820.75
+    >>> New best model! Val MAPE=99.77%
+  [LLM] Requesting strategy decision for round 8...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 8: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 8] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1040.179016, val_mape=99.68%
+    Client 2: 150 samples, train_loss=1045.408240, val_mape=99.37%
+    Client 3: 140 samples, train_loss=864.432312, val_mape=99.66%
+    Weights: Client 1=0.336, Client 2=0.340, Client 3=0.324
+    Global Val: MAPE=99.61%, RMSE=$3,889,914.25
+    >>> New best model! Val MAPE=99.61%
+  [LLM] Requesting strategy decision for round 9...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 9: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 9] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=938.909753, val_mape=99.39%
+    Client 2: 150 samples, train_loss=931.464478, val_mape=98.92%
+    Client 3: 140 samples, train_loss=774.198315, val_mape=99.40%
+    Weights: Client 1=0.336, Client 2=0.340, Client 3=0.324
+    Global Val: MAPE=99.29%, RMSE=$3,877,308.75
+    >>> New best model! Val MAPE=99.29%
+  [LLM] Requesting strategy decision for round 10...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 10: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 10] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=825.976917, val_mape=98.92%
+    Client 2: 150 samples, train_loss=844.599658, val_mape=98.27%
+    Client 3: 140 samples, train_loss=701.708057, val_mape=98.96%
+    Weights: Client 1=0.336, Client 2=0.340, Client 3=0.323
+    Global Val: MAPE=98.78%, RMSE=$3,856,401.25
+    >>> New best model! Val MAPE=98.78%
+  [LLM] Requesting strategy decision for round 11...
+  [Warning] LLM call failed: LLM API request failed: HTTPSConnectionPool(host='api.deepseek.com', port=443): Read timed out. (read timeout=10)
+
+  [LLM Decision] Round 11: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 11] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=727.173779, val_mape=98.24%
+    Client 2: 150 samples, train_loss=752.844116, val_mape=97.18%
+    Client 3: 140 samples, train_loss=605.112170, val_mape=97.95%
+    Weights: Client 1=0.336, Client 2=0.340, Client 3=0.324
+    Global Val: MAPE=97.98%, RMSE=$3,828,745.75
+    >>> New best model! Val MAPE=97.98%
+  [LLM] Requesting strategy decision for round 12...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 12: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 12] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=633.142200, val_mape=97.16%
+    Client 2: 150 samples, train_loss=633.319592, val_mape=95.38%
+    Client 3: 140 samples, train_loss=523.738464, val_mape=96.59%
+    Weights: Client 1=0.336, Client 2=0.341, Client 3=0.324
+    Global Val: MAPE=96.47%, RMSE=$3,779,552.75
+    >>> New best model! Val MAPE=96.47%
+  [LLM] Requesting strategy decision for round 13...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 13: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 13] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=521.406189, val_mape=95.10%
+    Client 2: 150 samples, train_loss=561.441168, val_mape=93.31%
+    Client 3: 140 samples, train_loss=412.204419, val_mape=94.58%
+    Weights: Client 1=0.336, Client 2=0.341, Client 3=0.323
+    Global Val: MAPE=94.71%, RMSE=$3,709,645.00
+    >>> New best model! Val MAPE=94.71%
+  [LLM] Requesting strategy decision for round 14...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 14: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 14] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=433.895245, val_mape=92.78%
+    Client 2: 150 samples, train_loss=426.403503, val_mape=89.73%
+    Client 3: 140 samples, train_loss=325.313394, val_mape=92.02%
+    Weights: Client 1=0.335, Client 2=0.342, Client 3=0.323
+    Global Val: MAPE=91.71%, RMSE=$3,611,415.25
+    >>> New best model! Val MAPE=91.71%
+  [LLM] Requesting strategy decision for round 15...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 15: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 15] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=345.794086, val_mape=87.73%
+    Client 2: 150 samples, train_loss=324.836157, val_mape=85.54%
+    Client 3: 140 samples, train_loss=259.613434, val_mape=87.26%
+    Weights: Client 1=0.336, Client 2=0.341, Client 3=0.323
+    Global Val: MAPE=86.81%, RMSE=$3,474,319.00
+    >>> New best model! Val MAPE=86.81%
+  [LLM] Requesting strategy decision for round 16...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 16: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 16] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=265.659692, val_mape=82.48%
+    Client 2: 150 samples, train_loss=243.071106, val_mape=80.24%
+    Client 3: 140 samples, train_loss=186.402733, val_mape=83.28%
+    Weights: Client 1=0.336, Client 2=0.342, Client 3=0.322
+    Global Val: MAPE=80.50%, RMSE=$3,281,347.25
+    >>> New best model! Val MAPE=80.50%
+  [LLM] Requesting strategy decision for round 17...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 17: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 17] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=198.679544, val_mape=76.42%
+    Client 2: 150 samples, train_loss=197.297620, val_mape=71.32%
+    Client 3: 140 samples, train_loss=128.452522, val_mape=75.77%
+    Weights: Client 1=0.334, Client 2=0.344, Client 3=0.322
+    Global Val: MAPE=72.31%, RMSE=$3,070,745.00
+    >>> New best model! Val MAPE=72.31%
+  [LLM] Requesting strategy decision for round 18...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 18: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 18] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=136.156801, val_mape=70.25%
+    Client 2: 150 samples, train_loss=140.011739, val_mape=62.57%
+    Client 3: 140 samples, train_loss=85.126051, val_mape=61.40%
+    Weights: Client 1=0.328, Client 2=0.343, Client 3=0.329
+    Global Val: MAPE=62.40%, RMSE=$2,831,496.50
+    >>> New best model! Val MAPE=62.40%
+  [LLM] Requesting strategy decision for round 19...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 19: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 19] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=98.151685, val_mape=60.20%
+    Client 2: 150 samples, train_loss=103.504207, val_mape=52.49%
+    Client 3: 140 samples, train_loss=53.456274, val_mape=48.29%
+    Weights: Client 1=0.325, Client 2=0.341, Client 3=0.334
+    Global Val: MAPE=52.19%, RMSE=$2,556,023.50
+    >>> New best model! Val MAPE=52.19%
+  [LLM] Requesting strategy decision for round 20...
+  [Warning] LLM call failed: LLM API request failed: 402 Client Error: Payment Required for url: https://api.deepseek.com/chat/completions
+
+  [LLM Decision] Round 20: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 20] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=70.198286, val_mape=52.61%
+    Client 2: 150 samples, train_loss=85.835797, val_mape=43.13%
+    Client 3: 140 samples, train_loss=36.139634, val_mape=36.57%
+    Weights: Client 1=0.319, Client 2=0.340, Client 3=0.342
+    Global Val: MAPE=42.71%, RMSE=$2,272,864.75
+    >>> New best model! Val MAPE=42.71%
+
+------------------------------------------------------------
+Restoring Best Checkpoint...
+------------------------------------------------------------
+  Last round (Round 20) Val MAPE: 42.71%
+  Best round (Round 20) Val MAPE: 42.71%
+  >>> Model restored to Round 20 (best checkpoint)
+
+  Evaluating best checkpoint on test set...
+
+============================================================
+LLM-Guided Training Completed!
+============================================================
+  Best Round: 20
+  Best Val MAPE: 42.71%
+
+Test Set Results (using best checkpoint):
+  MAPE:  55.29%
+  RMSE:  $1,925,105.88
+  MAE:   $1,463,514.12
+  MPE:   -31.52%
+  NRMSE: 21.60%
+  R2:    0.1279
+
+LLM Strategy Selection Summary:
+  size_only: 1 rounds (5.0%)
+  perf_only: 1 rounds (5.0%)
+  hybrid: 1 rounds (5.0%)
+  fairness_clip: 17 rounds (85.0%)
+
+[Bias Correction] Calibrating on validation set...
+  [Bias Correction] Validation MPE = -31.61%
+  [Bias Correction] Correction factor: 1 / (1 + -0.3161) = 1.4623
+  [Bias Correction] Validation MPE after correction: -0.00%
+  [Bias Correction] Validation MAPE after correction: 42.60%
+
+[Bias Correction] Test Results (after correction):
+  MAPE:  52.48%
+  RMSE:  $1,543,439.12
+  MAE:   $1,121,960.38
+  MPE:   0.13%
+  R2:    0.4394
+
+[Saving] Results...
+  Saving best checkpoint (Round 20, Val MAPE: 42.71%)
+  Model saved: results\models\scenario_C_llm_model.pt
+  Saved: results\logs\scene_C_round_metrics.csv
+  Saved: results\logs\scene_C_client_metrics.csv
+  Saved: results\logs\scene_C_training_history.json
+  Logs: results/logs/
+  Results saved: results\scenario_c_results.csv
+
+================================================================================
+COMPLETED!
+================================================================================
+
+Test Results:
+  MAPE:  55.29%
+  RMSE:  $1,925,105.88
+  MAE:   $1,463,514.12
+  R2:    0.1279
+================================================================================
+
+--- STDERR ---
+2026-02-26 12:52:42 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:53:50 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 55.29%

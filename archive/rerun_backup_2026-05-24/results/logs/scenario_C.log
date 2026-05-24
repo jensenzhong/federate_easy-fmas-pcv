@@ -1,0 +1,77 @@
+2026-02-26 10:50:23 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 10:52:48 - MAS-FL - INFO - Strategy size_only: Test MAPE=42.06%
+2026-02-26 10:53:38 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 42.73%
+2026-02-26 11:49:48 - MAS-FL - INFO - Starting LLM-guided training: 30 rounds
+2026-02-26 11:55:33 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 52.78%
+2026-02-26 12:15:23 - MAS-FL - INFO - Starting LLM-guided training: 30 rounds
+2026-02-26 12:20:37 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 52.13%
+2026-02-26 12:23:14 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:26:15 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 43.19%
+2026-02-26 12:29:48 - MAS-FL - INFO - Strategy perf_only: Test MAPE=43.70%
+2026-02-26 12:30:36 - MAS-FL - INFO - Strategy hybrid: Test MAPE=43.97%
+2026-02-26 12:30:40 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:31:30 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 42.01%
+2026-02-26 12:31:34 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:32:29 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 42.01%
+2026-02-26 12:38:42 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:39:33 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 42.01%
+2026-02-26 12:39:37 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:40:28 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 50.66%
+2026-02-26 12:40:32 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:41:22 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 55.76%
+2026-02-26 12:41:27 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:42:18 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 54.52%
+2026-02-26 12:42:22 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:43:14 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 55.29%
+2026-02-26 12:47:37 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:48:28 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 42.01%
+2026-02-26 12:49:03 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:49:53 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 42.01%
+2026-02-26 12:49:58 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:50:48 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 50.66%
+2026-02-26 12:50:53 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:51:43 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 55.76%
+2026-02-26 12:51:47 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:52:38 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 54.52%
+2026-02-26 12:52:42 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 12:53:50 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 55.29%
+2026-02-26 16:11:42 - MAS-FL - INFO - Strategy size_only: Test MAPE=42.06%
+2026-02-26 16:12:05 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 16:13:09 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 42.01%
+2026-02-26 16:16:07 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 16:19:27 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 53.15%
+2026-02-26 17:42:00 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 17:45:20 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 41.36%
+2026-02-26 18:01:54 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 18:05:29 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 40.56%
+2026-02-26 18:47:52 - MAS-FL - INFO - Starting LLM-guided training: 30 rounds
+2026-02-26 18:53:23 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 49.30%
+2026-02-26 18:54:36 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 18:58:21 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 47.37%
+2026-02-26 19:01:00 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-02-26 19:04:09 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 52.74%
+2026-03-17 21:48:58 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-03-17 21:53:18 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 41.44%
+2026-03-24 00:54:02 - MAS-FL - INFO - Strategy perf_only: Test MAPE=41.53%
+2026-03-24 00:54:45 - MAS-FL - INFO - Strategy hybrid: Test MAPE=41.95%
+2026-03-24 00:54:50 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-03-24 00:55:26 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 42.01%
+2026-03-24 00:55:30 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-03-24 00:56:01 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 42.01%
+2026-03-24 22:15:32 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-03-24 22:19:24 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 44.53%
+2026-03-26 21:17:47 - MAS-FL - INFO - Strategy perf_only: Test MAPE=41.53%
+2026-03-26 21:19:02 - MAS-FL - INFO - Strategy perf_only: Test MAPE=50.81%
+2026-03-26 21:20:20 - MAS-FL - INFO - Strategy perf_only: Test MAPE=54.27%
+2026-03-26 21:21:48 - MAS-FL - INFO - Strategy perf_only: Test MAPE=54.65%
+2026-03-26 21:23:16 - MAS-FL - INFO - Strategy perf_only: Test MAPE=56.44%
+2026-03-26 22:06:18 - MAS-FL - INFO - Strategy hybrid: Test MAPE=41.95%
+2026-03-27 10:36:32 - MAS-FL - INFO - Strategy hybrid: Test MAPE=50.70%
+2026-03-27 11:31:35 - MAS-FL - INFO - Strategy hybrid: Test MAPE=55.45%
+2026-03-27 11:31:35 - MAS-FL - INFO - Strategy hybrid: Test MAPE=55.45%
+2026-03-27 11:32:15 - MAS-FL - INFO - Strategy hybrid: Test MAPE=54.69%
+2026-03-27 12:06:07 - MAS-FL - INFO - Strategy hybrid: Test MAPE=54.69%
+2026-03-27 12:27:42 - MAS-FL - INFO - Strategy hybrid: Test MAPE=55.64%
+2026-03-27 12:27:43 - MAS-FL - INFO - Strategy hybrid: Test MAPE=55.64%
+2026-04-25 15:45:41 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-04-25 15:47:12 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 42.07%

@@ -1,0 +1,2 @@
+scenario,model_type,training_samples,validation_samples,test_samples,n_estimators,learning_rate,max_depth,val_mape,val_rmse,val_mae,val_mpe,val_nrmse,test_mape,test_rmse,test_mae,test_mpe,test_nrmse
+A_Centralized_GBR,GradientBoostingRegressor,550,68,70,200,0.1,5,0.4336678011590691,1777596.6929833696,1112421.8509427127,0.1490385956060709,0.15981020813961436,0.6433226788072415,1639790.7608821364,1189341.4735297647,0.2967318867244847,0.18394838057656504

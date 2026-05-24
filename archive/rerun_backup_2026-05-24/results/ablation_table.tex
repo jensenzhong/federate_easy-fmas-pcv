@@ -1,0 +1,19 @@
+
+\begin{table}[htbp]
+\centering
+\caption{Ablation Study: Component Contribution Analysis}
+\label{tab:ablation}
+\begin{tabular}{lcccccc}
+\toprule
+Configuration & FedProx & Strategy & LLM & MAPE (\%) $\downarrow$ & RMSE (\$) $\downarrow$ & $R^2$ $\uparrow$ \\
+\midrule
+B-baseline & No & size\_only & No & 42.07 & 1,700,182 & 0.3198 \\
+B+FedProx & Yes & size\_only & No & 42.06 & 1,700,434 & 0.3196 \\
+C-perf\_only & Yes & perf\_only & No & 41.53 & 1,697,736 & 0.3218 \\
+C-hybrid & Yes & hybrid & No & 41.95 & 1,699,977 & 0.3200 \\
+C-LLM & Yes & Dynamic & Yes & 42.01 & 1,699,809 & 0.3201 \\
+C-LLM+bias & Yes & Dynamic+BC & Yes & 42.09 & 1,544,123 & 0.4389 \\
+
+\bottomrule
+\end{tabular}
+\end{table}

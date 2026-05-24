@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent-Augmented Federated Learning · 公路造价估算</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@300;400;500;600&family=Noto+Serif+SC:wght@300;400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0a1f3d;
+    --ink-rgb:10,31,61;
+    --paper:#f1f3f5;
+    --paper-rgb:241,243,245;
+    --paper-tint:#e4e8ec;
+    --ink-tint:#152a4a;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --serif-en:"Playfair Display","Source Serif 4",Georgia,serif;
+    --serif-zh:"Noto Serif SC",source-han-serif-sc,serif;
+    --sans-zh:"Noto Sans SC",source-han-sans-sc,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper);font-family:var(--sans-zh);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  canvas.bg{position:fixed;inset:0;width:100vw;height:100vh;z-index:0;display:block;transition:opacity 1.2s ease}
+  canvas#bg-light{opacity:0}canvas#bg-dark{opacity:1}
+  body.light-bg canvas#bg-light{opacity:1}body.light-bg canvas#bg-dark{opacity:0}
+  body.low-power canvas.bg{display:none!important}
+  #deck{position:fixed;inset:0;width:10000vw;height:100vh;display:flex;flex-wrap:nowrap;transition:transform .9s cubic-bezier(.77,0,.175,1);z-index:10;will-change:transform}
+  .slide{width:100vw;height:100vh;flex:0 0 100vw;position:relative;padding:6vh 6vw 10vh 6vw;display:flex;flex-direction:column;overflow:hidden}
+  .slide.light{color:var(--ink);background:var(--paper)}
+  .slide.dark{color:var(--paper);background:var(--ink)}
+  .slide::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;transition:background .7s ease}
+  .slide.light::before{background:rgba(var(--paper-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.dark::before{background:rgba(var(--ink-rgb),.78);backdrop-filter:blur(3px)}
+  .slide.hero.light::before{background:rgba(var(--paper-rgb),.16);backdrop-filter:none}
+  .slide.hero.dark::before{background:rgba(var(--ink-rgb),.12);backdrop-filter:none}
+  .slide.hero::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+  .slide.hero.light::after{background:linear-gradient(180deg,rgba(var(--paper-rgb),.28) 0%,rgba(var(--paper-rgb),0) 14%,rgba(var(--paper-rgb),0) 86%,rgba(var(--paper-rgb),.28) 100%)}
+  .slide.hero.dark::after{background:linear-gradient(180deg,rgba(var(--ink-rgb),.32) 0%,rgba(var(--ink-rgb),0) 14%,rgba(var(--ink-rgb),0) 86%,rgba(var(--ink-rgb),.32) 100%)}
+  .chrome{display:flex;justify-content:space-between;align-items:flex-start;font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.2em;text-transform:uppercase;opacity:.62}
+  .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;font-family:var(--mono);font-size:max(11px,.78vw);letter-spacing:.18em;text-transform:uppercase;opacity:.5}
+  .foot .title{font-family:var(--serif-zh);font-weight:400;letter-spacing:.05em;text-transform:none;opacity:.75;font-size:13px}
+  .kicker{font-family:var(--mono);font-size:12px;letter-spacing:.3em;text-transform:uppercase;opacity:.6;margin-bottom:2.6vh}
+  .rule{width:100%;height:1px;background:currentColor;opacity:.25;margin:3vh 0}
+</style>
+<style>
+  .h-hero{font-family:var(--serif-zh);font-weight:900;font-size:10vw;line-height:.96;letter-spacing:-.02em}
+  .h-xl{font-family:var(--serif-zh);font-weight:700;font-size:6.2vw;line-height:1.08;letter-spacing:-.01em}
+  .h-sub{font-family:var(--serif-zh);font-weight:500;font-size:3.1vw;line-height:1.25;opacity:.7}
+  .h-md{font-family:var(--serif-zh);font-weight:600;font-size:2.3vw;line-height:1.3}
+  .h-hero-en{font-family:var(--serif-en);letter-spacing:-.025em}
+  .lead{font-family:var(--serif-zh);font-weight:400;font-size:1.75vw;line-height:1.5;opacity:.86}
+  .body-zh{font-family:var(--sans-zh);font-weight:400;font-size:max(15px,1.22vw);line-height:1.75;opacity:.82}
+  .meta-row{display:flex;gap:1.2em;align-items:baseline;flex-wrap:wrap;font-family:var(--mono);font-size:max(12px,.92vw);letter-spacing:.16em;text-transform:uppercase;opacity:.6}
+  .ghost{font-family:var(--serif-en);font-weight:900;font-size:34vw;line-height:.8;opacity:.06;letter-spacing:-.04em;position:absolute;font-feature-settings:"tnum"}
+  .big-num{font-family:var(--serif-en);font-weight:800;font-size:10vw;line-height:.85;letter-spacing:-.03em;font-feature-settings:"tnum"}
+  .mid-num{font-family:var(--serif-en);font-weight:700;font-size:5.5vw;line-height:.88;letter-spacing:-.02em;font-feature-settings:"tnum"}
+  em{font-style:italic;font-family:var(--serif-en)}
+  .hi{position:relative;display:inline}
+  .slide.dark .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--paper-rgb),.15);z-index:-1}
+  .slide.light .hi::after{content:"";position:absolute;left:-.1em;right:-.1em;bottom:-.05em;height:.28em;background:rgba(var(--ink-rgb),.08);z-index:-1}
+  .col{display:flex;flex-direction:column;gap:2.4vh}
+  .row{display:flex;align-items:center;gap:3vw}
+  .fill{flex:1}
+  .center{align-items:center;justify-content:center;text-align:center}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:4vw;flex:1;align-items:center}
+  .split-55{display:grid;grid-template-columns:55fr 45fr;gap:5vw;flex:1;align-items:start}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:4vw;flex:1;align-content:center}
+  .grid-4{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:4vh 6vw;flex:1;align-content:center}
+  .frame{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .frame.grid-2-7-5{display:grid;grid-template-columns:7fr 5fr;gap:4vw;align-items:start}
+  .frame.grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:4vw;align-items:start}
+  .frame-img{overflow:hidden;position:relative;background:rgba(0,0,0,.04);width:100%;border-radius:4px}
+  .slide.dark .frame-img{background:rgba(255,255,255,.04)}
+  .frame-img>img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+  .frame-img.fit-contain>img{object-fit:contain;object-position:center center}
+  .frame-img.h-26{height:26vh}.frame-img.h-32{height:32vh}.frame-img.h-36{height:36vh}.frame-img.h-42{height:42vh}.frame-img.h-48{height:48vh}.frame-img.h-52{height:52vh}.frame-img.h-56{height:56vh}.frame-img.h-60{height:60vh}
+  .frame.grid-2-6-6{display:grid;grid-template-columns:1fr 1fr;gap:3vw;align-items:start}
+  .img-cap{display:block;margin-top:.8vh;font-family:var(--mono);font-size:max(10px,.8vw);letter-spacing:.22em;text-transform:uppercase;opacity:.6}
+  .stat-card{display:flex;flex-direction:column;gap:.8vh;align-items:flex-start;padding-top:1.6vh;border-top:1px solid rgba(127,127,127,.3)}
+  .stat-card .stat-label{font-family:var(--mono);font-size:max(10px,.78vw);letter-spacing:.24em;text-transform:uppercase;opacity:.55}
+  .stat-card .stat-nb{font-family:var(--serif-en);font-weight:800;font-size:5.8vw;line-height:.9;letter-spacing:-.03em;font-feature-settings:"tnum";margin-top:.4vh}
+  .stat-card .stat-nb .stat-unit{font-family:var(--serif-zh);font-weight:500;font-size:.38em;letter-spacing:0;opacity:.72;margin-left:.14em}
+  .stat-card .stat-note{font-family:var(--sans-zh);font-weight:400;font-size:max(13px,1.05vw);line-height:1.5;opacity:.72;margin-top:.6vh}
+  .grid-4 .stat-card .stat-nb{font-size:5vw}
+  .grid-3 .stat-card .stat-nb{font-size:6.8vw}
+  .callout{padding:3vh 2.4vw;border-left:3px solid currentColor;font-family:var(--serif-zh);font-size:max(15px,1.2vw);line-height:1.55;opacity:.92}
+  .slide.light .callout{background:rgba(var(--ink-rgb),.05)}
+  .slide.dark .callout{background:rgba(var(--paper-rgb),.06)}
+  .callout-src{display:block;margin-top:1.6vh;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .pillar{display:flex;flex-direction:column;gap:1.8vh}
+  .pillar .ic svg{width:2.8vw;height:2.8vw;stroke-width:1.2;opacity:.7;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .pillar .t{font-family:var(--serif-zh);font-weight:700;font-size:2.4vw;line-height:1.1}
+  .pillar .d{font-family:var(--sans-zh);font-weight:400;font-size:max(14px,1.1vw);opacity:.76;line-height:1.6}
+  .pipeline-section{margin-top:4vh;padding-top:2.8vh;border-top:1px dashed rgba(127,127,127,.32)}
+  .pipeline-section:first-of-type{border-top:0;padding-top:0;margin-top:3vh}
+  .pipeline-label{font-family:var(--mono);font-size:max(11px,.85vw);letter-spacing:.24em;text-transform:uppercase;opacity:.62;margin-bottom:2.2vh}
+  .pipeline{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2vw}
+  .step{display:flex;flex-direction:column;gap:.8vh;padding-top:1.4vh;border-top:1px solid rgba(127,127,127,.35)}
+  .step-nb{font-family:var(--serif-en);font-style:italic;font-weight:500;font-size:1.15vw;opacity:.45}
+  .step-title{font-family:var(--sans-zh);font-weight:700;font-size:max(14px,1.4vw);letter-spacing:.01em;line-height:1.2}
+  .step-desc{font-family:var(--sans-zh);font-weight:400;font-size:max(12px,.95vw);line-height:1.45;opacity:.72}
+  #nav{position:fixed;left:50%;bottom:2.6vh;transform:translateX(-50%);z-index:30;display:flex;gap:10px;padding:8px 14px;border-radius:999px;background:rgba(0,0,0,.18);backdrop-filter:blur(10px)}
+  #nav .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .3s ease;border:0;padding:0}
+  #nav .dot:hover{background:rgba(255,255,255,.5);transform:scale(1.15)}
+  #nav .dot.active{background:rgba(255,255,255,.95);width:22px;border-radius:999px}
+  body.light-bg #nav{background:rgba(255,255,255,.25)}
+  body.light-bg #nav .dot{background:rgba(var(--ink-rgb),.25)}
+  body.light-bg #nav .dot.active{background:rgba(var(--ink-rgb),.9)}
+  #hint{position:fixed;bottom:3vh;right:3vw;z-index:30;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;opacity:.4;mix-blend-mode:difference;color:#aaa}
+  [data-anim]{opacity:1}
+  body.motion-ready [data-anim]{opacity:0}
+  body.motion-ready [data-anim="left"]{transform:translateX(-24px)}
+  body.motion-ready [data-anim="right"]{transform:translateX(24px)}
+  body.motion-ready [data-anim="line"]{opacity:0;transform:translateY(10px)}
+  body.low-power #deck{transition:none!important}
+  body.low-power *,body.low-power *::before,body.low-power *::after{animation:none!important;transition:none!important}
+  body.low-power.motion-ready [data-anim],body.low-power [data-anim]{opacity:1!important;transform:none!important}
+  @media(max-width:900px){.h-hero{font-size:14vw}.h-xl{font-size:9vw}.split,.split-55,.frame.grid-2-7-5,.frame.grid-2-6-6{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<script>
+(function(){
+  const KEY='guizang-ppt-low-power';
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const stored=localStorage.getItem(KEY);
+  window.__lowPowerMode=stored==='1'||(stored===null&&reduced);
+  function updateHint(){const h=document.getElementById('hint');if(h)h.textContent=`← → 翻页 · B ${window.__lowPowerMode?'动态':'静态'} · ESC 索引`}
+  window.__setLowPowerMode=function(on){
+    window.__lowPowerMode=!!on;document.body.classList.toggle('low-power',window.__lowPowerMode);
+    localStorage.setItem(KEY,window.__lowPowerMode?'1':'0');
+    if(window.__lowPowerMode&&document.getAnimations)document.getAnimations().forEach(a=>a.cancel());
+    updateHint();if(window.__playSlide)window.__playSlide(window.__currentSlideIndex||0);
+  };
+  document.body.classList.toggle('low-power',window.__lowPowerMode);
+  addEventListener('DOMContentLoaded',updateHint,{once:true});
+})();
+</script>
+<canvas id="bg-dark" class="bg"></canvas>
+<canvas id="bg-light" class="bg"></canvas>
+<div id="hint">← → 翻页 · B 静态 · ESC 索引</div>
+<div id="deck">
+
+<!-- P01 · Cover · hero dark -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim><span>MAS-FL-LLM</span><span style="width:40px;height:1px;background:currentColor;opacity:.4;display:inline-block"></span><span>2024</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center;gap:3vh">
+    <p class="kicker" data-anim>Federated Learning × Multi-Agent × LLM</p>
+    <h1 class="h-hero" data-anim style="font-size:7.2vw;white-space:nowrap">智能体增强</h1>
+    <h1 class="h-hero" data-anim style="font-size:7.2vw;white-space:nowrap">联邦学习</h1>
+    <p class="h-sub" data-anim style="margin-top:2vh">面向公路工程造价估算的隐私保护框架</p>
+    <div class="meta-row" data-anim style="margin-top:4vh"><span>Agent-Augmented Federated Learning</span><span>Highway Cost Estimating</span></div>
+  </div>
+  <div class="foot" data-anim><span class="title">MAS-FL-LLM Framework</span><span>01 / 20</span></div>
+</section>
+
+<!-- P02 · Background · light -->
+<section class="slide light">
+  <div class="chrome" data-anim><span>Background</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>Research Context</p>
+    <h2 class="h-xl" data-anim style="font-size:4.4vw">公路造价估算</h2>
+    <div class="rule" data-anim></div>
+    <div class="split-55" data-anim>
+      <div class="col" style="gap:2.4vh">
+        <p class="lead">造价估算直接影响项目立项、资金配置与施工控制，偏差往往导致资源浪费或项目失败。</p>
+        <p class="body-zh">工程造价数据涉及企业成本结构、报价策略及资源配置等<strong>商业机密</strong>，各方无法直接共享数据。</p>
+        <p class="body-zh">随着数据安全与隐私保护法规加强，多方数据汇集面临高合规约束，形成<strong>"数据孤岛"</strong>问题。</p>
+        <p class="body-zh">基于单一数据源训练的模型过度依赖特定分布，<strong>泛化能力不足</strong>。</p>
+      </div>
+      <div class="col" style="gap:2.8vh">
+        <div class="callout" data-anim>
+          <p>现有方法缺乏对多主体协同建模的系统性框架，模型构建仍依赖大量人工经验与反复调参。</p>
+          <span class="callout-src">Webster et al. 2024 · Karadimos 2024</span>
+        </div>
+        <div class="callout" data-anim style="border-left-color:rgba(var(--ink-rgb),.4)">
+          <p>如何在不共享原始数据的前提下实现多方协同建模，成为工程造价估算的关键问题。</p>
+          <span class="callout-src">Core Research Question</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim><span class="title">研究背景</span><span>02 / 20</span></div>
+</section>
+
+<!-- P03 · Data Overview · dark -->
+<section class="slide dark">
+  <div class="chrome" data-anim><span>Dataset</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>Data Heterogeneity</p>
+    <h2 class="h-xl" data-anim style="font-size:4.2vw">数据异构性</h2>
+    <div class="frame grid-2-7-5" data-anim style="margin-top:3vh;gap:4vw;align-items:start">
+      <div>
+        <div class="frame-img fit-contain h-52" style="background:rgba(255,255,255,.06)">
+          <img src="images/16-data-heterogeneity.png" alt="Data Heterogeneity">
+        </div>
+        <span class="img-cap">Fig. Cost distribution & feature heterogeneity across 3 clients</span>
+      </div>
+      <div class="col" style="gap:2.4vh;padding-top:0">
+        <div class="stat-card"><span class="stat-label">Total Samples</span><span class="stat-nb" style="font-size:3.2vw">688</span><span class="stat-note">Florida DOT 公路项目 (2002-2012)</span></div>
+        <div class="stat-card"><span class="stat-label">Features</span><span class="stat-nb" style="font-size:3.2vw">10</span><span class="stat-note">BIDS, CPPR, ContDays, LEN, LANE, WDays, CPI, ContSpend, PLR, PPI</span></div>
+        <div class="stat-card"><span class="stat-label">Clients</span><span class="stat-nb" style="font-size:3.2vw">3</span><span class="stat-note">按地理邻近性分组 · 7 个行政区 → 3 个客户端<br>Client 1: 233 · Client 2: 235 · Client 3: 220</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim><span class="title">数据概览</span><span>03 / 20</span></div>
+</section>
+
+<!-- P04 · Methodology Title · hero light -->
+<section class="slide hero light">
+  <div class="chrome" data-anim><span>Methodology</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start">
+    <p class="kicker" data-anim>Chapter 01</p>
+    <h1 class="h-hero" data-anim style="font-size:8.6vw;white-space:nowrap">方法论</h1>
+    <p class="h-sub" data-anim style="margin-top:3vh">MAS-FL-LLM：三阶段框架</p>
+    <div class="meta-row" data-anim style="margin-top:5vh"><span>Stage 1 · FL Training</span><span>Stage 2 · MAS</span><span>Stage 3 · LLM Decision</span></div>
+  </div>
+  <div class="foot" data-anim><span class="title">方法论</span><span>04 / 20</span></div>
+</section>
+
+<!-- P05 · Framework Overview · light -->
+<section class="slide light">
+  <div class="chrome" data-anim><span>Framework</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>Overall Architecture</p>
+    <h2 class="h-md" data-anim>整体框架设计</h2>
+    <div style="margin-top:3vh" data-anim>
+      <div class="frame-img fit-contain h-60" style="background:rgba(var(--ink-rgb),.03)">
+        <img src="images/01-methodology-framework.png" alt="Methodology Framework">
+      </div>
+      <span class="img-cap">Fig. MAS-FL-LLM overall methodology framework</span>
+    </div>
+  </div>
+  <div class="foot" data-anim><span class="title">整体框架</span><span>05 / 20</span></div>
+</section>
+
+<!-- P06 · FL Training · dark -->
+<section class="slide dark">
+  <div class="chrome" data-anim><span>Stage 1</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>Federated Learning</p>
+    <h2 class="h-xl" data-anim style="font-size:4.2vw">联邦训练架构</h2>
+    <div class="frame grid-2-7-5" data-anim style="margin-top:3vh;gap:4vw;align-items:start">
+      <div>
+        <div class="frame-img fit-contain h-56" style="background:rgba(255,255,255,.05)">
+          <img src="images/02-fl-training-arch.png" alt="FL Training Architecture">
+        </div>
+        <span class="img-cap">Fig. Horizontal FL with MLP predictor</span>
+      </div>
+      <div class="col" style="gap:2.4vh;padding-top:1vh">
+        <p class="lead" style="font-size:1.5vw">水平联邦学习 + MLP 预测器</p>
+        <p class="body-zh">每个客户端本地训练 MLP 模型，通过 FedAvg 聚合参数。</p>
+        <p class="body-zh">MLP 结构：输入层(10) → 隐藏层(128→128→64→32) → 输出层(1)，共 28,993 参数</p>
+        <p class="body-zh">激活函数：GELU，优化器：Adam (lr=0.0005, weight_decay=1e-4)，Dropout=0.1</p>
+        <p class="body-zh">目标变量：ContAmnt^0.25 幂变换，逆变换 Y^4 还原</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim><span class="title">联邦训练</span><span>06 / 20</span></div>
+</section>
+
+<!-- P07 · MAS Architecture · light -->
+<section class="slide light" style="padding-bottom:3vh;position:relative">
+  <div class="chrome" data-anim><span>Stage 2</span></div>
+  <div style="position:absolute;right:4vw;top:4vh;width:52%;height:92vh;display:flex;align-items:flex-start;justify-content:center" data-anim>
+    <img src="images/03-mas-fl-arch.png" alt="MAS-FL Architecture" style="max-width:100%;max-height:100%;object-fit:contain;object-position:center top">
+  </div>
+  <div style="width:42%;padding-top:4vh;display:flex;flex-direction:column;gap:2.4vh">
+    <p class="kicker" data-anim>Multi-Agent System</p>
+    <h2 class="h-xl" data-anim style="font-size:4.2vw">多智能体系统</h2>
+    <p class="lead" style="font-size:1.5vw" data-anim>Local Agents + Central Agent 协作</p>
+    <p class="body-zh" data-anim><strong>Local Agent</strong>：数据预处理（联邦标准化）、本地训练（FedProx, mu=0.01）、性能报告生成。</p>
+    <p class="body-zh" data-anim><strong>Central Agent (DeepSeek LLM)</strong>：接收各客户端报告，从 4 种策略中动态选择聚合方式。</p>
+    <p class="body-zh" data-anim><strong>4 种策略</strong>：size_only / perf_only / hybrid / fairness_clip，前 4 轮强制探索，第 5 轮起 LLM 决策。</p>
+  </div>
+  <div class="foot" data-anim><span class="title">多智能体</span><span>07 / 20</span></div>
+</section>
+
+<!-- P08 · LLM Decision · dark -->
+<section class="slide dark">
+  <div class="chrome" data-anim><span>Stage 3</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>LLM-Driven Aggregation</p>
+    <h2 class="h-xl" data-anim style="font-size:3.8vw">LLM 动态决策算法</h2>
+    <div class="frame grid-2-7-5" data-anim style="margin-top:3vh;gap:4vw;align-items:start">
+      <div style="font-family:var(--mono);font-size:max(12px,.95vw);line-height:1.85;opacity:.88;padding:2.4vh 2vw;background:rgba(255,255,255,.04);border-radius:4px;border-left:3px solid rgba(var(--paper-rgb),.3)">
+        <div data-anim="line"><span style="opacity:.5">Algorithm 1:</span> MAS-FL-LLM</div>
+        <div data-anim="line"><span style="opacity:.5">Input:</span> K clients, T rounds, η, E</div>
+        <div data-anim="line" style="margin-top:1.2vh"><span style="color:rgba(var(--paper-rgb),.6)">1:</span> Initialize global model θ₀</div>
+        <div data-anim="line"><span style="color:rgba(var(--paper-rgb),.6)">2:</span> <strong>for</strong> t = 1 to T <strong>do</strong></div>
+        <div data-anim="line"><span style="color:rgba(var(--paper-rgb),.6)">3:</span> &nbsp;&nbsp;<strong>for</strong> each client k <strong>in parallel</strong></div>
+        <div data-anim="line"><span style="color:rgba(var(--paper-rgb),.6)">4:</span> &nbsp;&nbsp;&nbsp;&nbsp;θₖ ← LocalTrain(θ, Dₖ, E, η)</div>
+        <div data-anim="line"><span style="color:rgba(var(--paper-rgb),.6)">5:</span> &nbsp;&nbsp;&nbsp;&nbsp;sₖ ← Evaluate(θₖ, Vₖ)</div>
+        <div data-anim="line"><span style="color:rgba(var(--paper-rgb),.6)">6:</span> &nbsp;&nbsp;Collect S = [s₁, s₂, ..., sₖ]</div>
+        <div data-anim="line"><span style="color:rgba(var(--paper-rgb),.6)">7:</span> &nbsp;&nbsp;<strong style="color:rgba(255,200,100,.9)">w ← LLM(S)</strong> &nbsp;<span style="opacity:.5">// DeepSeek 决策</span></div>
+        <div data-anim="line"><span style="color:rgba(var(--paper-rgb),.6)">8:</span> &nbsp;&nbsp;θ ← Σ wₖ · θₖ</div>
+        <div data-anim="line"><span style="color:rgba(var(--paper-rgb),.6)">9:</span> <strong>return</strong> θ_T</div>
+      </div>
+      <div class="col" style="gap:2.4vh;padding-top:1vh">
+        <p class="lead" style="font-size:1.4vw">核心创新：第 7 行</p>
+        <p class="body-zh">传统 FedAvg 使用固定权重 wₖ = nₖ/N（数据量比例），LLM 则根据<strong>实时状态矩阵 S</strong> 动态输出权重。</p>
+        <p class="body-zh" style="margin-top:1vh"><strong>状态向量 sₖ</strong> 包含：MAPE、Loss、数据量、训练轮次等多维指标。</p>
+        <p class="body-zh" style="margin-top:1vh"><strong>约束条件</strong>：Σwₖ = 1, wₖ ≥ 0</p>
+        <div class="callout" style="margin-top:2vh;padding:2vh 1.8vw">
+          <p>前 4 轮强制探索 4 种策略，第 5 轮起 LLM 自主决策。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim><span class="title">LLM 决策引擎</span><span>08 / 20</span></div>
+</section>
+
+<!-- P09 · Decision Process · light -->
+<section class="slide light">
+  <div class="chrome" data-anim><span>Decision</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>Decision Process</p>
+    <h2 class="h-md" data-anim>LLM 决策流程</h2>
+    <div style="margin-top:3vh" data-anim>
+      <div class="frame-img fit-contain h-60" style="background:rgba(var(--ink-rgb),.03)">
+        <img src="images/06-decision-process.png" alt="Decision Process">
+      </div>
+      <span class="img-cap">Fig. LLM decision-making process for weight allocation</span>
+    </div>
+  </div>
+  <div class="foot" data-anim><span class="title">决策流程</span><span>09 / 20</span></div>
+</section>
+
+<!-- P10 · Pipeline · dark -->
+<section class="slide dark">
+  <div class="chrome" data-anim><span>Workflow</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>Three-Stage Pipeline</p>
+    <h2 class="h-xl" data-anim style="font-size:3.8vw">三阶段工作流</h2>
+    <div class="pipeline-section" data-anim>
+      <div class="pipeline-label">MAS-FL-LLM Pipeline</div>
+      <div class="pipeline">
+        <div class="step"><span class="step-nb">01</span><span class="step-title">本地训练</span><span class="step-desc">各客户端独立训练 MLP，生成性能报告（Loss、MAPE、数据分布）</span></div>
+        <div class="step"><span class="step-nb">02</span><span class="step-title">智能体通信</span><span class="step-desc">Local Agent 将报告发送至 Central Agent，LLM 分析各客户端状态</span></div>
+        <div class="step"><span class="step-nb">03</span><span class="step-title">动态聚合</span><span class="step-desc">LLM 输出聚合权重，服务器加权平均模型参数，广播全局模型</span></div>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:4vh">
+      <p>每轮通信中，LLM 根据实时训练状态调整权重，而非使用固定比例。</p>
+    </div>
+  </div>
+  <div class="foot" data-anim><span class="title">工作流</span><span>10 / 20</span></div>
+</section>
+
+<!-- P11 · Results Title · hero light -->
+<section class="slide hero light">
+  <div class="chrome" data-anim><span>Results</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start">
+    <span class="ghost" style="right:-2vw;top:12vh;font-size:26vw;opacity:.04" data-anim>42%</span>
+    <p class="kicker" data-anim>Chapter 02</p>
+    <h1 class="h-hero" data-anim style="font-size:8.6vw;white-space:nowrap">实验结果</h1>
+    <p class="h-sub" data-anim style="margin-top:3vh;font-size:2.2vw">MAPE 42.07% · 20 轮收敛 · 偏差修正 MPE -15.8% → -1.3%</p>
+  </div>
+  <div class="foot" data-anim><span class="title">实验结果</span><span>11 / 20</span></div>
+</section>
+
+<!-- P12 · Overall Results · dark -->
+<section class="slide dark">
+  <div class="chrome" data-anim><span>Performance</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>Overall Comparison</p>
+    <h2 class="h-md" data-anim>整体性能对比</h2>
+    <div data-anim style="margin-top:3vh">
+      <div class="frame-img fit-contain h-56" style="background:rgba(255,255,255,.05);max-width:70%;margin:0 auto">
+        <img src="images/04-overall-results.png" alt="Overall Results">
+      </div>
+      <span class="img-cap" style="text-align:center;display:block">Fig. Four-scenario performance comparison (MAPE / RMSE / MAE / R²)</span>
+    </div>
+    <div class="grid-3" data-anim style="margin-top:2.5vh;flex:unset">
+      <div class="stat-card"><span class="stat-label">MAS-FL-LLM MAPE</span><span class="stat-nb" style="font-size:3vw">42.07<span class="stat-unit">%</span></span><span class="stat-note">本研究方法</span></div>
+      <div class="stat-card"><span class="stat-label">FedAvg MAPE</span><span class="stat-nb" style="font-size:3vw">55.15<span class="stat-unit">%</span></span><span class="stat-note">标准联邦学习</span></div>
+      <div class="stat-card"><span class="stat-label">Centralized GBR</span><span class="stat-nb" style="font-size:3vw">64.33<span class="stat-unit">%</span></span><span class="stat-note">集中式基线</span></div>
+    </div>
+  </div>
+  <div class="foot" data-anim><span class="title">性能对比</span><span>12 / 20</span></div>
+</section>
+
+<!-- P13 · Convergence · light -->
+<section class="slide light">
+  <div class="chrome" data-anim><span>Convergence</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>Training Dynamics</p>
+    <h2 class="h-xl" data-anim style="font-size:4vw">收敛分析</h2>
+    <div class="frame grid-2-7-5" data-anim style="margin-top:3vh;gap:4vw;align-items:start">
+      <div>
+        <div class="frame-img fit-contain h-56" style="background:rgba(var(--ink-rgb),.03)">
+          <img src="images/05-convergence.png" alt="Convergence">
+        </div>
+        <span class="img-cap">Fig. Convergence curves comparison</span>
+      </div>
+      <div class="col" style="gap:2.4vh;padding-top:1vh">
+        <p class="lead" style="font-size:1.5vw">更快收敛，更少通信</p>
+        <p class="body-zh">MAS-FL-LLM 在第 20 轮达到最优，而 FedAvg 需要 30 轮。</p>
+        <p class="body-zh">LLM 动态权重使模型在早期快速聚焦于高质量客户端，后期平衡各方贡献。</p>
+        <div class="callout" style="margin-top:2vh">
+          <p>通信效率提升 33%，在带宽受限场景下优势显著。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim><span class="title">收敛分析</span><span>13 / 20</span></div>
+</section>
+
+<!-- P14 · Client Validation · dark -->
+<section class="slide dark">
+  <div class="chrome" data-anim><span>Validation</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>Client-Level Results</p>
+    <h2 class="h-xl" data-anim style="font-size:4vw">客户端验证</h2>
+    <div class="frame grid-2-7-5" data-anim style="margin-top:3vh;gap:4vw;align-items:start">
+      <div>
+        <div class="frame-img fit-contain h-56" style="background:rgba(255,255,255,.05)">
+          <img src="images/07-client-validation.png" alt="Client Validation">
+        </div>
+        <span class="img-cap">Fig. Per-client validation performance</span>
+      </div>
+      <div class="col" style="gap:2.4vh;padding-top:1vh">
+        <p class="lead" style="font-size:1.5vw">各客户端均获提升</p>
+        <p class="body-zh"><strong>Client 1</strong>（Districts 4/6/7，233 样本）：最终 MAPE 40.44%</p>
+        <p class="body-zh"><strong>Client 2</strong>（Districts 2/3，235 样本）：最终 MAPE 36.94%</p>
+        <p class="body-zh"><strong>Client 3</strong>（Districts 1/5，220 样本）：最终 MAPE 36.05%</p>
+        <p class="body-zh" style="margin-top:1vh;opacity:.7">三个客户端按地理邻近性分组，各自保留独立的区域数据分布特征。</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim><span class="title">客户端验证</span><span>14 / 20</span></div>
+</section>
+
+<!-- P15 · Key Metric · hero dark -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim><span>Key Finding</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start">
+    <p class="kicker" data-anim>Best Performance</p>
+    <div class="big-num" data-anim style="font-size:14vw">42.07<span style="font-size:.3em;opacity:.6;font-family:var(--serif-zh);font-weight:500">%</span></div>
+    <p class="h-sub" data-anim style="margin-top:3vh;opacity:.8">MAPE · MAS-FL-LLM · 所有方法中最优</p>
+    <p class="lead" data-anim style="margin-top:2vh;max-width:50vw">相比 FedAvg（MAPE 55.15%）降低 24%，相比集中式 GBR（64.33%）降低 35%。仅需 20 轮通信即达最优。</p>
+  </div>
+  <div class="foot" data-anim><span class="title">核心指标</span><span>15 / 20</span></div>
+</section>
+
+<!-- P16 · Ablation · light -->
+<section class="slide light">
+  <div class="chrome" data-anim><span>Ablation</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>Ablation Study</p>
+    <h2 class="h-xl" data-anim style="font-size:4vw">消融实验</h2>
+    <div class="frame grid-2-6-6" data-anim style="margin-top:3vh;gap:3vw;align-items:start">
+      <div>
+        <div class="frame-img fit-contain h-56" style="background:rgba(var(--ink-rgb),.03)">
+          <img src="images/08-ablation.png" alt="Ablation Study">
+        </div>
+        <span class="img-cap">Fig. Ablation study results</span>
+      </div>
+      <div>
+        <div class="frame-img fit-contain h-56" style="background:rgba(var(--ink-rgb),.03)">
+          <img src="images/11-strategy-timeline.png" alt="LLM Strategy Timeline">
+        </div>
+        <span class="img-cap">Fig. LLM strategy selection over 20 rounds</span>
+      </div>
+    </div>
+    <p class="body-zh" data-anim style="margin-top:2vh"><span class="hi">移除 LLM 动态决策</span>（固定 hybrid）：MAPE 上升至 55.26%。LLM 在第 5 轮后根据训练状态自适应切换策略是性能提升的关键。</p>
+  </div>
+  <div class="foot" data-anim><span class="title">消融实验</span><span>16 / 20</span></div>
+</section>
+
+<!-- P17 · Robustness · dark -->
+<section class="slide dark">
+  <div class="chrome" data-anim><span>Robustness</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>Multi-Seed & Stratified Evaluation</p>
+    <h2 class="h-xl" data-anim style="font-size:4vw">鲁棒性分析</h2>
+    <div class="frame grid-2-6-6" data-anim style="margin-top:3vh;gap:3vw;align-items:start">
+      <div>
+        <div class="frame-img fit-contain h-56" style="background:rgba(255,255,255,.05)">
+          <img src="images/13-multi-seed-boxplot.png" alt="Multi-Seed Boxplot">
+        </div>
+        <span class="img-cap">Fig. 5 seeds (42/123/456/789/2024) distribution</span>
+      </div>
+      <div>
+        <div class="frame-img fit-contain h-56" style="background:rgba(255,255,255,.05)">
+          <img src="images/14-stratified-eval.png" alt="Stratified Evaluation">
+        </div>
+        <span class="img-cap">Fig. Performance by project size (S/M/L)</span>
+      </div>
+    </div>
+    <p class="body-zh" data-anim style="margin-top:2vh">5 组随机种子验证统计显著性；按项目规模分层评估（小型 &lt;$1M / 中型 $1M-$5M / 大型 &ge;$5M），各层级均优于基线。</p>
+  </div>
+  <div class="foot" data-anim><span class="title">鲁棒性</span><span>17 / 20</span></div>
+</section>
+
+<!-- P18 · Bias Correction · hero light -->
+<section class="slide hero light">
+  <div class="chrome" data-anim><span>Bias</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>Bias Correction</p>
+    <h2 class="h-xl" data-anim style="font-size:4.8vw">偏差修正</h2>
+    <div class="frame grid-2-6-6" data-anim style="margin-top:3vh;gap:4vw;align-items:center">
+      <div>
+        <div class="frame-img fit-contain h-52" style="background:rgba(var(--ink-rgb),.04)">
+          <img src="images/10-bias-correction.png" alt="Bias Correction">
+        </div>
+        <span class="img-cap">Fig. MPE bias correction results</span>
+      </div>
+      <div class="col" style="gap:3vh">
+        <div class="stat-card"><span class="stat-label">Before (MPE)</span><span class="stat-nb" style="font-size:4.2vw">-15.8<span class="stat-unit">%</span></span><span class="stat-note">系统性低估偏差</span></div>
+        <div class="stat-card"><span class="stat-label">After (MPE)</span><span class="stat-nb" style="font-size:4.2vw">-1.3<span class="stat-unit">%</span></span><span class="stat-note">偏差修正 91.7%，R² 提升至 0.437</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot" data-anim><span class="title">偏差修正</span><span>18 / 20</span></div>
+</section>
+
+<!-- P19 · Contributions · light -->
+<section class="slide light">
+  <div class="chrome" data-anim><span>Contributions</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center">
+    <p class="kicker" data-anim>Key Contributions</p>
+    <h2 class="h-xl" data-anim style="font-size:4.2vw">核心贡献</h2>
+    <div class="grid-3" data-anim style="margin-top:4vh;flex:unset">
+      <div class="pillar">
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+        <span class="t">隐私保护联邦框架</span>
+        <span class="d">水平 FL + FedProx 正则化，数据不出本地，满足各州 DOT 隐私法规。</span>
+      </div>
+      <div class="pillar">
+        <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <span class="t">LLM 动态策略选择</span>
+        <span class="d">DeepSeek 从 4 种聚合策略中实时选择最优方案，MAPE 降低 24%（vs FedAvg）。</span>
+      </div>
+      <div class="pillar">
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+        <span class="t">MPE 偏差修正</span>
+        <span class="d">基于 MPE 的后处理修正，系统偏差从 -15.8% 降至 -1.3%，R² 提升 37%。</span>
+      </div>
+    </div>
+    <div class="callout" data-anim style="margin-top:4vh">
+      <p>首次将 LLM 驱动的多智能体系统引入联邦学习聚合决策，实现了从"固定规则聚合"到"上下文感知的自适应聚合"的范式转变。</p>
+      <span class="callout-src">MAS-FL-LLM · First in Highway Cost Estimation</span>
+    </div>
+  </div>
+  <div class="foot" data-anim><span class="title">核心贡献</span><span>19 / 20</span></div>
+</section>
+
+<!-- P20 · Closing · hero dark -->
+<section class="slide hero dark">
+  <div class="chrome" data-anim><span>Closing</span></div>
+  <div class="fill" style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start">
+    <p class="kicker" data-anim>Thank You</p>
+    <h1 class="h-hero" data-anim style="font-size:4.8vw">恳请各位老师批评指正</h1>
+    <p class="h-sub" data-anim style="margin-top:3vh">Agent-Augmented Federated Learning<br>for Highway Cost Estimating</p>
+    <div class="meta-row" data-anim style="margin-top:5vh"><span>MAS-FL-LLM</span><span>Q&A</span></div>
+  </div>
+  <div class="foot" data-anim><span class="title">MAS-FL-LLM Framework</span><span>20 / 20</span></div>
+</section>
+
+</div>
+<div id="nav"></div>
+<script>
+const VS=`attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}`;
+const FS_DARK=`precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+vec3 palette(float t,vec3 a,vec3 b,vec3 c,vec3 d){return a+b*cos(6.28318*(c*t+d));}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;vec2 p=uv*2.0-1.0;p.x*=u_resolution.x/u_resolution.y;
+  vec2 m=u_mouse*2.0-1.0;m.x*=u_resolution.x/u_resolution.y;
+  float md=length(p-m);float mr=sin(md*15.0-u_time*4.0)*exp(-md*3.0);p+=mr*0.08;
+  for(float i=1.0;i<4.0;i++){p.x+=0.1/i*sin(i*3.0*p.y+u_time*0.4)+0.05;p.y+=0.1/i*cos(i*2.0*p.x+u_time*0.3)-0.05;}
+  float r=length(p);float ang=atan(p.y,p.x);
+  vec3 col=palette(r*1.5+uv.x*0.5+u_time*0.1,vec3(0.04,0.06,0.12),vec3(0.03,0.04,0.06),vec3(1.0),vec3(0.1,0.2,0.4));
+  float disp=sin(r*25.0-u_time*1.5+ang*2.0)*0.5+0.5;col+=vec3(disp*0.015,disp*0.01,disp*0.02);
+  col=mix(vec3(0.03,0.05,0.1),col,0.85);gl_FragColor=vec4(col,1.0);}`;
+const FS_LIGHT=`precision highp float;
+uniform vec2 u_resolution;uniform float u_time;uniform vec2 u_mouse;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p);float a=hash(i),b=hash(i+vec2(1,0)),c=hash(i+vec2(0,1)),d=hash(i+vec2(1,1));vec2 u=f*f*(3.0-2.0*f);return mix(a,b,u.x)+(c-a)*u.y*(1.0-u.x)+(d-b)*u.x*u.y;}
+float fbm(vec2 p){float v=0.0,a=0.5;mat2 m=mat2(0.80,0.60,-0.60,0.80);for(int i=0;i<5;i++){v+=a*noise(p);p=m*p*2.02;a*=0.5;}return v;}
+void main(){
+  vec2 uv=gl_FragCoord.xy/u_resolution.xy;vec2 p=uv;p.x*=u_resolution.x/u_resolution.y;
+  vec2 q=vec2(fbm(p*1.8+u_time*0.07),fbm(p*1.8+vec2(5.2,1.3)+u_time*0.06));
+  vec2 r=vec2(fbm(p*2.0+q*1.3+vec2(1.7,9.2)+u_time*0.05),fbm(p*2.0+q*1.3+vec2(8.3,2.8)+u_time*0.04));
+  float f=fbm(p*2.2+r*1.5);
+  vec3 col=mix(vec3(0.88,0.89,0.90),vec3(0.955,0.96,0.965),f);
+  col+=vec3(0.55,0.62,0.82)*sin(r.x*2.2+u_time*0.35)*0.05;
+  gl_FragColor=vec4(col,1.0);}`;
+const mouse={x:0.5,y:0.5};
+addEventListener('mousemove',e=>{mouse.x=e.clientX/innerWidth;mouse.y=e.clientY/innerHeight});
+function bootGL(id,fs){
+  const c=document.getElementById(id),gl=c.getContext('webgl',{alpha:false});
+  if(!gl)return()=>false;
+  const mk=(t,s)=>{const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh};
+  const prog=gl.createProgram();gl.attachShader(prog,mk(gl.VERTEX_SHADER,VS));gl.attachShader(prog,mk(gl.FRAGMENT_SHADER,fs));gl.linkProgram(prog);gl.useProgram(prog);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+  const pos=gl.getAttribLocation(prog,'position');gl.enableVertexAttribArray(pos);gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+  const lR=gl.getUniformLocation(prog,'u_resolution'),lT=gl.getUniformLocation(prog,'u_time'),lM=gl.getUniformLocation(prog,'u_mouse');
+  const resize=()=>{const d=Math.min(devicePixelRatio||1,2);c.width=innerWidth*d;c.height=innerHeight*d;gl.viewport(0,0,c.width,c.height)};
+  addEventListener('resize',resize);resize();
+  return t=>{gl.uniform2f(lR,c.width,c.height);gl.uniform1f(lT,t);gl.uniform2f(lM,mouse.x,1-mouse.y);gl.drawArrays(gl.TRIANGLES,0,6);return true};
+}
+let dD=null,dL=null,raf=0,t0=Date.now();
+function startGL(){if(window.__lowPowerMode||raf)return;if(!dD)dD=bootGL('bg-dark',FS_DARK);if(!dL)dL=bootGL('bg-light',FS_LIGHT);t0=Date.now();(function loop(){if(window.__lowPowerMode){raf=0;return}const t=(Date.now()-t0)/1000;dD(t);dL(t);raf=requestAnimationFrame(loop)})()}
+function stopGL(){if(raf)cancelAnimationFrame(raf);raf=0}
+startGL();addEventListener('ppt-low-power-change',e=>{e.detail.on?stopGL():startGL()});
+</script>
+<script>
+const deck=document.getElementById('deck'),slides=deck.querySelectorAll('.slide'),nav=document.getElementById('nav');
+let idx=0,total=slides.length,lock=false;
+deck.style.width=(total*100)+'vw';
+slides.forEach((s,i)=>{const b=document.createElement('button');b.className='dot';b.onclick=()=>go(i);nav.appendChild(b)});
+function go(n){
+  if(lock)return;idx=Math.max(0,Math.min(total-1,n));window.__currentSlideIndex=idx;
+  deck.style.transform=`translateX(${-idx*100}vw)`;
+  nav.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  const el=slides[idx],th=el.classList.contains('light')?'light':'dark';
+  document.body.classList.toggle('light-bg',th==='light');
+  if(window.__playSlide)setTimeout(()=>window.__playSlide(idx),450);
+  lock=true;setTimeout(()=>lock=false,700);
+}
+let overviewOn=false;const ov=document.createElement('div');ov.id='overview';
+ov.style.cssText='position:fixed;inset:0;z-index:100;background:rgba(var(--ink-rgb),.92);backdrop-filter:blur(12px);display:none;overflow-y:auto;padding:4vh 4vw';
+document.body.appendChild(ov);
+function buildOverview(){ov.innerHTML='';const g=document.createElement('div');g.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:2vh 1.6vw;max-width:90vw;margin:0 auto';
+slides.forEach((s,i)=>{const c=document.createElement('div');c.style.cssText='cursor:pointer;border-radius:6px;overflow:hidden;border:2px solid '+(i===idx?'rgba(var(--paper-rgb),.8)':'rgba(var(--paper-rgb),.15)');
+const w=document.createElement('div');w.style.cssText='width:100%;aspect-ratio:16/9;overflow:hidden;position:relative;pointer-events:none;background:'+(s.classList.contains('light')?'var(--paper)':'var(--ink)');
+const cl=s.cloneNode(true);cl.style.cssText='width:100vw;height:100vh;transform:scale('+(1/4.5)+');transform-origin:top left;position:absolute;top:0;left:0;pointer-events:none';
+cl.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});
+w.appendChild(cl);const lb=document.createElement('div');lb.style.cssText='padding:6px 10px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--paper);opacity:.7';
+lb.textContent=(i+1)+'/'+total;c.appendChild(w);c.appendChild(lb);c.onclick=()=>{toggleOverview();go(i)};g.appendChild(c)});ov.appendChild(g)}
+function toggleOverview(){overviewOn=!overviewOn;if(overviewOn){buildOverview();ov.style.display='block'}else{ov.style.display='none'}}
+addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();toggleOverview();return}
+  if(e.key&&e.key.toLowerCase()==='b'&&!e.metaKey&&!e.ctrlKey){e.preventDefault();window.__setLowPowerMode(!window.__lowPowerMode);return}
+  if(overviewOn)return;
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='ArrowDown')go(idx+1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')go(idx-1);
+  if(e.key==='Home')go(0);if(e.key==='End')go(total-1);
+});
+let wAcc=0,wTO=null;
+addEventListener('wheel',e=>{wAcc+=e.deltaY+e.deltaX;if(Math.abs(wAcc)>50){go(idx+(wAcc>0?1:-1));wAcc=0}clearTimeout(wTO);wTO=setTimeout(()=>wAcc=0,150)},{passive:true});
+let tx=0;addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>50)go(idx+(dx<0?1:-1))},{passive:true});
+go(0);
+</script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>if(window.lucide)lucide.createIcons();</script>
+<script type="module">
+let motion;
+try{motion=await import('./assets/motion.min.js')}catch(e1){try{motion=await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm')}catch(e2){document.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'})}}
+if(motion){
+  const{animate,stagger}=motion;document.body.classList.add('motion-ready');
+  const EASE=[.22,1,.36,1],slides=[...document.querySelectorAll('.slide')];
+  function playSlide(i){
+    const slide=slides[i];if(!slide)return;
+    const recipe=slide.classList.contains('hero')?'hero':'cascade';
+    if(window.__lowPowerMode){slide.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='1';el.style.transform='none'});return}
+    slide.querySelectorAll('[data-anim]').forEach(el=>{el.style.opacity='';el.style.transform=''});
+    const all=[...slide.querySelectorAll('[data-anim]')];if(!all.length)return;
+    if(recipe==='hero')animate(all,{opacity:[0,1],y:[14,0]},{duration:.9,delay:stagger(.16,{start:.2}),easing:EASE});
+    else animate(all,{opacity:[0,1],y:[16,0]},{duration:.75,delay:stagger(.1,{start:.15}),easing:EASE});
+  }
+  window.__playSlide=playSlide;playSlide(0);
+}
+</script>
+</body>
+</html>
