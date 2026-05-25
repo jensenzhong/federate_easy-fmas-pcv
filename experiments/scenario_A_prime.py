@@ -5,6 +5,7 @@
 """
 
 import sys
+import argparse
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -26,8 +27,23 @@ from src.models import (
     CostEstimationMLP, evaluate_model, save_model
 )
 
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Scenario A-prime: centralized neural network baseline"
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Random seed. Defaults to preprocessing.random_seed in configs/config.yaml.",
+    )
+    return parser.parse_args()
+
+
 def main():
     """场景A-Prime主函数"""
+    args = parse_args()
     
     print("=" * 80)
     print("SCENARIO A-PRIME: NEURAL NETWORK CENTRALIZED BASELINE")
@@ -39,7 +55,7 @@ def main():
     print("[Step 1/6] Loading configuration...")
     config = load_config("configs/config.yaml")
     
-    seed = config['preprocessing']['random_seed']
+    seed = args.seed if args.seed is not None else config['preprocessing']['random_seed']
     set_seed(seed)
     print(f"          Random seed: {seed}")
     

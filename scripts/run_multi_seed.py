@@ -28,13 +28,13 @@ SCENARIO_CONFIGS = {
         "name": "Centralized (GBR)",
         "script": "experiments/scenario_A_centralized.py",
         "args": [],
-        "seed_arg": None,  # A场景使用config中的seed，需要特殊处理
+        "seed_arg": "--seed",
     },
     "A_prime": {
         "name": "Centralized (NN)",
         "script": "experiments/scenario_A_prime.py",
         "args": [],
-        "seed_arg": None,
+        "seed_arg": "--seed",
     },
     "B": {
         "name": "FedAvg Baseline",

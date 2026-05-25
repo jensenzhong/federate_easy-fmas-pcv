@@ -1,0 +1,361 @@
+Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --use_llm --seed 42
+Return code: 0
+Elapsed: 96.6s
+
+================================================================================
+SCENARIO C: MAS-FL (Multi-Agent System Federated Learning)
+================================================================================
+
+[Config] Seed: 42, Device: cpu
+[Config] Use LLM: True
+
+[Data] Loading datasets...
+[Data] Train: 438, Val: 68, Test: 70
+
+================================================================================
+SCENARIO C: MAS-FL with LLM Decision (Phase 3)
+================================================================================
+
+LLM will analyze training history and choose optimal strategy each round.
+
+[Model] Architecture: 10 -> [128, 128, 64, 32] -> 1
+[Model] Parameters: 28,993
+[Agent] Client 1: 148 train, 38 val
+[Agent] Client 2: 150 train, 38 val
+[Agent] Client 3: 140 train, 36 val
+
+[LLM] Initializing LLM Planner...
+[LLM] Provider: deepseek
+
+[Training] Base LR: 0.0005, Base Epochs: 20
+[Training] Rounds: 20
+============================================================
+Starting MAS-FL Training (Phase 3: LLM-Guided)
+============================================================
+  Rounds: 20
+  Clients: ['Client 1', 'Client 2', 'Client 3']
+  Base Learning Rate: 0.0005
+  Base Local Epochs: 20
+  LLM call interval: every 1 round(s)
+  [LLM] Round 1 (Exploration Phase): strategy=size_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��1�֣�ʹ��size_only(��׼FedAvg)��������
+
+  [LLM Decision] Round 1: strategy=size_only, lr=0.000500, epochs=20, mode=new
+
+[Round 1] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1566.158252, val_mape=99.99%
+    Client 2: 150 samples, train_loss=1602.805005, val_mape=100.00%
+    Client 3: 140 samples, train_loss=1353.919336, val_mape=100.00%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=100.00%, RMSE=$3,907,211.75
+    >>> New best model! Val MAPE=100.00%
+  [LLM] Round 2 (Exploration Phase): strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��2�֣�����perf_only���ԣ�̽�����������ۺϵ�Ч��
+
+  [LLM Decision] Round 2: strategy=perf_only, lr=0.000500, epochs=20, mode=new
+
+[Round 2] Strategy: perf_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1471.449829, val_mape=99.98%
+    Client 2: 150 samples, train_loss=1500.835400, val_mape=99.98%
+    Client 3: 140 samples, train_loss=1288.911377, val_mape=100.00%
+    Weights: Client 1=0.333, Client 2=0.333, Client 3=0.333
+    Global Val: MAPE=99.99%, RMSE=$3,906,343.00
+    >>> New best model! Val MAPE=99.99%
+  [LLM] Round 3 (Exploration Phase): strategy=hybrid, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��3�֣�����hybrid���ԣ�̽����Ͼۺϵ�Ч��
+
+  [LLM Decision] Round 3: strategy=hybrid, lr=0.000500, epochs=20, mode=new
+
+[Round 3] Strategy: hybrid, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1398.833813, val_mape=99.96%
+    Client 2: 150 samples, train_loss=1403.126807, val_mape=99.96%
+    Client 3: 140 samples, train_loss=1225.185498, val_mape=99.98%
+    Weights: Client 1=0.336, Client 2=0.338, Client 3=0.326
+    Global Val: MAPE=99.97%, RMSE=$3,904,920.00
+    >>> New best model! Val MAPE=99.97%
+  [LLM] Round 4 (Exploration Phase): strategy=fairness_clip, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��4�֣�����fairness_clip���ԣ�������в��Ե�̽��
+
+  [LLM Decision] Round 4: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 4] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1303.623999, val_mape=99.91%
+    Client 2: 150 samples, train_loss=1312.173926, val_mape=99.89%
+    Client 3: 140 samples, train_loss=1103.989771, val_mape=99.92%
+    Weights: Client 1=0.337, Client 2=0.340, Client 3=0.324
+    Global Val: MAPE=99.93%, RMSE=$3,902,365.50
+    >>> New best model! Val MAPE=99.93%
+  [LLM] Requesting strategy decision for round 5...
+  [LLM] Decision: strategy=fairness_clip, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��4�ֲ���fairness_clip���Ժ�MAPE��99.97%����99.93%���ﵽ��ʷ��ѣ��Ҹ��ͻ���MAPE���������ƣ���Client2��99.96%����99.89%���������˹�ƽ��Լ���������Ϳͻ��˾����ϵ����ơ���Ȼ���Ʒ��Ƚ�С��0.04%���������ƻ��������ܴ��������Ż��׶Ρ���ǰ�ǵ�5�֣����ڣ���Ӧ����ʹ�øò��������Ż�������Ƶ���л����Ե��²��ȶ���lr_scale����1.0��epoch_delta����0��ά�ֵ�ǰѵ�����࣬Ԥ��MAPE�����½���
+
+  [LLM Decision] Round 5: strategy=fairness_clip, lr=0.000500, epochs=20, mode=new
+
+[Round 5] Strategy: fairness_clip, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1220.315479, val_mape=99.86%
+    Client 2: 150 samples, train_loss=1254.068945, val_mape=99.74%
+    Client 3: 140 samples, train_loss=1043.248950, val_mape=99.87%
+    Weights: Client 1=0.336, Client 2=0.340, Client 3=0.324
+    Global Val: MAPE=99.86%, RMSE=$3,898,957.75
+    >>> New best model! Val MAPE=99.86%
+  [LLM] Requesting strategy decision for round 6...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��ǰMAPE��������ʹ��fairness_clip���Դ�99.93%����99.86%�����Ʒ�������խ��99.93%->99.86%��������0.07%������Client3��MAPE��99.87%���Ը���Client1��99.86%����Client2��99.74%����������ƽ��Լ���ı߼�Ч��ݼ�����ʷ������ʾhybrid����ƽ��MAPEΪ99.97%���䲻��fairness_clip������ʹ��һ�������������ִΣ��н�һ���Ż��ռ䡣����ʣ��15�֣�Ӧ�����л���hybrid���ԣ�ͨ��ƽ�������������ܹ�����̽���µ��½�·����������fairness_clip�Ϲ����Ż����¹���ϡ�lr_scale��epoch_delta����Ĭ�ϣ���������������������������Ч����
+
+  [LLM Decision] Round 6: strategy=hybrid, lr=0.000500, epochs=20, mode=new
+
+[Round 6] Strategy: hybrid, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1151.453540, val_mape=99.74%
+    Client 2: 150 samples, train_loss=1167.616162, val_mape=99.50%
+    Client 3: 140 samples, train_loss=967.113574, val_mape=99.74%
+    Weights: Client 1=0.335, Client 2=0.338, Client 3=0.326
+    Global Val: MAPE=99.71%, RMSE=$3,892,964.00
+    >>> New best model! Val MAPE=99.71%
+  [LLM] Requesting strategy decision for round 7...
+  [LLM] Decision: strategy=fairness_clip, lr_scale=1.10, epoch_delta=1
+  [LLM] Reasoning: ��ǰMAPEΪ99.71%����Ȼhybrid�����ڵ�6�ִ�������ʷ��ѣ������Ʒ��ȴӵ�5�ֵ�0.07%�½�����6�ֵ�0.15%����֮ǰʹ��hybrid����ʱ����3��MAPEΪ99.97%��Ч������ͻ������4-5������ʹ��fairness_clipʱ��MAPE��99.93%����99.86%�������ȶ���0.07%��������Ҫ���ǣ���6��hybrid������Client 3��MAPEΪ99.74%���Ը���Client 2��99.50%�����ڲ���ƽ�ԣ���fairness_clip�����ڱ���С�ͻ��ˣ�Client 3��140���������������ơ�����MAPE�������ƷŻ����ʶ�����ѧϰ�ʣ�lr_scale=1.1���ͱ���epoch��epoch_delta=1���ɼ�������������ģ���������ܵľֲ����š�Ԥ��fairness_clip�ܽ�һ����С�ͻ��˼���첢��������MAPE��
+
+  [LLM Decision] Round 7: strategy=fairness_clip, lr=0.000550, epochs=21, mode=new
+
+[Round 7] Strategy: fairness_clip, LR=0.00055, Epochs=21
+    Client 1: 148 samples, train_loss=1018.649622, val_mape=99.47%
+    Client 2: 150 samples, train_loss=1029.593762, val_mape=98.78%
+    Client 3: 140 samples, train_loss=870.429993, val_mape=99.40%
+    Weights: Client 1=0.336, Client 2=0.340, Client 3=0.324
+    Global Val: MAPE=99.38%, RMSE=$3,878,382.50
+    >>> New best model! Val MAPE=99.38%
+  [LLM] Requesting strategy decision for round 8...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.20, epoch_delta=1
+  [LLM] Reasoning: ��ǰMAPE������5���½�����99.71%����99.38%���������ӵ�6�ֵ�0.15%������7�ֵ�0.33%��fairness_clip���ԣ�������fairness_clip�ڵ�7�ִ�����ʷ��ѣ���hybrid�����ڵ�6��Ҳʵ�����������ƣ�0.15%��������ƽ��MAPE��99.84%������fairness_clip��99.72%�������ǵ�ʣ�������϶࣬��MAPE�½��ٶ��зŻ�����ѡ��hybrid�����Ը�ƽ����ں�������������Ȩ�أ�ͬʱ�ʶ����ѧϰ�ʣ�1.2�������ӱ���epoch��1���Լ�������������ͻ�Ƶ�ǰƿ����
+
+  [LLM Decision] Round 8: strategy=hybrid, lr=0.000600, epochs=21, mode=new
+
+[Round 8] Strategy: hybrid, LR=0.0006, Epochs=21
+    Client 1: 148 samples, train_loss=908.471448, val_mape=98.98%
+    Client 2: 150 samples, train_loss=910.973315, val_mape=97.97%
+    Client 3: 140 samples, train_loss=733.832922, val_mape=98.81%
+    Weights: Client 1=0.335, Client 2=0.339, Client 3=0.326
+    Global Val: MAPE=98.77%, RMSE=$3,850,393.25
+    >>> New best model! Val MAPE=98.77%
+  [LLM] Requesting strategy decision for round 9...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.10, epoch_delta=1
+  [LLM] Reasoning: ��ǰMAPE����5���½�����99.71%����98.77%��������ͷ���á�����ѡ��hybrid���ԣ�MAPE��99.38%����98.77%������0.61%��������ʷ��ѡ�hybrid��������ʷ��ƽ��MAPE��ͣ�99.49%�����ҽ�������ʹ�þ�ȡ������Ч�������ǵ���9�ִ������ڽ׶Σ���20�֣�ʣ��12�֣���Ӧ������Ч���Լ����Ż���ͬʱ΢��ѧϰ�ʣ�lr_scale=1.1���Լ���������������1��epoch��epoch_delta=1������ǿģ�����������Ԥ��MAPE�������½���98.5%���ҡ�
+
+  [LLM Decision] Round 9: strategy=hybrid, lr=0.000550, epochs=21, mode=new
+
+[Round 9] Strategy: hybrid, LR=0.00055, Epochs=21
+    Client 1: 148 samples, train_loss=780.047766, val_mape=98.37%
+    Client 2: 150 samples, train_loss=784.389099, val_mape=96.76%
+    Client 3: 140 samples, train_loss=663.491675, val_mape=97.75%
+    Weights: Client 1=0.334, Client 2=0.339, Client 3=0.326
+    Global Val: MAPE=97.91%, RMSE=$3,811,641.25
+    >>> New best model! Val MAPE=97.91%
+  [LLM] Requesting strategy decision for round 10...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.00, epoch_delta=1
+  [LLM] Reasoning: ��ǰMAPE�ӵ�1��100.00%�����½�����9��97.91%���Ѵ���ʷ��ѣ���hybrid���������4��ʹ����ƽ��MAPEΪ99.09%��Ч�������������ԡ�hybridƽ���������������ܹ��ף��ʺ��к����Ż�������hybrid���lr_scale=1.1��epoch_delta=1������0.86%����MAPE�Խϸߣ�97.91%������������ֲ����ţ���Ҫ��һ��̽�������鱣��hybrid������ά���½���ͷ��ͬʱ��΢���ӱ���ѵ����epoch_delta=1���԰���ģ�͸����ѧϰ��ѧϰ�ʱ��ֲ��䣨lr_scale=1.0���Ա����𵴡�Ԥ���ܼ�������MAPE��
+
+  [LLM Decision] Round 10: strategy=hybrid, lr=0.000500, epochs=21, mode=new
+
+[Round 10] Strategy: hybrid, LR=0.0005, Epochs=21
+    Client 1: 148 samples, train_loss=678.720215, val_mape=97.37%
+    Client 2: 150 samples, train_loss=685.382886, val_mape=94.82%
+    Client 3: 140 samples, train_loss=561.382977, val_mape=96.68%
+    Weights: Client 1=0.334, Client 2=0.340, Client 3=0.326
+    Global Val: MAPE=96.67%, RMSE=$3,757,631.75
+    >>> New best model! Val MAPE=96.67%
+  [LLM] Requesting strategy decision for round 11...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.00, epoch_delta=1
+  [LLM] Reasoning: ��ǰMAPE�ӵ�1��100.00%�����½�����10��96.67%���Ѵ���ʷ��ѣ���hybrid���������4������ʹ����MAPE��99.97%����96.67%��ƽ��MAPEΪ98.61%��Ч�����������������ԡ�hybridƽ���������������ܹ��ף��ʺ��к����ȶ��Ż�����ǰ�½��������ã�����ʹ��hybrid���ԣ�ͬʱ����lr_scale=1.0��epoch_delta=1����ά�ֵ�ǰ�����ٶȣ�Ԥ��MAPE�������½���
+
+  [LLM Decision] Round 11: strategy=hybrid, lr=0.000500, epochs=21, mode=new
+
+[Round 11] Strategy: hybrid, LR=0.0005, Epochs=21
+    Client 1: 148 samples, train_loss=584.109247, val_mape=95.92%
+    Client 2: 150 samples, train_loss=588.634644, val_mape=92.91%
+    Client 3: 140 samples, train_loss=486.716870, val_mape=94.74%
+    Weights: Client 1=0.333, Client 2=0.341, Client 3=0.326
+    Global Val: MAPE=95.05%, RMSE=$3,689,578.75
+    >>> New best model! Val MAPE=95.05%
+  [LLM] Requesting strategy decision for round 12...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��ǰMAPE�ӵ�1��100.00%�����½�����11��95.05%���Ѵ���ʷ��ѣ���hybrid���������5�֣���6-11�֣�����ʹ����MAPE��99.71%����95.05%��ƽ��MAPEΪ97.62%��Ч�����������������ԡ�hybrid���������������˾A�����ࣩ�����ܣ���˾B��val_mape��ͣ�92.91%����ƽ����ȫ���Ż��빫ƽ�ԡ����鱣�ֵ�ǰ���Ժͳ�������lr_scale=1.0, epoch_delta=0���Լ����ȶ�������ʣ��9�ֿ��ڴ�MAPE��һ�����͡�
+
+  [LLM Decision] Round 12: strategy=hybrid, lr=0.000500, epochs=20, mode=new
+
+[Round 12] Strategy: hybrid, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=477.258411, val_mape=94.12%
+    Client 2: 150 samples, train_loss=481.650391, val_mape=90.08%
+    Client 3: 140 samples, train_loss=373.787457, val_mape=93.66%
+    Weights: Client 1=0.333, Client 2=0.343, Client 3=0.325
+    Global Val: MAPE=93.24%, RMSE=$3,617,476.75
+    >>> New best model! Val MAPE=93.24%
+  [LLM] Requesting strategy decision for round 13...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��ǰMAPE������5�֣���6-12�֣���99.71%�½���93.24%��ƽ��ÿ�ָ���Լ1.29%����hybrid���������5�֣���8-12�֣��г���ʹ�ã�MAPE��98.77%����93.24%������5.53%��Ч����������ʷͳ����ʾhybridƽ��MAPEΪ97.33%�����������������ԣ�size_only 100.00%��perf_only 99.99%��fairness_clip 99.72%��������hybrid����������Чƽ�������������ܹ��ף��ƶ�ģ����������ǰ���ڵ�13�֣����ڣ���ʣ��8�֣�MAPE�����ȶ��½�����˱���hybrid���Լ����Ż���ѧϰ�ʺͱ���epoch���䣬��ά���������ơ�
+
+  [LLM Decision] Round 13: strategy=hybrid, lr=0.000500, epochs=20, mode=new
+
+[Round 13] Strategy: hybrid, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=392.383633, val_mape=91.52%
+    Client 2: 150 samples, train_loss=391.019415, val_mape=86.55%
+    Client 3: 140 samples, train_loss=295.103619, val_mape=88.86%
+    Weights: Client 1=0.331, Client 2=0.342, Client 3=0.327
+    Global Val: MAPE=89.83%, RMSE=$3,505,932.25
+    >>> New best model! Val MAPE=89.83%
+  [LLM] Requesting strategy decision for round 14...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��ǰMAPE�ӵ�6�ֿ�ʼ����8���½�����99.71%����89.83%��ƽ��ÿ�ָ���Լ1.23%����hybrid���������8����һֱʹ�ã�Ч���ȶ��ҳ������ơ���Ȼ��13�ָ��Ʒ��ȴӵ�12�ֵ�1.81%����3.41%���������������ã�û��ͣ�ͻ��𵴼���hybrid���Ե�ƽ��MAPEΪ96.39%��Զ�����������ԣ��ҵ�ǰ�ѽӽ���ʷ��ѡ���˱���hybrid���Բ��䣬ѧϰ�ʺ�epochҲ���ֲ��䣬�Լ��������ȶ����Ż�Ч����ʣ��7��������һ������MAPE��
+
+  [LLM Decision] Round 14: strategy=hybrid, lr=0.000500, epochs=20, mode=new
+
+[Round 14] Strategy: hybrid, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=310.033734, val_mape=87.28%
+    Client 2: 150 samples, train_loss=304.587442, val_mape=83.37%
+    Client 3: 140 samples, train_loss=206.766193, val_mape=84.37%
+    Weights: Client 1=0.331, Client 2=0.341, Client 3=0.328
+    Global Val: MAPE=85.60%, RMSE=$3,377,747.50
+    >>> New best model! Val MAPE=85.60%
+  [LLM] Requesting strategy decision for round 15...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��ǰMAPE�ӵ�6�ֿ�ʼ����9���½�����99.71%����85.60%������14.11%������hybrid���������7���г���ʹ�ã�Ч���ȶ��Ҹ��Ʒ��������󣨵�13�ָ���3.41%����14�ָ���4.22%����˵��ģ���Դ��������׶Ρ���ʷͳ����ʾhybridƽ��MAPE=95.20%��Զ�����������ԡ�ʣ��6��ѵ��ʱ���ԣ��Ӧ���ֵ�ǰ���Լ����Ż���ѧϰ�������������Ϊ�����ٶ����������𵴡�epoch_delta����0���������ϻ�Ƿ��ϡ�
+
+  [LLM Decision] Round 15: strategy=hybrid, lr=0.000500, epochs=20, mode=new
+
+[Round 15] Strategy: hybrid, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=220.844891, val_mape=81.85%
+    Client 2: 150 samples, train_loss=231.163797, val_mape=76.88%
+    Client 3: 140 samples, train_loss=183.846536, val_mape=75.88%
+    Weights: Client 1=0.328, Client 2=0.341, Client 3=0.331
+    Global Val: MAPE=78.44%, RMSE=$3,208,291.50
+    >>> New best model! Val MAPE=78.44%
+  [LLM] Requesting strategy decision for round 16...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��ǰMAPE�ӵ�6�ֿ�ʼ����10���½�����99.71%����78.44%������21.27%������hybrid���������10����ʹ��9�Σ�ƽ��MAPE=93.52%��Ч�����������������ԡ���15�ֵ��ָ���7.16%������ģ���Դ��ڿ��������׶Σ�hybrid���Ե�ƽ���ԣ���������������ܣ�������Ч�����Ż���ʣ���5�֣���Ӧð���л����ԣ����ֵ�ǰ�ȶ���hybrid���ԣ�lr_scale=1.0��epoch_delta=0��ά�������ٶȣ�Ԥ��MAPE�������½���
+
+  [LLM Decision] Round 16: strategy=hybrid, lr=0.000500, epochs=20, mode=new
+
+[Round 16] Strategy: hybrid, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=163.770630, val_mape=73.48%
+    Client 2: 150 samples, train_loss=164.389940, val_mape=68.00%
+    Client 3: 140 samples, train_loss=101.966257, val_mape=63.66%
+    Weights: Client 1=0.324, Client 2=0.338, Client 3=0.338
+    Global Val: MAPE=69.29%, RMSE=$2,981,663.00
+    >>> New best model! Val MAPE=69.29%
+  [LLM] Requesting strategy decision for round 17...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��ǰMAPE�ӵ�7�ֿ�ʼ����10���½�����99.38%����69.29%������30.09%������hybrid���������10����ʹ��9�Σ�ƽ��MAPE=91.32%��Ч�����������������ԡ���16�ֵ��ָ���9.15%�������ȶ��½���û��ͣ�ͼ���ʣ��������4�֣�Ӧ���ֵ�ǰ���Ų��Գ����Ż������������Ա������벻ȷ���ԡ�ѧϰ�ʺ�epoch���ֲ��䣬ά�����������ٶȡ�
+
+  [LLM Decision] Round 17: strategy=hybrid, lr=0.000500, epochs=20, mode=new
+
+[Round 17] Strategy: hybrid, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=110.431972, val_mape=63.98%
+    Client 2: 150 samples, train_loss=110.554916, val_mape=58.05%
+    Client 3: 140 samples, train_loss=80.896474, val_mape=55.49%
+    Weights: Client 1=0.323, Client 2=0.341, Client 3=0.337
+    Global Val: MAPE=58.69%, RMSE=$2,734,185.50
+    >>> New best model! Val MAPE=58.69%
+  [LLM] Requesting strategy decision for round 18...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��ǰMAPE�ӵ�7�ֿ�ʼ����10���½�����99.38%����58.69%������40.92%������hybrid���������10����ʹ��10�Σ�ƽ��MAPE=86.36%��Ч�����������������ԡ���17�ֵ��ָ���10.60%�������ȶ���δ��ͣ�ͻ��𵴡�ʣ���3�֣�Ӧά�����Ų��Լ����Ż���ѧϰ�ʱ���1.0��epoch_delta=0����������䶯�ƻ��������ơ�
+
+  [LLM Decision] Round 18: strategy=hybrid, lr=0.000500, epochs=20, mode=new
+
+[Round 18] Strategy: hybrid, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=55.603777, val_mape=51.97%
+    Client 2: 150 samples, train_loss=72.335097, val_mape=44.71%
+    Client 3: 140 samples, train_loss=39.377206, val_mape=48.47%
+    Weights: Client 1=0.324, Client 2=0.351, Client 3=0.326
+    Global Val: MAPE=47.11%, RMSE=$2,389,050.50
+    >>> New best model! Val MAPE=47.11%
+  [LLM] Requesting strategy decision for round 19...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��ǰMAPE�ӵ�9�ֵ�97.91%����10���½�����18�ֵ�47.11%�����Ʒ��ȴ�51.88%����hybrid���������10��������ʹ��10�Σ�ƽ��MAPE=85.41%��Ч�����������������ԣ��������5��MAPE��85.60%����47.11%������38.49%����ͷǿ����hybrid������֤������Чƽ�������������ܹ��ף��ƶ�ģ�Ϳ���������ʣ��������2�֣������л����Ի����ѧϰ��/epoch�������ƻ���ǰ�ȶ��������ơ�����ʹ��hybrid���ԣ�����lr_scale=1.0��epoch_delta=0��Ԥ�ڿ�ά��MAPE�½������ܽ�һ���ӽ���ʷ��ѻ����µ͡�
+
+  [LLM Decision] Round 19: strategy=hybrid, lr=0.000500, epochs=20, mode=new
+
+[Round 19] Strategy: hybrid, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=43.871856, val_mape=40.32%
+    Client 2: 150 samples, train_loss=42.193515, val_mape=36.28%
+    Client 3: 140 samples, train_loss=27.467704, val_mape=49.42%
+    Weights: Client 1=0.340, Client 2=0.361, Client 3=0.299
+    Global Val: MAPE=40.04%, RMSE=$2,102,799.00
+    >>> New best model! Val MAPE=40.04%
+  [LLM] Requesting strategy decision for round 20...
+  [LLM] Decision: strategy=hybrid, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: ��ǰMAPE�Ѵӵ�9�ֵ�97.91%����10���½�����19�ֵ�40.04%�����Ʒ��ȴ�59.96%����hybrid���������10���г���ʹ�ã�Ч���������ȶ�����ȻClient 3��MAPE��49.42%���Ը��������ͻ��ˣ���hybrid����ͨ��ƽ��������������Ȩ�أ������������á�����ֻʣ���һ�֣����鱣�ֵ�ǰ���Բ��䣬��ά���ȶ��½����ƣ��������������ȷ���ԡ�lr_scale��epoch_delta����Ĭ�ϣ�ȷ��ģ�ͼ���ƽ���Ż���
+
+  [LLM Decision] Round 20: strategy=hybrid, lr=0.000500, epochs=20, mode=new
+
+[Round 20] Strategy: hybrid, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=25.456898, val_mape=37.13%
+    Client 2: 150 samples, train_loss=33.635337, val_mape=36.02%
+    Client 3: 140 samples, train_loss=28.373631, val_mape=45.51%
+    Weights: Client 1=0.345, Client 2=0.352, Client 3=0.303
+    Global Val: MAPE=40.03%, RMSE=$1,925,531.38
+    >>> New best model! Val MAPE=40.03%
+
+------------------------------------------------------------
+Restoring Best Checkpoint...
+------------------------------------------------------------
+  Last round (Round 20) Val MAPE: 40.03%
+  Best round (Round 20) Val MAPE: 40.03%
+  >>> Model restored to Round 20 (best checkpoint)
+
+  Evaluating best checkpoint on test set...
+
+============================================================
+LLM-Guided Training Completed!
+============================================================
+  Best Round: 20
+  Best Val MAPE: 40.03%
+
+Test Set Results (using best checkpoint):
+  MAPE:  44.88%
+  RMSE:  $1,567,783.50
+  MAE:   $1,105,032.38
+  MPE:   -2.82%
+  NRMSE: 17.59%
+  R2:    0.4216
+
+LLM Strategy Selection Summary:
+  size_only: 1 rounds (5.0%)
+  perf_only: 1 rounds (5.0%)
+  hybrid: 15 rounds (75.0%)
+  fairness_clip: 3 rounds (15.0%)
+
+[Bias Correction] Calibrating on validation set...
+  [Bias Correction] Validation MPE = -6.31%
+  [Bias Correction] Correction factor: 1 / (1 + -0.0631) = 1.0674
+  [Bias Correction] Validation MPE after correction: -0.00%
+  [Bias Correction] Validation MAPE after correction: 40.66%
+
+[Bias Correction] Test Results (after correction):
+  MAPE:  45.54%
+  RMSE:  $1,516,481.75
+  MAE:   $1,062,295.62
+  MPE:   3.73%
+  R2:    0.4588
+
+[Saving] Results...
+  Saving best checkpoint (Round 20, Val MAPE: 40.03%)
+  Model saved: results\models\scenario_C_llm_model.pt
+  Saved: results\logs\scene_C_round_metrics.csv
+  Saved: results\logs\scene_C_client_metrics.csv
+  Saved: results\logs\scene_C_training_history.json
+  Logs: results/logs/
+  Results saved: results\scenario_c_results.csv
+
+================================================================================
+COMPLETED!
+================================================================================
+
+Test Results:
+  MAPE:  44.88%
+  RMSE:  $1,567,783.50
+  MAE:   $1,105,032.38
+  R2:    0.4216
+================================================================================
+
+--- STDERR ---
+2026-05-24 19:45:23 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-05-24 19:46:55 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 44.88%

@@ -1,0 +1,24 @@
+2026-05-24 19:37:15 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-05-24 19:39:33 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 42.01%
+2026-05-24 19:40:11 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-05-24 19:41:50 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 43.39%
+2026-05-24 19:45:23 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-05-24 19:46:55 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 44.88%
+2026-05-24 19:47:11 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-05-24 19:48:49 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 46.30%
+2026-05-24 19:48:54 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-05-24 19:50:27 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 50.01%
+2026-05-24 19:50:32 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-05-24 19:52:19 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 53.83%
+2026-05-24 19:52:24 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-05-24 19:53:55 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 55.70%
+2026-05-25 20:28:08 - MAS-FL - INFO - Strategy perf_only: Test MAPE=41.53%
+2026-05-25 20:29:16 - MAS-FL - INFO - Strategy perf_only: Test MAPE=50.81%
+2026-05-25 20:30:24 - MAS-FL - INFO - Strategy perf_only: Test MAPE=54.27%
+2026-05-25 20:31:29 - MAS-FL - INFO - Strategy perf_only: Test MAPE=54.65%
+2026-05-25 20:32:34 - MAS-FL - INFO - Strategy perf_only: Test MAPE=56.44%
+2026-05-25 20:38:00 - MAS-FL - INFO - Strategy hybrid: Test MAPE=41.95%
+2026-05-25 20:39:03 - MAS-FL - INFO - Strategy hybrid: Test MAPE=50.70%
+2026-05-25 20:40:03 - MAS-FL - INFO - Strategy hybrid: Test MAPE=55.45%
+2026-05-25 20:41:04 - MAS-FL - INFO - Strategy hybrid: Test MAPE=54.69%
+2026-05-25 20:42:09 - MAS-FL - INFO - Strategy hybrid: Test MAPE=55.64%

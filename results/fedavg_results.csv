@@ -1,0 +1,2 @@
+scenario,num_rounds,best_round,test_mape,test_rmse,test_mae,test_mpe,test_nrmse,test_r2
+B_FedAvg,20,20,0.5514851,1927509.6,1466459.9,-0.32676706,0.2162241,0.12574267387390137

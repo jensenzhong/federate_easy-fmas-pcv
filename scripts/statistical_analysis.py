@@ -34,7 +34,11 @@ def load_results(results_file: str) -> pd.DataFrame:
 def compute_summary_stats(df: pd.DataFrame) -> pd.DataFrame:
     """计算各场景的汇总统计"""
     scenarios = df["scenario"].unique()
-    metrics = ["test_mape", "test_rmse", "test_mae", "test_mpe", "test_r2"]
+    metrics = [
+        "test_mape", "test_rmse", "test_mae", "test_mpe", "test_r2",
+        "test_mape_corrected", "test_rmse_corrected", "test_mae_corrected",
+        "test_mpe_corrected", "test_r2_corrected",
+    ]
 
     summary_rows = []
     for scenario in sorted(scenarios):
@@ -89,28 +93,45 @@ def perform_statistical_tests(df: pd.DataFrame) -> dict:
             if metric not in b_data.columns or metric not in comp_data.columns:
                 continue
 
-            b_values = b_data[metric].dropna().values
-            c_values = comp_data[metric].dropna().values
+            if "seed" in b_data.columns and "seed" in comp_data.columns:
+                paired = (
+                    b_data[["seed", metric]]
+                    .dropna()
+                    .merge(
+                        comp_data[["seed", metric]].dropna(),
+                        on="seed",
+                        suffixes=("_b", "_c"),
+                    )
+                    .sort_values("seed")
+                )
+            else:
+                paired = pd.DataFrame()
+
+            if len(paired) >= 2:
+                paired_seeds = paired["seed"].astype(int).tolist()
+                b_values = paired[f"{metric}_b"].values
+                c_values = paired[f"{metric}_c"].values
+                t_stat, p_value = stats.ttest_rel(b_values, c_values)
+                test_type = "paired t-test"
+            else:
+                paired_seeds = []
+                b_values = b_data[metric].dropna().values
+                c_values = comp_data[metric].dropna().values
+                if len(b_values) < 2 or len(c_values) < 2:
+                    continue
+                t_stat, p_value = stats.ttest_ind(b_values, c_values)
+                test_type = "independent t-test"
 
             if len(b_values) < 2 or len(c_values) < 2:
                 continue
 
-            # 配对t检验（如果相同种子数量相同）
-            if len(b_values) == len(c_values):
-                t_stat, p_value = stats.ttest_rel(b_values, c_values)
-                test_type = "paired t-test"
-            else:
-                # 独立样本t检验
-                t_stat, p_value = stats.ttest_ind(b_values, c_values)
-                test_type = "independent t-test"
-
             # Wilcoxon检验（非参数）
             try:
-                if len(b_values) == len(c_values):
+                if paired_seeds:
                     w_stat, w_pvalue = stats.wilcoxon(b_values, c_values)
                 else:
                     w_stat, w_pvalue = stats.mannwhitneyu(b_values, c_values, alternative="two-sided")
-                wilcoxon_type = "Wilcoxon signed-rank" if len(b_values) == len(c_values) else "Mann-Whitney U"
+                wilcoxon_type = "Wilcoxon signed-rank" if paired_seeds else "Mann-Whitney U"
             except Exception:
                 w_stat, w_pvalue = np.nan, np.nan
                 wilcoxon_type = "N/A"
@@ -124,6 +145,7 @@ def perform_statistical_tests(df: pd.DataFrame) -> dict:
                 "b_std": np.std(b_values),
                 "c_mean": np.mean(c_values),
                 "c_std": np.std(c_values),
+                "paired_seeds": paired_seeds,
                 "t_test_type": test_type,
                 "t_statistic": t_stat,
                 "t_p_value": p_value,
@@ -210,6 +232,30 @@ Metric & Test & Statistic & p-value & Significant \\
     return latex
 
 
+def flatten_significance_tests(test_results: dict) -> pd.DataFrame:
+    """Convert nested B-vs-C test results into a CSV-friendly table."""
+    rows = []
+    for comparison, metrics in test_results.items():
+        for metric, result in metrics.items():
+            paired_seeds = result.get("paired_seeds", [])
+            rows.append({
+                "comparison": comparison,
+                "metric": metric,
+                "paired_seeds": ",".join(str(seed) for seed in paired_seeds),
+                "t_test_type": result.get("t_test_type"),
+                "t_statistic": result.get("t_statistic"),
+                "t_p_value": result.get("t_p_value"),
+                "wilcoxon_type": result.get("wilcoxon_type"),
+                "w_statistic": result.get("w_statistic"),
+                "w_p_value": result.get("w_p_value"),
+                "cohens_d": result.get("cohens_d"),
+                "significant_005": result.get("significant_005"),
+                "significant_001": result.get("significant_001"),
+            })
+
+    return pd.DataFrame(rows)
+
+
 def _fmt_mean_std(row, metric_prefix, pct=False, dollar=False):
     """格式化 mean ± std"""
     mean_key = f"{metric_prefix}_mean"
@@ -272,6 +318,10 @@ def main():
     summary_path = Path("results") / "multi_seed" / "statistical_summary.csv"
     summary.to_csv(summary_path, index=False)
     print(f"\nSaved statistical summary to {summary_path}")
+
+    tests_path = Path("results") / "multi_seed" / "significance_tests.csv"
+    flatten_significance_tests(test_results).to_csv(tests_path, index=False)
+    print(f"Saved significance tests to {tests_path}")
 
 
 if __name__ == "__main__":

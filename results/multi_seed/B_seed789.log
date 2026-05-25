@@ -1,0 +1,236 @@
+Command: D:\Python\python.exe experiments/scenario_B_fedavg.py --num_rounds 20 --seed 789
+Return code: 0
+Elapsed: 34.7s
+
+================================================================================
+SCENARIO B: FedAvg BASELINE
+Using same data pipeline as Scenario C for fair comparison
+================================================================================
+
+[Step 1] Loading federated datasets (same split as Scenario C)...
+  Rounds: 20, LR: 0.0005, Local Epochs: 20
+  FedProx mu: 0.0 (pure FedAvg)
+  Strategy: size_only
+  Seed: 789
+  Clients: ['Client 1', 'Client 2', 'Client 3']
+
+[Step 2] Creating global model...
+  Parameters: 28,993
+
+[Step 3] Creating client agents...
+  Client 1: 148 train, 38 val
+  Client 2: 150 train, 38 val
+  Client 3: 140 train, 36 val
+============================================================
+Starting MAS-FL Training (Phase 2: Multi-Strategy)
+============================================================
+  Rounds: 20
+  Strategy: size_only
+  Clients: ['Client 1', 'Client 2', 'Client 3']
+  Learning Rate: 0.0005
+  Local Epochs: 20
+
+[Round 1] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1586.815332, val_mape=100.00%
+    Client 2: 150 samples, train_loss=1609.154565, val_mape=100.00%
+    Client 3: 140 samples, train_loss=1345.252539, val_mape=100.00%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=100.00%, RMSE=$3,907,374.25
+    >>> New best model! Val MAPE=100.00%
+
+[Round 2] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1530.024219, val_mape=99.99%
+    Client 2: 150 samples, train_loss=1533.852271, val_mape=100.00%
+    Client 3: 140 samples, train_loss=1298.024561, val_mape=100.00%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=100.00%, RMSE=$3,907,216.25
+    >>> New best model! Val MAPE=100.00%
+
+[Round 3] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1453.134766, val_mape=99.99%
+    Client 2: 150 samples, train_loss=1449.976270, val_mape=99.98%
+    Client 3: 140 samples, train_loss=1243.611084, val_mape=99.99%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.99%, RMSE=$3,906,685.50
+    >>> New best model! Val MAPE=99.99%
+
+[Round 4] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1359.621436, val_mape=99.96%
+    Client 2: 150 samples, train_loss=1368.817261, val_mape=99.94%
+    Client 3: 140 samples, train_loss=1160.705591, val_mape=99.98%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.97%, RMSE=$3,905,603.00
+    >>> New best model! Val MAPE=99.97%
+
+[Round 5] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1257.851929, val_mape=99.92%
+    Client 2: 150 samples, train_loss=1292.900903, val_mape=99.87%
+    Client 3: 140 samples, train_loss=1101.859619, val_mape=99.93%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.93%, RMSE=$3,903,270.50
+    >>> New best model! Val MAPE=99.93%
+
+[Round 6] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1198.759253, val_mape=99.86%
+    Client 2: 150 samples, train_loss=1193.632471, val_mape=99.71%
+    Client 3: 140 samples, train_loss=1013.580457, val_mape=99.85%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.85%, RMSE=$3,899,474.75
+    >>> New best model! Val MAPE=99.85%
+
+[Round 7] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1102.634668, val_mape=99.71%
+    Client 2: 150 samples, train_loss=1112.772925, val_mape=99.46%
+    Client 3: 140 samples, train_loss=946.055896, val_mape=99.72%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.69%, RMSE=$3,891,721.75
+    >>> New best model! Val MAPE=99.69%
+
+[Round 8] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=1003.345239, val_mape=99.50%
+    Client 2: 150 samples, train_loss=1013.900793, val_mape=99.14%
+    Client 3: 140 samples, train_loss=818.647217, val_mape=99.27%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.43%, RMSE=$3,879,441.00
+    >>> New best model! Val MAPE=99.43%
+
+[Round 9] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=910.732922, val_mape=99.09%
+    Client 2: 150 samples, train_loss=889.488086, val_mape=98.46%
+    Client 3: 140 samples, train_loss=743.138574, val_mape=98.86%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.00%, RMSE=$3,858,965.25
+    >>> New best model! Val MAPE=99.00%
+
+[Round 10] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=768.445312, val_mape=98.47%
+    Client 2: 150 samples, train_loss=798.657495, val_mape=97.55%
+    Client 3: 140 samples, train_loss=646.392664, val_mape=98.05%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=98.19%, RMSE=$3,827,153.75
+    >>> New best model! Val MAPE=98.19%
+
+[Round 11] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=673.999438, val_mape=97.46%
+    Client 2: 150 samples, train_loss=683.614136, val_mape=96.06%
+    Client 3: 140 samples, train_loss=554.996631, val_mape=97.07%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=97.01%, RMSE=$3,780,697.50
+    >>> New best model! Val MAPE=97.01%
+
+[Round 12] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=555.306635, val_mape=96.35%
+    Client 2: 150 samples, train_loss=565.662384, val_mape=93.75%
+    Client 3: 140 samples, train_loss=478.468372, val_mape=94.93%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=95.16%, RMSE=$3,717,398.75
+    >>> New best model! Val MAPE=95.16%
+
+[Round 13] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=463.314978, val_mape=93.73%
+    Client 2: 150 samples, train_loss=479.146863, val_mape=91.13%
+    Client 3: 140 samples, train_loss=374.848291, val_mape=92.02%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=92.30%, RMSE=$3,621,833.50
+    >>> New best model! Val MAPE=92.30%
+
+[Round 14] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=372.822223, val_mape=90.60%
+    Client 2: 150 samples, train_loss=385.083911, val_mape=86.77%
+    Client 3: 140 samples, train_loss=298.701151, val_mape=86.72%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=87.85%, RMSE=$3,505,435.00
+    >>> New best model! Val MAPE=87.85%
+
+[Round 15] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=295.617673, val_mape=85.33%
+    Client 2: 150 samples, train_loss=284.019946, val_mape=82.42%
+    Client 3: 140 samples, train_loss=211.847000, val_mape=81.72%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=81.94%, RMSE=$3,336,199.50
+    >>> New best model! Val MAPE=81.94%
+
+[Round 16] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=213.182379, val_mape=79.15%
+    Client 2: 150 samples, train_loss=204.463065, val_mape=73.35%
+    Client 3: 140 samples, train_loss=146.301874, val_mape=75.33%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=72.02%, RMSE=$3,089,140.75
+    >>> New best model! Val MAPE=72.02%
+
+[Round 17] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=127.530296, val_mape=71.22%
+    Client 2: 150 samples, train_loss=136.160860, val_mape=63.24%
+    Client 3: 140 samples, train_loss=102.986310, val_mape=65.77%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=64.19%, RMSE=$2,885,265.25
+    >>> New best model! Val MAPE=64.19%
+
+[Round 18] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=90.974617, val_mape=57.74%
+    Client 2: 150 samples, train_loss=94.303056, val_mape=51.62%
+    Client 3: 140 samples, train_loss=60.723801, val_mape=52.70%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=51.30%, RMSE=$2,529,642.00
+    >>> New best model! Val MAPE=51.30%
+
+[Round 19] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=58.199323, val_mape=46.09%
+    Client 2: 150 samples, train_loss=59.799717, val_mape=42.98%
+    Client 3: 140 samples, train_loss=46.340094, val_mape=49.45%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=40.61%, RMSE=$2,190,950.00
+    >>> New best model! Val MAPE=40.61%
+
+[Round 20] Strategy: size_only, LR=0.0005, Epochs=20
+    Client 1: 148 samples, train_loss=37.444294, val_mape=39.67%
+    Client 2: 150 samples, train_loss=37.970341, val_mape=40.94%
+    Client 3: 140 samples, train_loss=25.519358, val_mape=45.15%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=34.65%, RMSE=$1,997,372.88
+    >>> New best model! Val MAPE=34.65%
+
+------------------------------------------------------------
+Restoring Best Checkpoint...
+------------------------------------------------------------
+  Last round (Round 20) Val MAPE: 34.65%
+  Best round (Round 20) Val MAPE: 34.65%
+  >>> Model restored to Round 20 (best checkpoint)
+
+  Evaluating best checkpoint on test set...
+
+============================================================
+Training Completed!
+============================================================
+  Strategy: size_only
+  Best Round: 20
+  Best Val MAPE: 34.65%
+
+Test Set Results (using best checkpoint):
+  MAPE:  54.14%
+  RMSE:  $1,665,254.00
+  MAE:   $1,226,601.50
+  MPE:   -7.62%
+  NRMSE: 18.68%
+  R2:    0.3475
+
+[Saving] Results and logs...
+  Model saved: results\models\fedavg_global_model.pth
+  Saved: results\logs\scene_B_round_metrics.csv
+  Saved: results\logs\scene_B_client_metrics.csv
+  Saved: results\logs\scene_B_training_history.json
+  Results saved: results\fedavg_results.csv
+
+================================================================================
+SCENARIO B COMPLETED!
+================================================================================
+  Best Round: 20
+  Best Val MAPE: 34.65%
+  Test MAPE:  54.14%
+  Test RMSE:  $1,665,254.00
+  Test MAE:   $1,226,601.50
+  Test R2:    0.3475
+================================================================================
+
+--- STDERR ---
+2026-05-24 19:44:42 - FedAvg - INFO - Scenario B completed: Test MAPE=54.14%

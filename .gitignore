@@ -9,10 +9,9 @@ __pycache__/
 temp_*
 *.tmp
 
-results/logs/
 results/models/
 results/tensorboard/
-results/ablation_logs/
+!results/.gitkeep
 *.pth
 *.pt
 *.pkl

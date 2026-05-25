@@ -209,6 +209,7 @@ class LLMPlanner:
         
         # 日志文件
         self.decisions_log_path = self.log_dir / "scene_C_llm_decisions.jsonl"
+        self.decisions_log_path.write_text("", encoding="utf-8")
         
         # 记录上一轮LLM的决策，用于反馈
         self.last_llm_decision = None

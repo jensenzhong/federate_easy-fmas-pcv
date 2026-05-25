@@ -72,10 +72,9 @@ ABLATION_CONFIGS = [
     {
         "id": "ab-6",
         "name": "C-with-LLM+bias",
-        "description": "Full MAS-FL-LLM with bias correction (20 rounds)",
-        "script": "experiments/scenario_C_llm.py",
-        "args": ["--num_rounds", "20", "--use_llm"],
-        "note": "Bias correction is automatically applied in scenario_C_llm.py"
+        "description": "Bias-corrected metrics derived from the same ab-5 LLM run",
+        "derive_from": "ab-5",
+        "note": "Derived from ab-5 corrected metrics to avoid a second stochastic LLM run."
     },
 ]
 
@@ -201,6 +200,30 @@ def _parse_output_metrics(stdout: str) -> dict:
     return metrics
 
 
+def derive_bias_correction_rows(df):
+    """Create ab-6 rows from ab-5 corrected metrics without rerunning LLM."""
+    import pandas as pd
+
+    if df.empty or "id" not in df.columns:
+        return pd.DataFrame()
+
+    source = df[(df["id"] == "ab-5") & (df["success"] == True)].copy()
+    if source.empty:
+        return pd.DataFrame()
+
+    corrected_cols = [
+        "test_mape_corrected", "test_rmse_corrected", "test_mae_corrected",
+        "test_mpe_corrected", "test_r2_corrected",
+    ]
+    if not any(col in source.columns and source[col].notna().any() for col in corrected_cols):
+        return pd.DataFrame()
+
+    source["id"] = "ab-6"
+    source["name"] = "C-with-LLM+bias"
+    source["description"] = "Derived bias-corrected metrics from ab-5"
+    return source
+
+
 def generate_summary(all_results: list, output_dir: str):
     """生成消融实验统计汇总CSV"""
     import pandas as pd
@@ -209,6 +232,10 @@ def generate_summary(all_results: list, output_dir: str):
     if df.empty:
         print("  No results to summarize.")
         return
+
+    derived_df = derive_bias_correction_rows(df)
+    if not derived_df.empty:
+        df = pd.concat([df, derived_df], ignore_index=True)
 
     # 保存原始结果
     raw_path = Path(output_dir) / "ablation_logs" / "ablation_all_results.csv"
@@ -292,17 +319,26 @@ def main():
 
     configs = ABLATION_CONFIGS
     if args.only:
-        configs = [c for c in configs if c["id"] in args.only]
+        requested = set(args.only)
+        for config in ABLATION_CONFIGS:
+            if config.get("derive_from") and config["id"] in requested:
+                requested.add(config["derive_from"])
+        configs = [c for c in configs if c["id"] in requested]
         print(f"Running {len(configs)} selected experiments: {[c['id'] for c in configs]}")
     else:
         print(f"Running all {len(configs)} experiments")
 
-    total_runs = len(configs) * len(seeds)
-    print(f"Total runs: {total_runs} ({len(configs)} configs x {len(seeds)} seeds)")
+    runnable_configs = [c for c in configs if "derive_from" not in c]
+    derived_configs = [c for c in configs if "derive_from" in c]
+    if derived_configs:
+        print(f"Derived experiments: {[c['id'] for c in derived_configs]} will be computed from source runs.")
+
+    total_runs = len(runnable_configs) * len(seeds)
+    print(f"Total runs: {total_runs} ({len(runnable_configs)} runnable configs x {len(seeds)} seeds)")
 
     all_results = []
     run_count = 0
-    for config in configs:
+    for config in runnable_configs:
         for seed in seeds:
             run_count += 1
             print(f"\n>>> Run {run_count}/{total_runs}")
@@ -314,13 +350,15 @@ def main():
     print("ABLATION STUDY RUN STATUS")
     print("=" * 70)
     for config in configs:
+        if "derive_from" in config:
+            print(f"  [DERIVED] {config['id']}: {config['name']} from {config['derive_from']}")
+            continue
         exp_results = [r for r in all_results if r["id"] == config["id"]]
         ok_count = sum(1 for r in exp_results if r["success"])
         total = len(exp_results)
         status = "OK" if ok_count == total else f"PARTIAL ({ok_count}/{total})"
         print(f"  [{status}] {config['id']}: {config['name']}")
 
-    # 生成统计汇总
     generate_summary(all_results, args.output_dir)
 
     failed_runs = [r for r in all_results if not r["success"]]

@@ -1,0 +1,4 @@
+comparison,metric,paired_seeds,t_test_type,t_statistic,t_p_value,wilcoxon_type,w_statistic,w_p_value,cohens_d,significant_005,significant_001
+B_vs_C,test_mape,"42,123,456,789,2024",paired t-test,0.90499693081948,0.41664756209068005,Wilcoxon signed-rank,5.0,0.625,0.31792041194176257,False,False
+B_vs_C,test_rmse,"42,123,456,789,2024",paired t-test,0.2368591232036398,0.8244018342583529,Wilcoxon signed-rank,5.0,0.625,0.12388178803410393,False,False
+B_vs_C,test_mae,"42,123,456,789,2024",paired t-test,0.3429493282832446,0.7489018235511571,Wilcoxon signed-rank,5.0,0.625,0.14829682960396404,False,False

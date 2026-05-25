@@ -369,8 +369,18 @@ def fig6_ablation():
         return
 
     df = pd.read_csv(ablation_path)
-    if df.empty or "test_mape" not in df.columns:
+    if df.empty:
         print("  [SKIP] No valid ablation data")
+        return
+
+    if "test_mape_mean" in df.columns:
+        metric_col = "test_mape_mean"
+        std_col = "test_mape_std" if "test_mape_std" in df.columns else None
+    elif "test_mape" in df.columns:
+        metric_col = "test_mape"
+        std_col = None
+    else:
+        print("  [SKIP] No valid ablation MAPE columns")
         return
 
     fig, ax = plt.subplots(figsize=(11, 5.5))
@@ -378,6 +388,8 @@ def fig6_ablation():
     label_map = {
         "B-baseline": "Fixed-weight baseline",
         "B+FedProx": "Baseline + proximal constraint",
+        "C-fixed-perf": "Performance-only weighting",
+        "C-fixed-hybrid": "Hybrid weighting",
         "C-perf_only": "Performance-only weighting",
         "C-perf\\_only": "Performance-only weighting",
         "C-hybrid": "Hybrid weighting",
@@ -386,21 +398,41 @@ def fig6_ablation():
     }
     raw_names = [name.replace("\\_", "_") for name in df["name"].tolist()]
     names = [label_map.get(name, name) for name in raw_names]
-    mape = df["test_mape"].to_numpy(dtype=float) * 100
+    mape = df[metric_col].to_numpy(dtype=float) * 100
+    mape_std = (
+        df[std_col].fillna(0).to_numpy(dtype=float) * 100
+        if std_col is not None
+        else None
+    )
     x = np.arange(len(names))
 
     line_color = "#D55E00"
-    ax.plot(
-        x,
-        mape,
-        color=line_color,
-        linewidth=2.2,
-        marker="o",
-        markersize=7,
-        markerfacecolor="white",
-        markeredgewidth=2,
-        markeredgecolor=line_color,
-    )
+    if mape_std is not None:
+        ax.errorbar(
+            x,
+            mape,
+            yerr=mape_std,
+            color=line_color,
+            linewidth=2.2,
+            marker="o",
+            markersize=7,
+            markerfacecolor="white",
+            markeredgewidth=2,
+            markeredgecolor=line_color,
+            capsize=4,
+        )
+    else:
+        ax.plot(
+            x,
+            mape,
+            color=line_color,
+            linewidth=2.2,
+            marker="o",
+            markersize=7,
+            markerfacecolor="white",
+            markeredgewidth=2,
+            markeredgecolor=line_color,
+        )
 
     best_idx = int(np.argmin(mape))
     ax.scatter(
@@ -413,8 +445,10 @@ def fig6_ablation():
         zorder=3,
     )
 
-    y_min = float(np.floor((mape.min() - 0.15) * 10) / 10)
-    y_max = float(np.ceil((mape.max() + 0.15) * 10) / 10)
+    lower = mape - mape_std if mape_std is not None else mape
+    upper = mape + mape_std if mape_std is not None else mape
+    y_min = float(np.floor((lower.min() - 0.15) * 10) / 10)
+    y_max = float(np.ceil((upper.max() + 0.15) * 10) / 10)
     for idx, val in enumerate(mape):
         offset = 0.035 if idx != best_idx else -0.06
         va = "bottom" if idx != best_idx else "top"

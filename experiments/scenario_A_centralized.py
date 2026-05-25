@@ -5,6 +5,7 @@
 """
 
 import sys
+import argparse
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -22,8 +23,22 @@ from src.utils import (
 from src.data_preprocessing import load_centralized_datasets
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Scenario A: centralized Gradient Boosting baseline"
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=None,
+        help="Random seed. Defaults to preprocessing.random_seed in configs/config.yaml.",
+    )
+    return parser.parse_args()
+
+
 def main():
     """场景A主函数"""
+    args = parse_args()
     
     print("=" * 80)
     print("SCENARIO A: CENTRALIZED TRAINING (Gradient Boosting)")
@@ -36,7 +51,7 @@ def main():
     config = load_config("configs/config.yaml")
     
     # 设置随机种子
-    seed = config['preprocessing']['random_seed']
+    seed = args.seed if args.seed is not None else config['preprocessing']['random_seed']
     set_seed(seed)
     print(f"          Random seed: {seed}")
     
