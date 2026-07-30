@@ -1,0 +1,1557 @@
+{
+  "training_config": {
+    "default_strategy": "size_only",
+    "default_lr": 0.0005,
+    "default_local_epochs": 20,
+    "strategies_config": {
+      "size_only": {
+        "description": "权重与客户端样本数成正比",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "perf_only": {
+        "description": "权重与1/val_mape成正比，表现好的客户端权重更大",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "hybrid": {
+        "description": "结合样本数和性能的加权",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "fairness_clip": {
+        "description": "限制大客户端权重上限，保护小客户端贡献",
+        "lambda_hybrid": 0.3,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      }
+    },
+    "server_optimizer": "fedyogi",
+    "max_coordinate_step_ratio": 1.0
+  },
+  "training_summary": {
+    "total_rounds": 3,
+    "best_round": 3,
+    "best_val_mape": "0.999003"
+  },
+  "round_history": [
+    {
+      "round": 0,
+      "strategy_name": "mas_validation_guided_candidate",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.33331623936243054,
+        "Client 2": 0.3333384529147002,
+        "Client 3": 0.3333453077228693
+      },
+      "strategy_params_override": {
+        "candidate_id": "candidate_002_lr0p5_ep+0",
+        "candidate_source": "error_compensation",
+        "score_profile": "mape_primary"
+      },
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 0.5,
+        "effective_server_lr": 0.2,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 13.04306230936836,
+        "update_norm": 4.460577002214265,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": false
+      },
+      "llm_decision": {
+        "selected_candidate_id": "candidate_002_lr0p5_ep+0",
+        "objective_profile": {
+          "primary": "mape",
+          "secondary": [
+            "rmse",
+            "client_gap",
+            "mpe_bias"
+          ],
+          "risk_tolerance": "balanced"
+        },
+        "reasoning": "candidate_002_lr0p5_ep+0 is within the near-best set (score 1.024735, within 0.003 of best 1.024461) and is the balanced_recommended_candidate_id. It has identical RMSE, MAE, MPE, and client_gap to the best candidate, with a slightly lower update_norm (4.460577 vs 4.460779) indicating marginally better update stability. No improvement in RMSE or MPE is observed, but it maintains the same validation metrics without leaving the near-best set, satisfying the balanced recommendation criteria.",
+        "risk": "No additional validation risk; score is within tolerance and metrics are identical to the best candidate.",
+        "fallback_used": false,
+        "fallback_candidate_id": null,
+        "round": 1,
+        "requested_candidate_id": "candidate_002_lr0p5_ep+0",
+        "gate_status": "accepted_llm_near_best",
+        "candidate_score": 1.024734676439966,
+        "candidate_source": "error_compensation",
+        "note": "LLM requests a validation-preview candidate; deterministic gate selects the executed candidate."
+      },
+      "candidate_weight_preview": {
+        "size_anchor_lr0p5_ep+0": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "size_anchor": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "size_anchor_lr1p5_ep+0": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "uniform_anchor_lr0p5_ep+0": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "uniform_anchor": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "uniform_anchor_lr1p5_ep+0": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "candidate_002_lr0p5_ep+0": {
+          "Client 1": 0.33331623936243054,
+          "Client 2": 0.3333384529147002,
+          "Client 3": 0.3333453077228693
+        },
+        "candidate_002": {
+          "Client 1": 0.33331623936243054,
+          "Client 2": 0.3333384529147002,
+          "Client 3": 0.3333453077228693
+        },
+        "candidate_002_lr1p5_ep+0": {
+          "Client 1": 0.33331623936243054,
+          "Client 2": 0.3333384529147002,
+          "Client 3": 0.3333453077228693
+        },
+        "candidate_003_lr0p5_ep+0": {
+          "Client 1": 0.23789954337899544,
+          "Client 2": 0.34246575342465757,
+          "Client 3": 0.41963470319634705
+        },
+        "candidate_003": {
+          "Client 1": 0.23789954337899544,
+          "Client 2": 0.34246575342465757,
+          "Client 3": 0.41963470319634705
+        },
+        "candidate_003_lr1p5_ep+0": {
+          "Client 1": 0.23789954337899544,
+          "Client 2": 0.34246575342465757,
+          "Client 3": 0.41963470319634705
+        }
+      },
+      "candidate_validation_preview": {
+        "size_anchor_lr0p5_ep+0": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.024460666794096,
+          "client_gap": 1.7881393432617188e-07,
+          "update_norm": 4.460779446874762,
+          "validation_metrics": {
+            "mape": 0.9999998807907104,
+            "rmse": 3907390.75,
+            "mae": 2983944.5,
+            "mpe": -0.9999998807907104,
+            "nrmse": 0.35128384828567505,
+            "r2": -1.3991549015045166
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.036936016538236,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "size_anchor": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.0279286079651293,
+          "client_gap": 7.152557373046875e-07,
+          "update_norm": 7.929119372981602,
+          "validation_metrics": {
+            "mape": 0.999999463558197,
+            "rmse": 3907386.25,
+            "mae": 2983942.25,
+            "mpe": -0.999999463558197,
+            "nrmse": 0.351283460855484,
+            "r2": -1.3991494178771973
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.036936016538236,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "size_anchor_lr1p5_ep+0": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0306260553171882,
+          "client_gap": 4.112720489501953e-06,
+          "update_norm": 10.628707127834309,
+          "validation_metrics": {
+            "mape": 0.9999971985816956,
+            "rmse": 3907355.75,
+            "mae": 2983929.0,
+            "mpe": -0.9999971985816956,
+            "nrmse": 0.35128071904182434,
+            "r2": -1.3991117477416992
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.036936016538236,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "uniform_anchor_lr0p5_ep+0": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.024734436520346,
+          "client_gap": 1.7881393432617188e-07,
+          "update_norm": 4.460576570384882,
+          "validation_metrics": {
+            "mape": 0.9999998807907104,
+            "rmse": 3907390.75,
+            "mae": 2983944.5,
+            "mpe": -0.9999998807907104,
+            "nrmse": 0.35128384828567505,
+            "r2": -1.3991549015045166
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.043060048138736,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "uniform_anchor": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.0282041871593013,
+          "client_gap": 7.152557373046875e-07,
+          "update_norm": 7.930725964413813,
+          "validation_metrics": {
+            "mape": 0.999999463558197,
+            "rmse": 3907386.25,
+            "mae": 2983942.25,
+            "mpe": -0.999999463558197,
+            "nrmse": 0.351283460855484,
+            "r2": -1.3991494178771973
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.043060048138736,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "uniform_anchor_lr1p5_ep+0": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0309030521363993,
+          "client_gap": 4.231929779052734e-06,
+          "update_norm": 10.631725383841335,
+          "validation_metrics": {
+            "mape": 0.9999971985816956,
+            "rmse": 3907355.75,
+            "mae": 2983929.0,
+            "mpe": -0.9999971985816956,
+            "nrmse": 0.35128071904182434,
+            "r2": -1.3991119861602783
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.043060048138736,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "candidate_002_lr0p5_ep+0": {
+          "source": "error_compensation",
+          "weights": {
+            "Client 1": 0.33331623936243054,
+            "Client 2": 0.3333384529147002,
+            "Client 3": 0.3333453077228693
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.024734676439966,
+          "client_gap": 1.7881393432617188e-07,
+          "update_norm": 4.460577002214265,
+          "validation_metrics": {
+            "mape": 0.9999998807907104,
+            "rmse": 3907390.75,
+            "mae": 2983944.5,
+            "mpe": -0.9999998807907104,
+            "nrmse": 0.35128384828567505,
+            "r2": -1.3991549015045166
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.04306230936836,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "candidate_002": {
+          "source": "error_compensation",
+          "weights": {
+            "Client 1": 0.33331623936243054,
+            "Client 2": 0.3333384529147002,
+            "Client 3": 0.3333453077228693
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.0282044277655455,
+          "client_gap": 7.152557373046875e-07,
+          "update_norm": 7.930727082867363,
+          "validation_metrics": {
+            "mape": 0.999999463558197,
+            "rmse": 3907386.25,
+            "mae": 2983942.25,
+            "mpe": -0.999999463558197,
+            "nrmse": 0.351283460855484,
+            "r2": -1.3991494178771973
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.04306230936836,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "candidate_002_lr1p5_ep+0": {
+          "source": "error_compensation",
+          "weights": {
+            "Client 1": 0.33331623936243054,
+            "Client 2": 0.3333384529147002,
+            "Client 3": 0.3333453077228693
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0309032913036018,
+          "client_gap": 4.231929779052734e-06,
+          "update_norm": 10.631725063252954,
+          "validation_metrics": {
+            "mape": 0.9999971985816956,
+            "rmse": 3907355.75,
+            "mae": 2983929.0,
+            "mpe": -0.9999971985816956,
+            "nrmse": 0.35128071904182434,
+            "r2": -1.3991119861602783
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.04306230936836,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "candidate_003_lr0p5_ep+0": {
+          "source": "local_grid",
+          "weights": {
+            "Client 1": 0.23789954337899544,
+            "Client 2": 0.34246575342465757,
+            "Client 3": 0.41963470319634705
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.026465928358283,
+          "client_gap": 1.1920928955078125e-07,
+          "update_norm": 4.4659223978184235,
+          "validation_metrics": {
+            "mape": 1.0,
+            "rmse": 3907391.0,
+            "mae": 2983944.5,
+            "mpe": -1.0,
+            "nrmse": 0.35128387808799744,
+            "r2": -1.3991551399230957
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.069188359702219,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "candidate_003": {
+          "source": "local_grid",
+          "weights": {
+            "Client 1": 0.23789954337899544,
+            "Client 2": 0.34246575342465757,
+            "Client 3": 0.41963470319634705
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.029942469418903,
+          "client_gap": 7.152557373046875e-07,
+          "update_norm": 7.942920030017551,
+          "validation_metrics": {
+            "mape": 0.9999995231628418,
+            "rmse": 3907386.5,
+            "mae": 2983942.25,
+            "mpe": -0.9999995231628418,
+            "nrmse": 0.351283460855484,
+            "r2": -1.3991496562957764
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.069188359702219,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "candidate_003_lr1p5_ep+0": {
+          "source": "local_grid",
+          "weights": {
+            "Client 1": 0.23789954337899544,
+            "Client 2": 0.34246575342465757,
+            "Client 3": 0.41963470319634705
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0326377935516737,
+          "client_gap": 4.410743713378906e-06,
+          "update_norm": 10.640430461158784,
+          "validation_metrics": {
+            "mape": 0.9999971985816956,
+            "rmse": 3907356.0,
+            "mae": 2983929.0,
+            "mpe": -0.9999971985816956,
+            "nrmse": 0.35128071904182434,
+            "r2": -1.3991122245788574
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.069188359702219,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1566.158251953125,
+          "val_mape": 0.9999087452888489,
+          "val_rmse": 3987421.5,
+          "val_mae": 3241735.25,
+          "val_mpe": -0.9999087452888489,
+          "update_norm": 13.202980828336942,
+          "update_delta_norm": 13.202980828336942,
+          "validation_gap": 1.9998174905776978
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1602.8050048828125,
+          "val_mape": 0.9999753832817078,
+          "val_rmse": 4608825.5,
+          "val_mae": 3894989.5,
+          "val_mpe": -0.9999753832817078,
+          "update_norm": 12.958765266907944,
+          "update_delta_norm": 12.958765266907944,
+          "validation_gap": 1.9999507665634155
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1353.9193359375,
+          "val_mape": 0.9999959468841553,
+          "val_rmse": 2321843.5,
+          "val_mae": 1997765.75,
+          "val_mpe": -0.9999959468841553,
+          "update_norm": 13.438986621784245,
+          "update_delta_norm": 13.438986621784245,
+          "validation_gap": 1.9999918937683105
+        }
+      },
+      "global_val": {
+        "mape": "0.9999999",
+        "mae": "2983944.5",
+        "rmse": "3907390.8",
+        "mpe": "-0.9999999",
+        "nrmse": "0.35128385",
+        "r2": -1.3991549015045166
+      },
+      "selected_candidate_id": "candidate_002_lr0p5_ep+0",
+      "requested_candidate_id": "candidate_002_lr0p5_ep+0",
+      "gate_status": "accepted_llm_near_best",
+      "candidate_score": 1.024734676439966,
+      "candidate_source": "error_compensation",
+      "candidate_budget": 12,
+      "weight_l1_from_previous": 0.02742120905304446,
+      "selection_epsilon": 0.002,
+      "llm_score_tolerance": 0.003,
+      "weight_l1_change_limit": 0.4,
+      "llm_candidate_decision": {
+        "selected_candidate_id": "candidate_002_lr0p5_ep+0",
+        "objective_profile": {
+          "primary": "mape",
+          "secondary": [
+            "rmse",
+            "client_gap",
+            "mpe_bias"
+          ],
+          "risk_tolerance": "balanced"
+        },
+        "reasoning": "candidate_002_lr0p5_ep+0 is within the near-best set (score 1.024735, within 0.003 of best 1.024461) and is the balanced_recommended_candidate_id. It has identical RMSE, MAE, MPE, and client_gap to the best candidate, with a slightly lower update_norm (4.460577 vs 4.460779) indicating marginally better update stability. No improvement in RMSE or MPE is observed, but it maintains the same validation metrics without leaving the near-best set, satisfying the balanced recommendation criteria.",
+        "risk": "No additional validation risk; score is within tolerance and metrics are identical to the best candidate.",
+        "fallback_used": false,
+        "fallback_candidate_id": null,
+        "round": 1,
+        "requested_candidate_id": "candidate_002_lr0p5_ep+0",
+        "gate_status": "accepted_llm_near_best",
+        "candidate_score": 1.024734676439966,
+        "candidate_source": "error_compensation",
+        "note": "LLM requests a validation-preview candidate; deterministic gate selects the executed candidate."
+      }
+    },
+    {
+      "round": 1,
+      "strategy_name": "mas_validation_guided_candidate",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3332933920077368,
+        "Client 2": 0.3333358967318418,
+        "Client 3": 0.33337071126042145
+      },
+      "strategy_params_override": {
+        "candidate_id": "candidate_003_lr0p5_ep+0",
+        "candidate_source": "error_compensation",
+        "score_profile": "mape_primary"
+      },
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 0.5,
+        "effective_server_lr": 0.2,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 9.661992156365967,
+        "update_norm": 4.798705188402797,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": {
+        "selected_candidate_id": "candidate_003_lr0p5_ep+0",
+        "objective_profile": {
+          "primary": "mape",
+          "secondary": [
+            "rmse",
+            "client_gap",
+            "mpe_bias"
+          ],
+          "risk_tolerance": "balanced"
+        },
+        "reasoning": "candidate_003_lr0p5_ep+0 is within the near-best set (score 1.024772, within 0.003 of best 1.024772) and is the balanced_recommended_candidate_id. It has identical validation metrics to the best candidate but uses error compensation weights, which may improve update stability and client gap without increasing validation risk.",
+        "risk": "No additional validation risk; score and metrics are identical to best candidate.",
+        "fallback_used": false,
+        "fallback_candidate_id": null,
+        "round": 2,
+        "requested_candidate_id": "candidate_003_lr0p5_ep+0",
+        "gate_status": "accepted_llm_near_best",
+        "candidate_score": 1.0247723571943574,
+        "candidate_source": "error_compensation",
+        "note": "LLM requests a validation-preview candidate; deterministic gate selects the executed candidate."
+      },
+      "candidate_weight_preview": {
+        "size_anchor_lr0p5_ep+0": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "size_anchor": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "size_anchor_lr1p5_ep+0": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "uniform_anchor_lr0p5_ep+0": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "uniform_anchor": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "uniform_anchor_lr1p5_ep+0": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "previous_accepted_lr0p5_ep+0": {
+          "Client 1": 0.33331623936243054,
+          "Client 2": 0.3333384529147002,
+          "Client 3": 0.3333453077228693
+        },
+        "previous_accepted": {
+          "Client 1": 0.33331623936243054,
+          "Client 2": 0.3333384529147002,
+          "Client 3": 0.3333453077228693
+        },
+        "previous_accepted_lr1p5_ep+0": {
+          "Client 1": 0.33331623936243054,
+          "Client 2": 0.3333384529147002,
+          "Client 3": 0.3333453077228693
+        },
+        "candidate_003_lr0p5_ep+0": {
+          "Client 1": 0.3332933920077368,
+          "Client 2": 0.3333358967318418,
+          "Client 3": 0.33337071126042145
+        },
+        "candidate_003": {
+          "Client 1": 0.3332933920077368,
+          "Client 2": 0.3333358967318418,
+          "Client 3": 0.33337071126042145
+        },
+        "candidate_003_lr1p5_ep+0": {
+          "Client 1": 0.3332933920077368,
+          "Client 2": 0.3333358967318418,
+          "Client 3": 0.33337071126042145
+        }
+      },
+      "candidate_validation_preview": {
+        "size_anchor_lr0p5_ep+0": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.025044587885905,
+          "client_gap": 6.0439109802246094e-05,
+          "update_norm": 4.7975698185069335,
+          "validation_metrics": {
+            "mape": 0.9999703764915466,
+            "rmse": 3906962.0,
+            "mae": 2983747.25,
+            "mpe": -0.9999703764915466,
+            "nrmse": 0.35124531388282776,
+            "r2": -1.3986282348632812
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.6563274336205,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "size_anchor": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.0280845507973433,
+          "client_gap": 0.00016379356384277344,
+          "update_norm": 7.896687955698919,
+          "validation_metrics": {
+            "mape": 0.9999073147773743,
+            "rmse": 3906110.0,
+            "mae": 2983343.0,
+            "mpe": -0.9999073147773743,
+            "nrmse": 0.3511687219142914,
+            "r2": -1.3975822925567627
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.6563274336205,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "size_anchor_lr1p5_ep+0": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0294393495569265,
+          "client_gap": 0.0003802776336669922,
+          "update_norm": 9.289725479091642,
+          "validation_metrics": {
+            "mape": 0.9998592138290405,
+            "rmse": 3905552.75,
+            "mae": 2983070.0,
+            "mpe": -0.9998592138290405,
+            "nrmse": 0.35111862421035767,
+            "r2": -1.3968982696533203
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.6563274336205,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "uniform_anchor_lr0p5_ep+0": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.0247721904055314,
+          "client_gap": 5.990266799926758e-05,
+          "update_norm": 4.798704590909799,
+          "validation_metrics": {
+            "mape": 0.9999707341194153,
+            "rmse": 3906967.75,
+            "mae": 2983750.0,
+            "mpe": -0.9999707341194153,
+            "nrmse": 0.35124582052230835,
+            "r2": -1.3986356258392334
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.661994387416225,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "uniform_anchor": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.0278130808565176,
+          "client_gap": 0.0001634359359741211,
+          "update_norm": 7.898741326952915,
+          "validation_metrics": {
+            "mape": 0.9999076724052429,
+            "rmse": 3906120.5,
+            "mae": 2983347.0,
+            "mpe": -0.9999076724052429,
+            "nrmse": 0.3511696457862854,
+            "r2": -1.3975954055786133
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.661994387416225,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "uniform_anchor_lr1p5_ep+0": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0291710968267804,
+          "client_gap": 0.00038373470306396484,
+          "update_norm": 9.295170106587731,
+          "validation_metrics": {
+            "mape": 0.9998592138290405,
+            "rmse": 3905563.75,
+            "mae": 2983073.5,
+            "mpe": -0.9998592138290405,
+            "nrmse": 0.35111960768699646,
+            "r2": -1.396911859512329
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.661994387416225,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "previous_accepted_lr0p5_ep+0": {
+          "source": "previous_accepted",
+          "weights": {
+            "Client 1": 0.33331623936243054,
+            "Client 2": 0.3333384529147002,
+            "Client 3": 0.3333453077228693
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.0247718481985584,
+          "client_gap": 5.990266799926758e-05,
+          "update_norm": 4.798704263354741,
+          "validation_metrics": {
+            "mape": 0.9999707341194153,
+            "rmse": 3906967.75,
+            "mae": 2983750.0,
+            "mpe": -0.9999707341194153,
+            "nrmse": 0.35124582052230835,
+            "r2": -1.3986356258392334
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.661990833926764,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "previous_accepted": {
+          "source": "previous_accepted",
+          "weights": {
+            "Client 1": 0.33331623936243054,
+            "Client 2": 0.3333384529147002,
+            "Client 3": 0.3333453077228693
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.027812739550971,
+          "client_gap": 0.0001634359359741211,
+          "update_norm": 7.898741900824516,
+          "validation_metrics": {
+            "mape": 0.9999076724052429,
+            "rmse": 3906120.5,
+            "mae": 2983347.0,
+            "mpe": -0.9999076724052429,
+            "nrmse": 0.3511696457862854,
+            "r2": -1.3975954055786133
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.661990833926764,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "previous_accepted_lr1p5_ep+0": {
+          "source": "previous_accepted",
+          "weights": {
+            "Client 1": 0.33331623936243054,
+            "Client 2": 0.3333384529147002,
+            "Client 3": 0.3333453077228693
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0291707572519173,
+          "client_gap": 0.00038373470306396484,
+          "update_norm": 9.29517241114282,
+          "validation_metrics": {
+            "mape": 0.9998592138290405,
+            "rmse": 3905564.0,
+            "mae": 2983073.5,
+            "mpe": -0.9998592138290405,
+            "nrmse": 0.35111963748931885,
+            "r2": -1.3969120979309082
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.661990833926764,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "candidate_003_lr0p5_ep+0": {
+          "source": "error_compensation",
+          "weights": {
+            "Client 1": 0.3332933920077368,
+            "Client 2": 0.3333358967318418,
+            "Client 3": 0.33337071126042145
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.0247723571943574,
+          "client_gap": 5.990266799926758e-05,
+          "update_norm": 4.798705188402797,
+          "validation_metrics": {
+            "mape": 0.9999707341194153,
+            "rmse": 3906967.75,
+            "mae": 2983750.0,
+            "mpe": -0.9999707341194153,
+            "nrmse": 0.35124582052230835,
+            "r2": -1.3986356258392334
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.661992156365967,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "candidate_003": {
+          "source": "error_compensation",
+          "weights": {
+            "Client 1": 0.3332933920077368,
+            "Client 2": 0.3333358967318418,
+            "Client 3": 0.33337071126042145
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.02781324991034,
+          "client_gap": 0.0001634359359741211,
+          "update_norm": 7.898744189442372,
+          "validation_metrics": {
+            "mape": 0.9999076724052429,
+            "rmse": 3906120.75,
+            "mae": 2983347.0,
+            "mpe": -0.9999076724052429,
+            "nrmse": 0.3511696755886078,
+            "r2": -1.3975956439971924
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.661992156365967,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "candidate_003_lr1p5_ep+0": {
+          "source": "error_compensation",
+          "weights": {
+            "Client 1": 0.3332933920077368,
+            "Client 2": 0.3333358967318418,
+            "Client 3": 0.33337071126042145
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0291712729055396,
+          "client_gap": 0.00038373470306396484,
+          "update_norm": 9.295179994013877,
+          "validation_metrics": {
+            "mape": 0.9998592138290405,
+            "rmse": 3905564.0,
+            "mae": 2983073.5,
+            "mpe": -0.9998592138290405,
+            "nrmse": 0.35111963748931885,
+            "r2": -1.3969120979309082
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.661992156365967,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1472.211328125,
+          "val_mape": 0.9997246265411377,
+          "val_rmse": 3986312.25,
+          "val_mae": 3240906.25,
+          "val_mpe": -0.9997246265411377,
+          "update_norm": 10.138070291366814,
+          "update_delta_norm": 10.138070291366814,
+          "validation_gap": 1.9994492530822754
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1493.5446044921875,
+          "val_mape": 0.9998521208763123,
+          "val_rmse": 4607756.0,
+          "val_mae": 3894276.25,
+          "val_mpe": -0.9998521208763123,
+          "update_norm": 9.505410413267258,
+          "update_delta_norm": 9.505410413267258,
+          "validation_gap": 1.9997042417526245
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1272.507080078125,
+          "val_mape": 0.9999565482139587,
+          "val_rmse": 2321651.5,
+          "val_mae": 1997636.25,
+          "val_mpe": -0.9999565482139587,
+          "update_norm": 10.096700620511465,
+          "update_delta_norm": 10.096700620511465,
+          "validation_gap": 1.9999130964279175
+        }
+      },
+      "global_val": {
+        "mape": "0.99997073",
+        "mae": "2983750.0",
+        "rmse": "3906967.8",
+        "mpe": "-0.99997073",
+        "nrmse": "0.35124582",
+        "r2": -1.3986356258392334
+      },
+      "selected_candidate_id": "candidate_003_lr0p5_ep+0",
+      "requested_candidate_id": "candidate_003_lr0p5_ep+0",
+      "gate_status": "accepted_llm_near_best",
+      "candidate_score": 1.0247723571943574,
+      "candidate_source": "error_compensation",
+      "candidate_budget": 12,
+      "weight_l1_from_previous": 5.080707510435323e-05,
+      "selection_epsilon": 0.002,
+      "llm_score_tolerance": 0.003,
+      "weight_l1_change_limit": 0.4,
+      "llm_candidate_decision": {
+        "selected_candidate_id": "candidate_003_lr0p5_ep+0",
+        "objective_profile": {
+          "primary": "mape",
+          "secondary": [
+            "rmse",
+            "client_gap",
+            "mpe_bias"
+          ],
+          "risk_tolerance": "balanced"
+        },
+        "reasoning": "candidate_003_lr0p5_ep+0 is within the near-best set (score 1.024772, within 0.003 of best 1.024772) and is the balanced_recommended_candidate_id. It has identical validation metrics to the best candidate but uses error compensation weights, which may improve update stability and client gap without increasing validation risk.",
+        "risk": "No additional validation risk; score and metrics are identical to best candidate.",
+        "fallback_used": false,
+        "fallback_candidate_id": null,
+        "round": 2,
+        "requested_candidate_id": "candidate_003_lr0p5_ep+0",
+        "gate_status": "accepted_llm_near_best",
+        "candidate_score": 1.0247723571943574,
+        "candidate_source": "error_compensation",
+        "note": "LLM requests a validation-preview candidate; deterministic gate selects the executed candidate."
+      }
+    },
+    {
+      "round": 2,
+      "strategy_name": "mas_validation_guided_candidate",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3333219577551573,
+        "Client 2": 0.3333110856970403,
+        "Client 3": 0.33336695654780235
+      },
+      "strategy_params_override": {
+        "candidate_id": "candidate_003_lr0p5_ep+0",
+        "candidate_source": "error_compensation",
+        "score_profile": "mape_primary"
+      },
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 0.5,
+        "effective_server_lr": 0.2,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 8.21975917667992,
+        "update_norm": 4.081114476815298,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": {
+        "selected_candidate_id": "candidate_003_lr0p5_ep+0",
+        "objective_profile": {
+          "primary": "mape",
+          "secondary": [
+            "rmse",
+            "client_gap",
+            "mpe_bias"
+          ],
+          "risk_tolerance": "balanced"
+        },
+        "reasoning": "candidate_003_lr0p5_ep+0 is the balanced_recommended_candidate_id and is within the near_best set (score 1.023129 vs best 1.023128, within 0.000001 tolerance). It has identical MAPE (0.999003) and RMSE (3896794.0) to the best candidate, with the same client_gap (0.001281) and update_norm (4.081114). It was accepted in round 2, showing consistent performance. No other candidate in the near-best set offers meaningful improvement in RMSE, MPE, client_gap, or stability, so the balanced recommendation is preferred.",
+        "risk": "No additional risk: validation metrics are virtually identical to the best candidate, and the candidate has been accepted before.",
+        "fallback_used": false,
+        "fallback_candidate_id": null,
+        "round": 3,
+        "requested_candidate_id": "candidate_003_lr0p5_ep+0",
+        "gate_status": "accepted_llm_near_best",
+        "candidate_score": 1.0231287928922506,
+        "candidate_source": "error_compensation",
+        "note": "LLM requests a validation-preview candidate; deterministic gate selects the executed candidate."
+      },
+      "candidate_weight_preview": {
+        "size_anchor_lr0p5_ep+0": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "size_anchor": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "size_anchor_lr1p5_ep+0": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "uniform_anchor_lr0p5_ep+0": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "uniform_anchor": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "uniform_anchor_lr1p5_ep+0": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "previous_accepted_lr0p5_ep+0": {
+          "Client 1": 0.3332933920077368,
+          "Client 2": 0.3333358967318418,
+          "Client 3": 0.33337071126042145
+        },
+        "previous_accepted": {
+          "Client 1": 0.3332933920077368,
+          "Client 2": 0.3333358967318418,
+          "Client 3": 0.33337071126042145
+        },
+        "previous_accepted_lr1p5_ep+0": {
+          "Client 1": 0.3332933920077368,
+          "Client 2": 0.3333358967318418,
+          "Client 3": 0.33337071126042145
+        },
+        "candidate_003_lr0p5_ep+0": {
+          "Client 1": 0.3333219577551573,
+          "Client 2": 0.3333110856970403,
+          "Client 3": 0.33336695654780235
+        },
+        "candidate_003": {
+          "Client 1": 0.3333219577551573,
+          "Client 2": 0.3333110856970403,
+          "Client 3": 0.33336695654780235
+        },
+        "candidate_003_lr1p5_ep+0": {
+          "Client 1": 0.3333219577551573,
+          "Client 2": 0.3333110856970403,
+          "Client 3": 0.33336695654780235
+        }
+      },
+      "candidate_validation_preview": {
+        "size_anchor_lr0p5_ep+0": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.0233977399862806,
+          "client_gap": 0.0012960433959960938,
+          "update_norm": 4.082034717577447,
+          "validation_metrics": {
+            "mape": 0.9989962577819824,
+            "rmse": 3896657.0,
+            "mae": 2978319.5,
+            "mpe": -0.9989962577819824,
+            "nrmse": 0.35031887888908386,
+            "r2": -1.3859918117523193
+          },
+          "metadata": {
+            "aggregation_delta_norm": 8.197125581889924,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "size_anchor": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.0251360508328529,
+          "client_gap": 0.0015153288841247559,
+          "update_norm": 5.733689351342847,
+          "validation_metrics": {
+            "mape": 0.9990704655647278,
+            "rmse": 3897595.5,
+            "mae": 2978745.5,
+            "mpe": -0.9990704655647278,
+            "nrmse": 0.3504032492637634,
+            "r2": -1.387141227722168
+          },
+          "metadata": {
+            "aggregation_delta_norm": 8.197125581889924,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "size_anchor_lr1p5_ep+0": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.025867914470527,
+          "client_gap": 0.0012118816375732422,
+          "update_norm": 6.301192585002439,
+          "validation_metrics": {
+            "mape": 0.9992464780807495,
+            "rmse": 3899545.5,
+            "mae": 2979758.0,
+            "mpe": -0.9992464780807495,
+            "nrmse": 0.35057854652404785,
+            "r2": -1.3895304203033447
+          },
+          "metadata": {
+            "aggregation_delta_norm": 8.197125581889924,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "uniform_anchor_lr0p5_ep+0": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.0231290225739669,
+          "client_gap": 0.0012810826301574707,
+          "update_norm": 4.0811166469683124,
+          "validation_metrics": {
+            "mape": 0.999002993106842,
+            "rmse": 3896793.5,
+            "mae": 2978378.5,
+            "mpe": -0.999002993106842,
+            "nrmse": 0.3503311276435852,
+            "r2": -1.3861591815948486
+          },
+          "metadata": {
+            "aggregation_delta_norm": 8.219703576718128,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "uniform_anchor": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.0248665970403932,
+          "client_gap": 0.0015079975128173828,
+          "update_norm": 5.735118844908587,
+          "validation_metrics": {
+            "mape": 0.9990738034248352,
+            "rmse": 3897704.75,
+            "mae": 2978788.0,
+            "mpe": -0.9990738034248352,
+            "nrmse": 0.350413054227829,
+            "r2": -1.387275218963623
+          },
+          "metadata": {
+            "aggregation_delta_norm": 8.219703576718128,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "uniform_anchor_lr1p5_ep+0": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0255946587543077,
+          "client_gap": 0.0012079477310180664,
+          "update_norm": 6.300899760864659,
+          "validation_metrics": {
+            "mape": 0.9992476105690002,
+            "rmse": 3899616.75,
+            "mae": 2979784.0,
+            "mpe": -0.9992476105690002,
+            "nrmse": 0.3505849540233612,
+            "r2": -1.389617919921875
+          },
+          "metadata": {
+            "aggregation_delta_norm": 8.219703576718128,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "previous_accepted_lr0p5_ep+0": {
+          "source": "previous_accepted",
+          "weights": {
+            "Client 1": 0.3332933920077368,
+            "Client 2": 0.3333358967318418,
+            "Client 3": 0.33337071126042145
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.0231282197884757,
+          "client_gap": 0.0012810826301574707,
+          "update_norm": 4.081112687988841,
+          "validation_metrics": {
+            "mape": 0.999002993106842,
+            "rmse": 3896794.0,
+            "mae": 2978378.75,
+            "mpe": -0.999002993106842,
+            "nrmse": 0.35033118724823,
+            "r2": -1.3861596584320068
+          },
+          "metadata": {
+            "aggregation_delta_norm": 8.21974617986365,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "previous_accepted": {
+          "source": "previous_accepted",
+          "weights": {
+            "Client 1": 0.3332933920077368,
+            "Client 2": 0.3333358967318418,
+            "Client 3": 0.33337071126042145
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.024865798913719,
+          "client_gap": 0.0015079975128173828,
+          "update_norm": 5.735119544746311,
+          "validation_metrics": {
+            "mape": 0.9990738034248352,
+            "rmse": 3897705.25,
+            "mae": 2978788.25,
+            "mpe": -0.9990738034248352,
+            "nrmse": 0.35041311383247375,
+            "r2": -1.3872756958007812
+          },
+          "metadata": {
+            "aggregation_delta_norm": 8.21974617986365,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "previous_accepted_lr1p5_ep+0": {
+          "source": "previous_accepted",
+          "weights": {
+            "Client 1": 0.3332933920077368,
+            "Client 2": 0.3333358967318418,
+            "Client 3": 0.33337071126042145
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0255938556070932,
+          "client_gap": 0.0012079477310180664,
+          "update_norm": 6.300895440161983,
+          "validation_metrics": {
+            "mape": 0.9992476105690002,
+            "rmse": 3899617.0,
+            "mae": 2979784.0,
+            "mpe": -0.9992476105690002,
+            "nrmse": 0.3505849838256836,
+            "r2": -1.3896183967590332
+          },
+          "metadata": {
+            "aggregation_delta_norm": 8.21974617986365,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "candidate_003_lr0p5_ep+0": {
+          "source": "error_compensation",
+          "weights": {
+            "Client 1": 0.3333219577551573,
+            "Client 2": 0.3333110856970403,
+            "Client 3": 0.33336695654780235
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.0231287928922506,
+          "client_gap": 0.0012810826301574707,
+          "update_norm": 4.081114476815298,
+          "validation_metrics": {
+            "mape": 0.999002993106842,
+            "rmse": 3896794.0,
+            "mae": 2978378.5,
+            "mpe": -0.999002993106842,
+            "nrmse": 0.35033118724823,
+            "r2": -1.3861596584320068
+          },
+          "metadata": {
+            "aggregation_delta_norm": 8.21975917667992,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "candidate_003": {
+          "source": "error_compensation",
+          "weights": {
+            "Client 1": 0.3333219577551573,
+            "Client 2": 0.3333110856970403,
+            "Client 3": 0.33336695654780235
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.0248663702106195,
+          "client_gap": 0.0015079379081726074,
+          "update_norm": 5.735122506930744,
+          "validation_metrics": {
+            "mape": 0.9990738034248352,
+            "rmse": 3897705.25,
+            "mae": 2978788.25,
+            "mpe": -0.9990738034248352,
+            "nrmse": 0.35041311383247375,
+            "r2": -1.3872756958007812
+          },
+          "metadata": {
+            "aggregation_delta_norm": 8.21975917667992,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "candidate_003_lr1p5_ep+0": {
+          "source": "error_compensation",
+          "weights": {
+            "Client 1": 0.3333219577551573,
+            "Client 2": 0.3333110856970403,
+            "Client 3": 0.33336695654780235
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0255944306688247,
+          "client_gap": 0.0012079477310180664,
+          "update_norm": 6.300899186945059,
+          "validation_metrics": {
+            "mape": 0.9992476105690002,
+            "rmse": 3899617.0,
+            "mae": 2979784.0,
+            "mpe": -0.9992476105690002,
+            "nrmse": 0.3505849838256836,
+            "r2": -1.3896183967590332
+          },
+          "metadata": {
+            "aggregation_delta_norm": 8.21975917667992,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1402.365673828125,
+          "val_mape": 0.9995846748352051,
+          "val_rmse": 3985050.0,
+          "val_mae": 3240066.0,
+          "val_mpe": -0.9995846748352051,
+          "update_norm": 8.370629414366768,
+          "update_delta_norm": 8.370629414366768,
+          "validation_gap": 1.9991693496704102
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1419.7011962890624,
+          "val_mape": 0.9995520710945129,
+          "val_rmse": 4606297.0,
+          "val_mae": 3892983.25,
+          "val_mpe": -0.9995520710945129,
+          "update_norm": 7.76523083432202,
+          "update_delta_norm": 7.76523083432202,
+          "validation_gap": 1.9991041421890259
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1216.223974609375,
+          "val_mape": 0.9997196197509766,
+          "val_rmse": 2320711.5,
+          "val_mae": 1996938.25,
+          "val_mpe": -0.9997196197509766,
+          "update_norm": 9.669726303877962,
+          "update_delta_norm": 9.669726303877962,
+          "validation_gap": 1.9994392395019531
+        }
+      },
+      "global_val": {
+        "mape": "0.999003",
+        "mae": "2978378.5",
+        "rmse": "3896794.0",
+        "mpe": "-0.999003",
+        "nrmse": "0.3503312",
+        "r2": -1.3861596584320068
+      },
+      "selected_candidate_id": "candidate_003_lr0p5_ep+0",
+      "requested_candidate_id": "candidate_003_lr0p5_ep+0",
+      "gate_status": "accepted_llm_near_best",
+      "candidate_score": 1.0231287928922506,
+      "candidate_source": "error_compensation",
+      "candidate_budget": 12,
+      "weight_l1_from_previous": 5.713149484110058e-05,
+      "selection_epsilon": 0.002,
+      "llm_score_tolerance": 0.003,
+      "weight_l1_change_limit": 0.4,
+      "llm_candidate_decision": {
+        "selected_candidate_id": "candidate_003_lr0p5_ep+0",
+        "objective_profile": {
+          "primary": "mape",
+          "secondary": [
+            "rmse",
+            "client_gap",
+            "mpe_bias"
+          ],
+          "risk_tolerance": "balanced"
+        },
+        "reasoning": "candidate_003_lr0p5_ep+0 is the balanced_recommended_candidate_id and is within the near_best set (score 1.023129 vs best 1.023128, within 0.000001 tolerance). It has identical MAPE (0.999003) and RMSE (3896794.0) to the best candidate, with the same client_gap (0.001281) and update_norm (4.081114). It was accepted in round 2, showing consistent performance. No other candidate in the near-best set offers meaningful improvement in RMSE, MPE, client_gap, or stability, so the balanced recommendation is preferred.",
+        "risk": "No additional risk: validation metrics are virtually identical to the best candidate, and the candidate has been accepted before.",
+        "fallback_used": false,
+        "fallback_candidate_id": null,
+        "round": 3,
+        "requested_candidate_id": "candidate_003_lr0p5_ep+0",
+        "gate_status": "accepted_llm_near_best",
+        "candidate_score": 1.0231287928922506,
+        "candidate_source": "error_compensation",
+        "note": "LLM requests a validation-preview candidate; deterministic gate selects the executed candidate."
+      }
+    }
+  ]
+}

@@ -265,7 +265,6 @@ scene_c:
         model_name: "deepseek-chat"                  # DeepSeek模型
         base_url: "https://api.deepseek.com"         # DeepSeek兼容OpenAI的Base URL
         api_key_env: "DEEPSEEK_API_KEY"              # 环境变量读取API密钥
-        api_key: "sk-1a0fec179d874dcdbf19f422a5313b6b" # 直接配置API Key（仅开发测试用，生产环境请使用环境变量）
       qwen:
         model_name: "qwen-plus"                      # 或 qwen-max 等
         base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"  # 通义千问OpenAI兼容端点
@@ -279,6 +278,21 @@ scene_c:
     max_tokens: 1024              # LLM最大输出token数
     temperature: 0.8              # 采样温度（从0.7增加到0.8，增加多样性）
     timeout: 60                   # 请求超时时间（秒）
+    force_initial_exploration: false  # false=LLM从第1轮开始自由选择；true=恢复前4轮固定探索
+    input_enhancement:
+      candidate_weight_preview: true      # 给LLM四种候选策略的本轮权重预览
+      candidate_validation_preview: true  # 给LLM四种候选聚合模型的validation-only预评估
+      marginal_effect_history: true       # 给LLM历史边际validation改善摘要
+      client_diagnostics: true            # 给LLM匿名客户端级validation诊断
+    parameter_bounds:
+      lr_scale_min: 0.5
+      lr_scale_max: 2.0
+      epoch_delta_min: -5
+      epoch_delta_max: 5
+      lambda_hybrid_min: 0.0
+      lambda_hybrid_max: 1.0
+      alpha_min_min: 0.0
+      alpha_max_max: 1.0
 
 # ==========================================
 # 7. 结果保存路径配置

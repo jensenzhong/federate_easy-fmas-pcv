@@ -1,0 +1,96 @@
+Command: D:\Python\python.exe experiments/scenario_A_centralized.py --seed 2024
+Return code: 0
+Elapsed: 7.9s
+
+================================================================================
+GBR��ͳ����ѧϰ
+================================================================================
+
+Training GradientBoostingRegressor on unified global training split
+This provides the traditional machine-learning centralized baseline.
+
+[Step 1/7] Loading configuration...
+          Random seed: 2024
+          [DONE]
+
+[Step 2/7] Loading unified centralized splits (same as FL global split)...
+          Train/Val/Test: 438/68/70
+          Training scope: federated_local_train_union
+          Features: 10
+          Train target range: $126,358 - $11,188,532
+          [DONE]
+
+[Step 3/7] Preprocessing data...
+          Feature scaling: StandardScaler
+          Target transform: power_0.25
+          Scaled X shape: (438, 10)
+          Transformed y shape: (438, 1)
+          Transformed target range: 18.8539 - 57.8353
+          [DONE]
+
+[Step 4/7] Training Gradient Boosting Regressor...
+          n_estimators: 200
+          learning_rate: 0.1
+          max_depth: 5
+          subsample: 0.8
+
+          Training completed!
+          Number of trees: 200
+          [DONE]
+
+[Step 5/7] Evaluating on validation set...
+          Validation samples: 68
+          Predictions (transformed): 26.0787 - 52.7425
+          Below training range: 0, Above: 0
+
+          Validation Results:
+          MAPE: 42.89% | RMSE: $1,786,419.88 | MAE: $1,157,436.02 | MPE: 18.23% | NRMSE: 16.06%
+          [DONE]
+
+[Step 6/7] Evaluating on test set...
+          Test samples: 70
+          Predictions (transformed): 23.5279 - 52.3715
+          Below training range: 0, Above: 0
+
+          Test Results:
+          MAPE: 54.81% | RMSE: $1,448,399.64 | MAE: $1,111,146.06 | MPE: 21.12% | NRMSE: 16.25%
+          [DONE]
+
+[Step 7/7] Saving results...
+          Model saved: results\models\centralized_gbr_model.pkl
+          Predictions saved: results\centralized_predictions.csv
+          Results saved: results\centralized_results.csv
+          [DONE]
+
+================================================================================
+GBR��ͳ����ѧϰ COMPLETED!
+================================================================================
+
+Final Test Performance:
+  MAPE:  54.81%
+  RMSE:  $1,448,399.64
+  MAE:   $1,111,146.06
+  MPE:   21.12%
+  NRMSE: 16.25%
+
+Validation Performance:
+  MAPE: 42.89%
+  RMSE: $1,786,419.88
+
+This is the centralized GBR baseline trained on the same local-train sample union as FL
+Model: GradientBoostingRegressor (sklearn)
+================================================================================
+
+--- STDERR ---
+2026-06-18 22:17:26 - Centralized_GBR - INFO - Starting GBR��ͳ����ѧϰ
+2026-06-18 22:17:26 - Centralized_GBR - INFO - Loaded unified split: train=438, val=68, test=70
+2026-06-18 22:17:26 - Centralized_GBR - INFO - Data preprocessing completed
+2026-06-18 22:17:27 - Centralized_GBR - INFO - GBR model trained with 200 trees
+2026-06-18 22:17:27 - Centralized_GBR - INFO - Validation Results: MAPE: 42.89% | RMSE: $1,786,419.88 | MAE: $1,157,436.02 | MPE: 18.23% | NRMSE: 16.06%
+2026-06-18 22:17:27 - Centralized_GBR - INFO - Final Test Results: MAPE: 54.81% | RMSE: $1,448,399.64 | MAE: $1,111,146.06 | MPE: 21.12% | NRMSE: 16.25%
+2026-06-18 22:17:27 - Centralized_GBR - INFO - Model saved to results\models\centralized_gbr_model.pkl
+2026-06-18 22:17:27 - Centralized_GBR - INFO - Results saved to results\centralized_results.csv
+2026-06-18 22:17:27 - Centralized_GBR - INFO - ==================================================
+2026-06-18 22:17:27 - Centralized_GBR - INFO - GBR��ͳ����ѧϰ completed successfully
+2026-06-18 22:17:27 - Centralized_GBR - INFO - Test MAPE: 54.81%, RMSE: $1,448,399.64
+2026-06-18 22:17:27 - Centralized_GBR - INFO - ==================================================

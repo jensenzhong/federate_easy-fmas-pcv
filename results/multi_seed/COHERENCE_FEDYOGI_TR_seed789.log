@@ -1,0 +1,248 @@
+Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --strategy size_only --server_optimizer fedyogi --adaptive_mode coherence_guided --output_prefix coherence_fedyogi_tr --method_key COHERENCE_FEDYOGI_TR --server_lr 0.5 --max_coordinate_step_ratio 1 --seed 789
+Return code: 0
+Elapsed: 172.9s
+
+================================================================================
+��������Эͬ����ѧϰ
+================================================================================
+
+[Config] Seed: 789, Device: cpu
+[Config] Use LLM: False
+
+[Data] Loading datasets...
+[Data] Train: 438, Val: 68, Test: 70
+
+============================================================
+Strategy: size_only
+Server optimizer: fedyogi
+============================================================
+[Model] Architecture: 10 -> [128, 128, 64, 32] -> 1
+[Model] Parameters: 28,993
+[Agent] Client 1: 148 train, 38 val
+[Agent] Client 2: 150 train, 38 val
+[Agent] Client 3: 140 train, 36 val
+============================================================
+Starting Coherence-Guided FedYogi-TR Training
+============================================================
+  Rounds: 20
+  Client weight bounds: [0.05, 0.8]
+
+[Round 1] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=1586.828516, val_mape=100.00%
+    Client 2: 150 samples, train_loss=1609.169458, val_mape=100.00%
+    Client 3: 140 samples, train_loss=1345.263232, val_mape=100.00%
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=100.00%, RMSE=$3,907,387.25
+    >>> New best model! Val MAPE=100.00%
+
+[Round 2] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=1530.040601, val_mape=99.99%
+    Client 2: 150 samples, train_loss=1533.868359, val_mape=100.00%
+    Client 3: 140 samples, train_loss=1298.037329, val_mape=100.00%
+    Weights: Client 1=0.337, Client 2=0.343, Client 3=0.319
+    Global Val: MAPE=100.00%, RMSE=$3,907,088.75
+    >>> New best model! Val MAPE=100.00%
+
+[Round 3] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=1453.406836, val_mape=99.99%
+    Client 2: 150 samples, train_loss=1450.465576, val_mape=99.98%
+    Client 3: 140 samples, train_loss=1244.026367, val_mape=99.99%
+    Weights: Client 1=0.342, Client 2=0.350, Client 3=0.308
+    Global Val: MAPE=99.98%, RMSE=$3,906,164.50
+    >>> New best model! Val MAPE=99.98%
+
+[Round 4] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=1361.178857, val_mape=99.97%
+    Client 2: 150 samples, train_loss=1370.210352, val_mape=99.94%
+    Client 3: 140 samples, train_loss=1161.997583, val_mape=99.98%
+    Weights: Client 1=0.348, Client 2=0.355, Client 3=0.297
+    Global Val: MAPE=99.96%, RMSE=$3,904,481.75
+    >>> New best model! Val MAPE=99.96%
+
+[Round 5] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=1260.303882, val_mape=99.92%
+    Client 2: 150 samples, train_loss=1295.211987, val_mape=99.88%
+    Client 3: 140 samples, train_loss=1103.887134, val_mape=99.94%
+    Weights: Client 1=0.342, Client 2=0.352, Client 3=0.307
+    Global Val: MAPE=99.90%, RMSE=$3,901,523.25
+    >>> New best model! Val MAPE=99.90%
+
+[Round 6] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=1202.686646, val_mape=99.87%
+    Client 2: 150 samples, train_loss=1198.046729, val_mape=99.73%
+    Client 3: 140 samples, train_loss=1016.878442, val_mape=99.86%
+    Weights: Client 1=0.340, Client 2=0.344, Client 3=0.316
+    Global Val: MAPE=99.80%, RMSE=$3,896,441.25
+    >>> New best model! Val MAPE=99.80%
+
+[Round 7] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=1108.108142, val_mape=99.74%
+    Client 2: 150 samples, train_loss=1119.979236, val_mape=99.50%
+    Client 3: 140 samples, train_loss=952.154980, val_mape=99.74%
+    Weights: Client 1=0.340, Client 2=0.344, Client 3=0.316
+    Global Val: MAPE=99.59%, RMSE=$3,885,777.75
+    >>> New best model! Val MAPE=99.59%
+
+[Round 8] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=1015.430078, val_mape=99.56%
+    Client 2: 150 samples, train_loss=1026.843433, val_mape=99.21%
+    Client 3: 140 samples, train_loss=828.576819, val_mape=99.36%
+    Weights: Client 1=0.337, Client 2=0.345, Client 3=0.318
+    Global Val: MAPE=99.24%, RMSE=$3,868,995.00
+    >>> New best model! Val MAPE=99.24%
+
+[Round 9] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=925.204663, val_mape=99.22%
+    Client 2: 150 samples, train_loss=905.088550, val_mape=98.58%
+    Client 3: 140 samples, train_loss=756.093127, val_mape=98.98%
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.319
+    Global Val: MAPE=98.68%, RMSE=$3,842,005.50
+    >>> New best model! Val MAPE=98.68%
+
+[Round 10] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=785.457861, val_mape=98.67%
+    Client 2: 150 samples, train_loss=812.747095, val_mape=97.73%
+    Client 3: 140 samples, train_loss=661.731604, val_mape=98.40%
+    Weights: Client 1=0.337, Client 2=0.345, Client 3=0.318
+    Global Val: MAPE=97.81%, RMSE=$3,805,065.00
+    >>> New best model! Val MAPE=97.81%
+
+[Round 11] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=690.826563, val_mape=97.82%
+    Client 2: 150 samples, train_loss=701.147119, val_mape=96.32%
+    Client 3: 140 samples, train_loss=572.635193, val_mape=97.37%
+    Weights: Client 1=0.339, Client 2=0.344, Client 3=0.316
+    Global Val: MAPE=96.53%, RMSE=$3,754,024.00
+    >>> New best model! Val MAPE=96.53%
+
+[Round 12] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=570.930750, val_mape=96.76%
+    Client 2: 150 samples, train_loss=581.446704, val_mape=94.21%
+    Client 3: 140 samples, train_loss=496.391302, val_mape=95.41%
+    Weights: Client 1=0.338, Client 2=0.344, Client 3=0.318
+    Global Val: MAPE=94.77%, RMSE=$3,690,977.50
+    >>> New best model! Val MAPE=94.77%
+
+[Round 13] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=487.040179, val_mape=94.25%
+    Client 2: 150 samples, train_loss=500.203461, val_mape=91.90%
+    Client 3: 140 samples, train_loss=398.637335, val_mape=92.76%
+    Weights: Client 1=0.340, Client 2=0.344, Client 3=0.316
+    Global Val: MAPE=92.16%, RMSE=$3,597,742.25
+    >>> New best model! Val MAPE=92.16%
+
+[Round 14] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=394.286328, val_mape=91.79%
+    Client 2: 150 samples, train_loss=402.345007, val_mape=87.88%
+    Client 3: 140 samples, train_loss=314.677539, val_mape=89.41%
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.320
+    Global Val: MAPE=87.70%, RMSE=$3,473,709.75
+    >>> New best model! Val MAPE=87.70%
+
+[Round 15] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=304.633435, val_mape=86.48%
+    Client 2: 150 samples, train_loss=299.820258, val_mape=83.90%
+    Client 3: 140 samples, train_loss=225.848770, val_mape=84.71%
+    Weights: Client 1=0.339, Client 2=0.344, Client 3=0.317
+    Global Val: MAPE=82.68%, RMSE=$3,310,796.50
+    >>> New best model! Val MAPE=82.68%
+
+[Round 16] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=220.511609, val_mape=80.04%
+    Client 2: 150 samples, train_loss=215.295746, val_mape=75.86%
+    Client 3: 140 samples, train_loss=152.973286, val_mape=77.04%
+    Weights: Client 1=0.337, Client 2=0.341, Client 3=0.322
+    Global Val: MAPE=73.94%, RMSE=$3,096,362.75
+    >>> New best model! Val MAPE=73.94%
+
+[Round 17] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=134.500436, val_mape=71.77%
+    Client 2: 150 samples, train_loss=144.771983, val_mape=65.14%
+    Client 3: 140 samples, train_loss=107.876204, val_mape=67.75%
+    Weights: Client 1=0.344, Client 2=0.332, Client 3=0.325
+    Global Val: MAPE=64.60%, RMSE=$2,820,126.75
+    >>> New best model! Val MAPE=64.60%
+
+[Round 18] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=100.712593, val_mape=61.45%
+    Client 2: 150 samples, train_loss=99.107593, val_mape=53.90%
+    Client 3: 140 samples, train_loss=67.825642, val_mape=56.21%
+    Weights: Client 1=0.322, Client 2=0.346, Client 3=0.331
+    Global Val: MAPE=55.32%, RMSE=$2,502,767.50
+    >>> New best model! Val MAPE=55.32%
+
+[Round 19] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=63.582738, val_mape=49.60%
+    Client 2: 150 samples, train_loss=62.561443, val_mape=44.44%
+    Client 3: 140 samples, train_loss=45.794636, val_mape=46.76%
+    Weights: Client 1=0.344, Client 2=0.320, Client 3=0.336
+    Global Val: MAPE=45.52%, RMSE=$2,147,329.50
+    >>> New best model! Val MAPE=45.52%
+
+[Round 20] Coherence-guided aggregation
+    Client 1: 148 samples, train_loss=42.040814, val_mape=38.60%
+    Client 2: 150 samples, train_loss=37.974179, val_mape=39.52%
+    Client 3: 140 samples, train_loss=26.282891, val_mape=44.53%
+    Weights: Client 1=0.358, Client 2=0.271, Client 3=0.370
+    Global Val: MAPE=38.29%, RMSE=$1,951,281.88
+    >>> New best model! Val MAPE=38.29%
+
+------------------------------------------------------------
+Restoring Best Checkpoint...
+------------------------------------------------------------
+  Last round (Round 20) Val MAPE: 38.29%
+  Best round (Round 20) Val MAPE: 38.29%
+  >>> Model restored to Round 20 (best checkpoint)
+
+  Evaluating best checkpoint on test set...
+
+============================================================
+coherence_guided Training Completed!
+============================================================
+  Best Round: 20
+  Best Val MAPE: 38.29%
+
+Test Set Results (using best checkpoint):
+  MAPE:  53.53%
+  RMSE:  $1,666,878.62
+  MAE:   $1,159,585.75
+  MPE:   -4.00%
+  NRMSE: 18.70%
+  R2:    0.3462
+
+[Bias Correction] Calibrating on validation set...
+  [Bias Correction] Validation MPE = -14.82%
+  [Bias Correction] Correction factor: 1 / (1 + -0.1482) = 1.1740
+  [Bias Correction] Validation MPE after correction: 0.00%
+  [Bias Correction] Validation MAPE after correction: 40.74%
+
+[Bias Correction] Test Results (after correction):
+  MAPE:  57.18%
+  RMSE:  $1,570,352.50
+  MAE:   $1,099,352.00
+  MPE:   12.70%
+  R2:    0.4197
+
+[Saving] Results...
+  Saving best checkpoint (Round 20, Val MAPE: 38.29%)
+  Model saved: results\models\coherence_fedyogi_tr_model.pt
+  Saved: results\logs\coherence_fedyogi_tr_round_metrics.csv
+  Saved: results\logs\coherence_fedyogi_tr_client_metrics.csv
+  Saved: results\logs\coherence_fedyogi_tr_training_history.json
+  Results saved: results\coherence_fedyogi_tr_results.csv
+  Predictions saved: results\coherence_fedyogi_tr_predictions.csv
+  Predictions saved: results\coherence_fedyogi_tr_predictions_bias_corrected.csv
+
+================================================================================
+COMPLETED!
+================================================================================
+
+Test Results:
+  MAPE:  53.53%
+  RMSE:  $1,666,878.62
+  MAE:   $1,159,585.75
+  R2:    0.3462
+================================================================================
+
+--- STDERR ---
+2026-07-06 17:05:48 - MAS-FL - INFO - һ���Ը�֪����Ӧ����ѧϰ��Coherence-FedYogi-TR�� completed. Test MAPE: 53.53%

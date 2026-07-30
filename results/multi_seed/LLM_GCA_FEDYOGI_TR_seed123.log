@@ -1,0 +1,297 @@
+Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --use_llm --temperature 0 --server_optimizer fedyogi --adaptive_mode llm_generative_coherence --output_prefix llm_gca_fedyogi_tr --method_key LLM_GCA_FEDYOGI_TR --server_lr 0.5 --max_coordinate_step_ratio 1 --seed 123
+Return code: 0
+Elapsed: 242.0s
+
+================================================================================
+��������Эͬ����ѧϰ
+================================================================================
+
+[Config] Seed: 123, Device: cpu
+[Config] Use LLM: True
+
+[Data] Loading datasets...
+[Data] Train: 438, Val: 68, Test: 70
+
+================================================================================
+��ģ������������ʽһ���Ը�֪����Ӧ����ѧϰ��LLM-GCA-FedYogi-TR��
+================================================================================
+
+LLM will analyze validation-only training history and choose each round's controls.
+[LLM] Temperature override: 0.0
+[LLM] Provider: deepseek
+[LLM] Decision log: results\logs\llm_gca_fedyogi_tr_llm_decisions.jsonl
+[Model] Architecture: 10 -> [128, 128, 64, 32] -> 1
+[Model] Parameters: 28,993
+[Agent] Client 1: 148 train, 38 val
+[Agent] Client 2: 150 train, 38 val
+[Agent] Client 3: 140 train, 36 val
+
+[Training] Base LR: 0.0005, Base Epochs: 20
+[Training] Server Optimizer: fedyogi, server_lr=0.5, max_coordinate_step_ratio=1.0
+[Training] Rounds: 20
+============================================================
+Starting LLM-GCA FedYogi-TR Training
+============================================================
+  Rounds: 20
+  Client weight bounds: [0.05, 0.8]
+  Weight L1 limit: 0.4
+
+[Round 1] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=1540.507666, val_mape=100.00%
+    Client 2: 150 samples, train_loss=1588.892822, val_mape=100.00%
+    Client 3: 140 samples, train_loss=1358.560034, val_mape=100.00%
+  [LLM] Requesting generative weights for round 1...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=100.00%, RMSE=$3,907,390.25
+    >>> New best model! Val MAPE=100.00%
+
+[Round 2] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=1476.931104, val_mape=99.99%
+    Client 2: 150 samples, train_loss=1495.179395, val_mape=99.99%
+    Client 3: 140 samples, train_loss=1244.799609, val_mape=100.00%
+  [LLM] Requesting generative weights for round 2...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.99%, RMSE=$3,906,519.75
+    >>> New best model! Val MAPE=99.99%
+
+[Round 3] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=1382.932788, val_mape=99.98%
+    Client 2: 150 samples, train_loss=1406.344849, val_mape=99.97%
+    Client 3: 140 samples, train_loss=1178.051074, val_mape=99.99%
+  [LLM] Requesting generative weights for round 3...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.319
+    Global Val: MAPE=99.97%, RMSE=$3,903,847.25
+    >>> New best model! Val MAPE=99.97%
+
+[Round 4] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=1309.227808, val_mape=99.93%
+    Client 2: 150 samples, train_loss=1314.014795, val_mape=99.92%
+    Client 3: 140 samples, train_loss=1130.554639, val_mape=99.94%
+  [LLM] Requesting generative weights for round 4...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.320
+    Global Val: MAPE=99.93%, RMSE=$3,900,785.50
+    >>> New best model! Val MAPE=99.93%
+
+[Round 5] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=1211.491919, val_mape=99.87%
+    Client 2: 150 samples, train_loss=1228.414160, val_mape=99.83%
+    Client 3: 140 samples, train_loss=1009.765625, val_mape=99.88%
+  [LLM] Requesting generative weights for round 5...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.319
+    Global Val: MAPE=99.86%, RMSE=$3,897,216.75
+    >>> New best model! Val MAPE=99.86%
+
+[Round 6] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=1095.332153, val_mape=99.77%
+    Client 2: 150 samples, train_loss=1120.770190, val_mape=99.58%
+    Client 3: 140 samples, train_loss=906.471423, val_mape=99.77%
+  [LLM] Requesting generative weights for round 6...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.319
+    Global Val: MAPE=99.72%, RMSE=$3,889,948.50
+    >>> New best model! Val MAPE=99.72%
+
+[Round 7] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=1001.268127, val_mape=99.56%
+    Client 2: 150 samples, train_loss=1007.395117, val_mape=99.16%
+    Client 3: 140 samples, train_loss=841.500793, val_mape=99.56%
+  [LLM] Requesting generative weights for round 7...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.42%, RMSE=$3,875,163.00
+    >>> New best model! Val MAPE=99.42%
+
+[Round 8] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=892.649207, val_mape=99.12%
+    Client 2: 150 samples, train_loss=900.863599, val_mape=98.62%
+    Client 3: 140 samples, train_loss=744.983057, val_mape=99.26%
+  [LLM] Requesting generative weights for round 8...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.320
+    Global Val: MAPE=98.96%, RMSE=$3,852,572.00
+    >>> New best model! Val MAPE=98.96%
+
+[Round 9] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=805.818152, val_mape=98.67%
+    Client 2: 150 samples, train_loss=799.981360, val_mape=97.66%
+    Client 3: 140 samples, train_loss=638.903699, val_mape=98.53%
+  [LLM] Requesting generative weights for round 9...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=98.22%, RMSE=$3,818,829.50
+    >>> New best model! Val MAPE=98.22%
+
+[Round 10] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=667.939355, val_mape=97.88%
+    Client 2: 150 samples, train_loss=680.405103, val_mape=96.42%
+    Client 3: 140 samples, train_loss=554.110809, val_mape=97.75%
+  [LLM] Requesting generative weights for round 10...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.320
+    Global Val: MAPE=97.15%, RMSE=$3,774,870.25
+    >>> New best model! Val MAPE=97.15%
+
+[Round 11] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=556.958258, val_mape=96.46%
+    Client 2: 150 samples, train_loss=587.047559, val_mape=94.47%
+    Client 3: 140 samples, train_loss=437.199902, val_mape=95.87%
+  [LLM] Requesting generative weights for round 11...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.320
+    Global Val: MAPE=95.40%, RMSE=$3,703,633.50
+    >>> New best model! Val MAPE=95.40%
+
+[Round 12] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=447.419781, val_mape=94.08%
+    Client 2: 150 samples, train_loss=466.926776, val_mape=91.24%
+    Client 3: 140 samples, train_loss=339.693793, val_mape=92.56%
+  [LLM] Requesting generative weights for round 12...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.320
+    Global Val: MAPE=92.99%, RMSE=$3,617,132.75
+    >>> New best model! Val MAPE=92.99%
+
+[Round 13] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=357.896356, val_mape=90.52%
+    Client 2: 150 samples, train_loss=361.619391, val_mape=87.52%
+    Client 3: 140 samples, train_loss=269.278955, val_mape=88.24%
+  [LLM] Requesting generative weights for round 13...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.320
+    Global Val: MAPE=88.96%, RMSE=$3,491,812.00
+    >>> New best model! Val MAPE=88.96%
+
+[Round 14] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=276.844156, val_mape=86.08%
+    Client 2: 150 samples, train_loss=282.633084, val_mape=82.14%
+    Client 3: 140 samples, train_loss=191.732895, val_mape=81.04%
+  [LLM] Requesting generative weights for round 14...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.319
+    Global Val: MAPE=83.55%, RMSE=$3,333,303.75
+    >>> New best model! Val MAPE=83.55%
+
+[Round 15] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=188.989438, val_mape=77.61%
+    Client 2: 150 samples, train_loss=191.019156, val_mape=73.43%
+    Client 3: 140 samples, train_loss=140.180382, val_mape=71.72%
+  [LLM] Requesting generative weights for round 15...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=75.11%, RMSE=$3,116,865.00
+    >>> New best model! Val MAPE=75.11%
+
+[Round 16] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=125.113289, val_mape=66.02%
+    Client 2: 150 samples, train_loss=130.188132, val_mape=63.22%
+    Client 3: 140 samples, train_loss=89.964905, val_mape=60.17%
+  [LLM] Requesting generative weights for round 16...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.319
+    Global Val: MAPE=63.91%, RMSE=$2,854,007.75
+    >>> New best model! Val MAPE=63.91%
+
+[Round 17] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=84.533806, val_mape=53.10%
+    Client 2: 150 samples, train_loss=83.940762, val_mape=52.42%
+    Client 3: 140 samples, train_loss=45.211724, val_mape=45.64%
+  [LLM] Requesting generative weights for round 17...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.337, Client 2=0.343, Client 3=0.320
+    Global Val: MAPE=52.70%, RMSE=$2,543,588.50
+    >>> New best model! Val MAPE=52.70%
+
+[Round 18] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=54.997203, val_mape=45.32%
+    Client 2: 150 samples, train_loss=41.134195, val_mape=40.69%
+    Client 3: 140 samples, train_loss=36.102249, val_mape=43.42%
+  [LLM] Requesting generative weights for round 18...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.337, Client 2=0.343, Client 3=0.320
+    Global Val: MAPE=43.70%, RMSE=$2,235,185.25
+    >>> New best model! Val MAPE=43.70%
+
+[Round 19] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=37.129889, val_mape=43.24%
+    Client 2: 150 samples, train_loss=35.148493, val_mape=37.75%
+    Client 3: 140 samples, train_loss=29.109786, val_mape=43.90%
+  [LLM] Requesting generative weights for round 19...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=40.19%, RMSE=$2,038,161.00
+    >>> New best model! Val MAPE=40.19%
+
+[Round 20] LLM generative coherence aggregation
+    Client 1: 148 samples, train_loss=33.377748, val_mape=47.52%
+    Client 2: 150 samples, train_loss=27.659264, val_mape=36.46%
+    Client 3: 140 samples, train_loss=26.021560, val_mape=43.61%
+  [LLM] Requesting generative weights for round 20...
+  [LLM] Generative weights ready: fallback=False, type=balanced
+    Weights: Client 1=0.338, Client 2=0.343, Client 3=0.319
+    Global Val: MAPE=41.12%, RMSE=$1,905,430.12
+
+------------------------------------------------------------
+Restoring Best Checkpoint...
+------------------------------------------------------------
+  Last round (Round 20) Val MAPE: 41.12%
+  Best round (Round 19) Val MAPE: 40.19%
+  >>> Model restored to Round 19 (best checkpoint)
+
+  Evaluating best checkpoint on test set...
+
+============================================================
+llm_generative_coherence Training Completed!
+============================================================
+  Best Round: 19
+  Best Val MAPE: 40.19%
+
+Test Set Results (using best checkpoint):
+  MAPE:  50.23%
+  RMSE:  $1,685,041.12
+  MAE:   $1,163,887.25
+  MPE:   -7.82%
+  NRMSE: 18.90%
+  R2:    0.3319
+
+[Bias Correction] Calibrating on validation set...
+  [Bias Correction] Validation MPE = -11.69%
+  [Bias Correction] Correction factor: 1 / (1 + -0.1169) = 1.1324
+  [Bias Correction] Validation MPE after correction: 0.00%
+  [Bias Correction] Validation MAPE after correction: 40.65%
+
+[Bias Correction] Test Results (after correction):
+  MAPE:  50.90%
+  RMSE:  $1,552,187.88
+  MAE:   $1,069,424.12
+  MPE:   4.38%
+  R2:    0.4331
+
+[Saving] Results...
+  Saving best checkpoint (Round 19, Val MAPE: 40.19%)
+  Model saved: results\models\llm_gca_fedyogi_tr_model.pt
+  Saved: results\logs\llm_gca_fedyogi_tr_round_metrics.csv
+  Saved: results\logs\llm_gca_fedyogi_tr_client_metrics.csv
+  Saved: results\logs\llm_gca_fedyogi_tr_training_history.json
+  Results saved: results\llm_gca_fedyogi_tr_results.csv
+  Predictions saved: results\llm_gca_fedyogi_tr_predictions.csv
+  Predictions saved: results\llm_gca_fedyogi_tr_predictions_bias_corrected.csv
+
+================================================================================
+COMPLETED!
+================================================================================
+
+Test Results:
+  MAPE:  50.23%
+  RMSE:  $1,685,041.12
+  MAE:   $1,163,887.25
+  R2:    0.3319
+================================================================================
+
+--- STDERR ---
+2026-07-06 17:09:13 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-07-06 17:12:37 - MAS-FL - INFO - ��ģ������������ʽһ���Ը�֪����Ӧ����ѧϰ��LLM-GCA-FedYogi-TR�� completed. Test MAPE: 50.23%

@@ -18,3 +18,8 @@ results/tensorboard/
 
 .DS_Store
 Thumbs.db
+
+.worktrees/
+.env
+.env.*
+results/**/PAUSED.json

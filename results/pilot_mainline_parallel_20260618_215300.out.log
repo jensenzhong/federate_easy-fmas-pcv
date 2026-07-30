@@ -1,0 +1,37 @@
+=== Seed 777: 16 pilot runs queued (max_workers=4) ===
+[OK] seed=777 lr=0.2 ratio=1.0 clip=None best_val_mape=0.4911609 test_mape=0.49565277
+[OK] seed=777 lr=0.2 ratio=1.0 clip=2.0 best_val_mape=0.7562442 test_mape=0.8270985
+[OK] seed=777 lr=0.2 ratio=0.75 clip=None best_val_mape=0.6893472 test_mape=0.7569197
+[OK] seed=777 lr=0.2 ratio=0.75 clip=2.0 best_val_mape=0.9010957 test_mape=0.9190165
+[OK] seed=777 lr=0.3 ratio=1.0 clip=None best_val_mape=0.36241484 test_mape=0.4546385
+[OK] seed=777 lr=0.3 ratio=1.0 clip=2.0 best_val_mape=0.933155 test_mape=0.9371604
+[OK] seed=777 lr=0.3 ratio=0.75 clip=None best_val_mape=0.7634477 test_mape=0.80868345
+[OK] seed=777 lr=0.3 ratio=0.75 clip=2.0 best_val_mape=0.9727098 test_mape=0.9762961
+[OK] seed=777 lr=0.4 ratio=1.0 clip=None best_val_mape=0.3372348 test_mape=0.4656743
+[OK] seed=777 lr=0.4 ratio=0.75 clip=None best_val_mape=0.7668864 test_mape=0.8117903
+[OK] seed=777 lr=0.4 ratio=1.0 clip=2.0 best_val_mape=0.97271436 test_mape=0.9763014
+[OK] seed=777 lr=0.4 ratio=0.75 clip=2.0 best_val_mape=0.98272884 test_mape=0.98550826
+[OK] seed=777 lr=0.5 ratio=1.0 clip=2.0 best_val_mape=0.9816909 test_mape=0.9845775
+[OK] seed=777 lr=0.5 ratio=0.75 clip=None best_val_mape=0.7661451 test_mape=0.8111367
+[OK] seed=777 lr=0.5 ratio=1.0 clip=None best_val_mape=0.33592197 test_mape=0.47681078
+[OK] seed=777 lr=0.5 ratio=0.75 clip=2.0 best_val_mape=0.9836979 test_mape=0.9863689
+=== Seed 888: 16 pilot runs queued (max_workers=4) ===
+[OK] seed=888 lr=0.2 ratio=1.0 clip=2.0 best_val_mape=0.7537482 test_mape=0.8627691
+[OK] seed=888 lr=0.2 ratio=0.75 clip=None best_val_mape=0.6622242 test_mape=0.80093986
+[OK] seed=888 lr=0.2 ratio=1.0 clip=None best_val_mape=0.48290208 test_mape=0.62672216
+[OK] seed=888 lr=0.2 ratio=0.75 clip=2.0 best_val_mape=0.91095966 test_mape=0.93281144
+[OK] seed=888 lr=0.3 ratio=1.0 clip=2.0 best_val_mape=0.93812627 test_mape=0.9436702
+[OK] seed=888 lr=0.3 ratio=0.75 clip=None best_val_mape=0.7792746 test_mape=0.85488033
+[OK] seed=888 lr=0.3 ratio=1.0 clip=None best_val_mape=0.4003839 test_mape=0.5380406
+[OK] seed=888 lr=0.3 ratio=0.75 clip=2.0 best_val_mape=0.9777846 test_mape=0.9813097
+[OK] seed=888 lr=0.4 ratio=1.0 clip=None best_val_mape=0.40206498 test_mape=0.5341683
+[OK] seed=888 lr=0.4 ratio=0.75 clip=2.0 best_val_mape=0.989587 test_mape=0.9913596
+[OK] seed=888 lr=0.4 ratio=0.75 clip=None best_val_mape=0.8098153 test_mape=0.8706725
+[OK] seed=888 lr=0.4 ratio=1.0 clip=2.0 best_val_mape=0.97738636 test_mape=0.9809506
+[OK] seed=888 lr=0.5 ratio=0.75 clip=2.0 best_val_mape=0.99151915 test_mape=0.9929331
+[OK] seed=888 lr=0.5 ratio=0.75 clip=None best_val_mape=0.8123504 test_mape=0.87182134
+[OK] seed=888 lr=0.5 ratio=1.0 clip=None best_val_mape=0.4002266 test_mape=0.53150964
+[OK] seed=888 lr=0.5 ratio=1.0 clip=2.0 best_val_mape=0.988178 test_mape=0.99020344
+Saved pilot summary: C:\Users\23079\Desktop\科研\federate_easy - 重新搞点图片\results\adaptive_pilot\pilot_summary.csv
+Saved pilot group summary: C:\Users\23079\Desktop\科研\federate_easy - 重新搞点图片\results\adaptive_pilot\pilot_group_summary.csv
+Saved pilot recommendation: C:\Users\23079\Desktop\科研\federate_easy - 重新搞点图片\results\adaptive_pilot\pilot_recommendation.csv

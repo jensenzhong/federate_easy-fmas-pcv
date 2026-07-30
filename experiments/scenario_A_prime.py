@@ -1,6 +1,6 @@
 """
 场景A-Prime: 神经网络集中式基线
-在统一全局训练切分上训练PyTorch MLP，建立神经网络的性能上限
+在统一全局训练切分上训练PyTorch MLP，建立集中式神经网络对照
 作为联邦学习场景（B和C）的公平对比基准
 """
 
@@ -18,19 +18,24 @@ sys.path.insert(0, str(project_root))
 
 from src.utils import (
     load_config, set_seed, setup_logger,
-    evaluate_metrics, save_results, format_metrics, get_device
+    evaluate_metrics, save_results, format_metrics, get_device,
+    compute_mape
 )
 from src.data_preprocessing import (
     create_dataloader, load_centralized_datasets
 )
 from src.models import (
-    CostEstimationMLP, evaluate_model, save_model
+    CostEstimationMLP, evaluate_model, save_model, snapshot_model_state
 )
+from src.federated_learning.mas_agents import (
+    apply_mpe_bias_correction, build_prediction_frame
+)
+from src.experiment_names import experiment_display_name
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Scenario A-prime: centralized neural network baseline"
+        description="ANN传统神经网络"
     )
     parser.add_argument(
         "--seed",
@@ -42,11 +47,11 @@ def parse_args():
 
 
 def main():
-    """场景A-Prime主函数"""
+    """ANN传统神经网络主函数"""
     args = parse_args()
     
     print("=" * 80)
-    print("SCENARIO A-PRIME: NEURAL NETWORK CENTRALIZED BASELINE")
+    print("ANN传统神经网络")
     print("=" * 80)
     print("\nTraining PyTorch MLP on unified global training split")
     print("Best config: [64,32], dropout=0.1, lr=0.001\n")
@@ -64,7 +69,7 @@ def main():
         log_file="results/logs/centralized_nn_training.log",
         console=True
     )
-    logger.info("Starting Scenario A-Prime: NN Centralized Baseline")
+    logger.info("Starting ANN传统神经网络")
     
     device = get_device(config['compute']['device'])
     print(f"          Device: {device}")
@@ -83,6 +88,7 @@ def main():
     preprocessor = split_data["preprocessor"]
 
     print(f"          Train/Val/Test samples: {len(split_data['X_train'])}/{len(split_data['X_val'])}/{len(split_data['X_test'])}")
+    print(f"          Training scope: {split_data['training_scope']}")
     print(f"          Transformed target range: {y_transformed.min():.4f} - {y_transformed.max():.4f}")
     print(f"          Transform method: power_0.25 (Y = ContAmnt^0.25)")
     print("          [DONE]\n")
@@ -153,7 +159,7 @@ def main():
         patience=10
     )
     
-    best_val_loss = float('inf')
+    best_val_mape = float('inf')
     best_epoch = 0
     best_model_state = None
     patience_counter = 0
@@ -178,24 +184,29 @@ def main():
         
         avg_train_loss = np.mean(train_losses)
         
-        # 验证
-        val_loss = evaluate_model(model, val_loader, device, return_predictions=False)
-        
+        # 验证：在原始空间计算 MAPE（与联邦场景 B/C 的 checkpoint 选择对齐）
+        _, y_val_pred_trans, y_val_true_trans = evaluate_model(
+            model, val_loader, device, return_predictions=True
+        )
+        y_val_pred_orig = preprocessor.inverse_transform_target(y_val_pred_trans).flatten()
+        y_val_true_orig = preprocessor.inverse_transform_target(y_val_true_trans).flatten()
+        val_mape = compute_mape(y_val_true_orig, y_val_pred_orig)
+
         # 更新学习率调度器
-        scheduler.step(val_loss)
-        
-        # 早停检查
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
+        scheduler.step(val_mape)
+
+        # 早停检查（基于原始空间 MAPE，与联邦场景一致）
+        if val_mape < best_val_mape:
+            best_val_mape = val_mape
             best_epoch = epoch
             patience_counter = 0
-            best_model_state = model.state_dict().copy()
+            best_model_state = snapshot_model_state(model)
         else:
             patience_counter += 1
-        
+
         # 打印进度
         if (epoch + 1) % 20 == 0:
-            msg = f"Epoch [{epoch+1}/{best_config['epochs']}] Train: {avg_train_loss:.6f}, Val: {val_loss:.6f}"
+            msg = f"Epoch [{epoch+1}/{best_config['epochs']}] Train Loss: {avg_train_loss:.6f}, Val MAPE: {val_mape*100:.2f}%"
             print(f"          {msg}")
             logger.info(msg)
         
@@ -211,7 +222,7 @@ def main():
     
     print(f"\n          Training completed!")
     print(f"          Best epoch: {best_epoch + 1}")
-    print(f"          Best val loss: {best_val_loss:.6f}")
+    print(f"          Best val MAPE: {best_val_mape*100:.2f}%")
     print("          [DONE]\n")
     
     # ========== 5. 在测试集上评估 ==========
@@ -247,7 +258,26 @@ def main():
     y_true = preprocessor.inverse_transform_target(y_true_log).flatten()
     
     # 计算指标
-    metrics = evaluate_metrics(y_true, y_pred, metrics=['MAPE', 'RMSE', 'MAE', 'MPE', 'NRMSE'])
+    metrics = evaluate_metrics(y_true, y_pred, metrics=['MAPE', 'RMSE', 'MAE', 'MPE', 'NRMSE', 'R2'])
+
+    _, y_val_pred_log, y_val_true_log = evaluate_model(
+        model=model,
+        data_loader=val_loader,
+        device=device,
+        return_predictions=True
+    )
+    y_val_pred = preprocessor.inverse_transform_target(y_val_pred_log).flatten()
+    y_val_true = preprocessor.inverse_transform_target(y_val_true_log).flatten()
+    y_pred_corrected, bias_correction_value = apply_mpe_bias_correction(
+        val_true=y_val_true,
+        val_pred=y_val_pred,
+        test_pred=y_pred,
+    )
+    corrected_metrics = evaluate_metrics(
+        y_true,
+        y_pred_corrected,
+        metrics=['MAPE', 'RMSE', 'MAE', 'MPE', 'NRMSE', 'R2']
+    )
     
     print(f"\n          Test Results:")
     print(f"          {format_metrics(metrics, percentage=True)}")
@@ -261,31 +291,46 @@ def main():
     # 保存模型
     model_path = Path(config['output']['models_dir']) / "centralized_nn_model.pth"
     save_model(model, model_path, model_info={
-        'scenario': 'A_Prime_Neural_Network',
+        'scenario': experiment_display_name("A_prime"),
         'training_samples': len(X_train),
+        'training_scope': split_data['training_scope'],
         'best_config': best_config,
         'best_epoch': best_epoch + 1,
-        'best_val_loss': best_val_loss,
+        'best_val_mape': best_val_mape,
         'test_metrics': metrics
     })
     print(f"          Model saved: {model_path}")
     
-    # 保存预测结果
-    predictions_df = pd.DataFrame({
-        'True_Value': y_true,
-        'Predicted_Value': y_pred,
-        'Absolute_Error': np.abs(y_true - y_pred),
-        'Percentage_Error': np.abs((y_true - y_pred) / y_true * 100)
-    })
+    metadata = split_data["test_df"][["Client"]].reset_index(drop=True)
+    predictions_df = build_prediction_frame(
+        y_true=y_true,
+        y_pred=y_pred,
+        metadata=metadata,
+        thresholds=config.get("thresholds", {}),
+        scenario=experiment_display_name("A_prime"),
+    )
     predictions_path = Path(config['output']['base_dir']) / "centralized_nn_predictions.csv"
     predictions_df.to_csv(predictions_path, index=False)
     print(f"          Predictions saved: {predictions_path}")
+
+    corrected_predictions_df = build_prediction_frame(
+        y_true=y_true,
+        y_pred=y_pred_corrected,
+        metadata=metadata,
+        thresholds=config.get("thresholds", {}),
+        scenario=f"{experiment_display_name('A_prime')}（偏差校正）",
+    )
+    corrected_predictions_path = Path(config['output']['base_dir']) / "centralized_nn_predictions_bias_corrected.csv"
+    corrected_predictions_df.to_csv(corrected_predictions_path, index=False)
+    print(f"          Bias-corrected predictions saved: {corrected_predictions_path}")
     
     # 保存结果
     results = {
-        'scenario': 'A_Prime_Neural_Network',
+        'scenario': experiment_display_name("A_prime"),
         'model_type': 'PyTorch_MLP',
         'training_samples': len(X_train),
+        'training_scope': split_data['training_scope'],
+        'local_validation_samples_withheld': len(split_data['local_val_df']),
         'test_samples': len(test_loader.dataset),
         'hidden_dims': str(best_config['hidden_dims']),
         'dropout': best_config['dropout'],
@@ -293,12 +338,19 @@ def main():
         'weight_decay': best_config['weight_decay'],
         'batch_size': best_config['batch_size'],
         'best_epoch': best_epoch + 1,
-        'best_val_loss': best_val_loss,
+        'best_val_mape': best_val_mape,
         'test_mape': metrics['MAPE'],
         'test_rmse': metrics['RMSE'],
         'test_mae': metrics['MAE'],
         'test_mpe': metrics['MPE'],
-        'test_nrmse': metrics['NRMSE']
+        'test_nrmse': metrics['NRMSE'],
+        'test_r2': metrics['R2'],
+        'test_mape_corrected': corrected_metrics['MAPE'],
+        'test_rmse_corrected': corrected_metrics['RMSE'],
+        'test_mae_corrected': corrected_metrics['MAE'],
+        'test_mpe_corrected': corrected_metrics['MPE'],
+        'test_r2_corrected': corrected_metrics['R2'],
+        'bias_correction_value': bias_correction_value,
     }
     
     results_path = Path(config['output']['base_dir']) / "centralized_nn_results.csv"
@@ -308,7 +360,7 @@ def main():
     
     # ========== 总结 ==========
     print("=" * 80)
-    print("SCENARIO A-PRIME COMPLETED!")
+    print("ANN传统神经网络 COMPLETED!")
     print("=" * 80)
     print(f"\nNeural Network Configuration:")
     print(f"  Architecture: 10 -> {best_config['hidden_dims']} -> 1")
@@ -324,13 +376,13 @@ def main():
     print(f"  NRMSE: {metrics['NRMSE']*100:.2f}%")
     
     print(f"\nNote:")
-    print(f"  Use results/experiment_ABC_comparison.md for unified cross-scenario comparison.")
+    print(f"  Use regenerated paper tables for unified cross-experiment comparison.")
     
-    print(f"\nThis is the NN UPPER BOUND for federated learning comparison")
+    print(f"\nThis is the centralized ANN baseline for federated learning comparison")
     print("=" * 80)
     
     logger.info("=" * 50)
-    logger.info("Scenario A-Prime completed successfully")
+    logger.info("ANN传统神经网络 completed successfully")
     logger.info(f"Best NN Test MAPE: {metrics['MAPE']*100:.2f}%")
     logger.info("=" * 50)
 
@@ -339,8 +391,7 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(f"\n[ERROR] Scenario A-Prime failed: {e}")
+        print(f"\n[ERROR] ANN传统神经网络 failed: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
-

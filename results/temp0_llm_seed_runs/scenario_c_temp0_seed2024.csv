@@ -1,0 +1,2 @@
+scenario,num_rounds,best_round,test_mape,test_rmse,test_mae,test_mpe,test_nrmse,test_r2,test_mape_corrected,test_rmse_corrected,test_mae_corrected,test_mpe_corrected,test_r2_corrected,bias_correction_value
+C_MAS_FL_LLM,20,20,0.5319283,1848418.8,1366035.5,-0.23857515,0.20735185,0.19601690769195557,0.52991587,1599050.9,1136456.6,0.014031163,0.39831286668777466,-0.24911101

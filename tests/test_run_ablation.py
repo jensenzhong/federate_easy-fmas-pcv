@@ -5,40 +5,26 @@ import pandas as pd
 
 
 class RunAblationTests(unittest.TestCase):
-    def test_bias_correction_config_is_derived_from_llm_run(self):
+    def test_default_ablation_configs_match_new_four_line_mainline(self):
         from scripts.run_ablation import ABLATION_CONFIGS
 
-        ab6 = next(cfg for cfg in ABLATION_CONFIGS if cfg["id"] == "ab-6")
-
-        self.assertTrue(ab6["derive_from"], "ab-5")
-
-    def test_derived_bias_rows_reuse_ab5_corrected_metrics(self):
-        from scripts.run_ablation import derive_bias_correction_rows
-
-        df = pd.DataFrame([
-            {
-                "id": "ab-5",
-                "name": "C-with-LLM",
-                "seed": 42,
-                "success": True,
-                "test_mape": 0.5,
-                "test_mape_corrected": 0.45,
-            }
-        ])
-
-        derived = derive_bias_correction_rows(df)
-
-        self.assertEqual(len(derived), 1)
-        self.assertEqual(derived.iloc[0]["id"], "ab-6")
-        self.assertEqual(derived.iloc[0]["name"], "C-with-LLM+bias")
-        self.assertEqual(derived.iloc[0]["test_mape_corrected"], 0.45)
+        self.assertEqual([cfg["id"] for cfg in ABLATION_CONFIGS], ["ab-1", "ab-2", "ab-3", "ab-4"])
+        self.assertEqual(
+            [cfg["name"] for cfg in ABLATION_CONFIGS],
+            [
+                "传统联邦学习（FedAvg）",
+                "自适应联邦学习（FedYogi-TR）",
+                "验证引导自适应联邦学习（VG-FedYogi-TR）",
+                "多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR）",
+            ],
+        )
 
     def test_main_calls_generate_summary(self):
         import scripts.run_ablation as run_ablation
 
         fake_metrics = {
             "id": "ab-1",
-            "name": "B-baseline",
+            "name": "传统联邦学习（FedAvg）",
             "seed": 42,
             "success": True,
         }

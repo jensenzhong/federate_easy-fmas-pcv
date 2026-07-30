@@ -1,0 +1,19 @@
+
+\begin{table}[htbp]
+\centering
+\caption{Ablation Study: Component Contribution Analysis}
+\label{tab:ablation}
+\begin{tabular}{lcccccc}
+\toprule
+Configuration & FedProx & Strategy & LLM & MAPE (\%) $\downarrow$ & RMSE (\$) $\downarrow$ & $R^2$ $\uparrow$ \\
+\midrule
+传统联邦学习（FedAvg） & No & size\_only & No & 51.63 $\pm$ 5.73 & 1,716,607 $\pm$ 122,275 & 0.3038 $\pm$ 0.1027 \\
+传统联邦学习（FedAvg+FedProx） & Yes & size\_only & No & 51.62 $\pm$ 5.73 & 1,716,555 $\pm$ 122,272 & 0.3038 $\pm$ 0.1027 \\
+多智能体协同联邦学习（固定性能加权） & Yes & perf\_only & No & 51.54 $\pm$ 5.96 & 1,716,277 $\pm$ 117,709 & 0.3042 $\pm$ 0.0987 \\
+多智能体协同联邦学习（固定混合加权） & Yes & hybrid & No & 51.69 $\pm$ 5.80 & 1,717,945 $\pm$ 119,250 & 0.3028 $\pm$ 0.1001 \\
+多智能体协同联邦学习（LLM动态决策） & Yes & Dynamic & Yes & 51.02 $\pm$ 4.58 & 1,727,135 $\pm$ 139,444 & 0.2944 $\pm$ 0.1137 \\
+多智能体协同联邦学习（LLM动态决策+偏差校正） & Yes & Dynamic+BC & Yes & 51.45 $\pm$ 5.09 & 1,535,472 $\pm$ 48,956 & 0.4448 $\pm$ 0.0354 \\
+
+\bottomrule
+\end{tabular}
+\end{table}

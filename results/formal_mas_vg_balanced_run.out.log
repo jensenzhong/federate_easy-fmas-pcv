@@ -1,0 +1,43 @@
+======================================================================
+MULTI-SEED EXPERIMENT RUNNER
+======================================================================
+Scenarios: ['MAS_VG_FEDYOGI_TR']
+Seeds: [42, 123, 456, 789, 2024]
+Total runs: 5
+
+============================================================
+Experiment: 多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR） [MAS_VG_FEDYOGI_TR]
+============================================================
+
+  Running 多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR） (seed=42)...
+    [OK] 104.9s MAPE=0.42235488
+
+  Running 多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR） (seed=123)...
+    [OK] 113.1s MAPE=0.44994426
+
+  Running 多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR） (seed=456)...
+    [OK] 110.9s MAPE=0.46473438
+
+  Running 多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR） (seed=789)...
+    [OK] 106.3s MAPE=0.5852128
+
+  Running 多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR） (seed=2024)...
+    [OK] 106.0s MAPE=0.45993245
+
+
+All results saved to results\multi_seed\all_results.csv
+
+======================================================================
+MULTI-SEED SUMMARY (mean +/- std)
+======================================================================
+
+  多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR）: n=5
+    MAPE: 47.64% +/- 6.30%
+    RMSE: $1,602,800 +/- $66,944
+    MAE: $1,135,565 +/- $62,727
+    MPE: -5.39% +/- 13.45%
+    R2: 0.3946 +/- 0.0508
+    MAPE (bias corrected): 48.17% +/- 4.72%
+
+
+Next step: python scripts/statistical_analysis.py

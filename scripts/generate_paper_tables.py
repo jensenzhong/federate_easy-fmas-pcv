@@ -12,19 +12,29 @@ sys.path.insert(0, str(project_root))
 
 import pandas as pd
 
+from src.experiment_names import (
+    ABLATION_NAMES,
+    EXPERIMENT_ORDER,
+    canonical_experiment_key,
+    experiment_display_name,
+)
 
-SCENARIO_ORDER = ["A", "A_prime", "B", "C"]
-SCENARIO_LABELS = {
-    "A": "A (GBR)",
-    "A_prime": "A' (NN)",
-    "B": "B (FedAvg)",
-    "C": "C (MAS-FL-LLM)",
-}
+SCENARIO_ORDER = EXPERIMENT_ORDER
 SINGLE_RESULT_FILES = {
     "A": "centralized_results.csv",
     "A_prime": "centralized_nn_results.csv",
     "B": "fedavg_results.csv",
-    "C": "scenario_c_results.csv",
+    "B_STRICT": "fedavg_strict_results.csv",
+    "FEDYOGI": "fedyogi_results.csv",
+    "FEDYOGI_STRICT": "fedyogi_strict_results.csv",
+    "VG_FEDYOGI_TR": "vg_fedyogi_tr_results.csv",
+    "MAS_VG_FEDYOGI_TR": "mas_vg_fedyogi_tr_results.csv",
+    "COHERENCE_FEDYOGI_TR": "coherence_fedyogi_tr_results.csv",
+    "LLM_GCA_FEDYOGI_TR": "llm_gca_fedyogi_tr_results.csv",
+    "STRICT_COHERENCE_FEDYOGI_TR": "strict_coherence_fedyogi_tr_results.csv",
+    "LLM_STRICT_GCA_FEDYOGI_TR": "llm_strict_gca_fedyogi_tr_results.csv",
+    "VP_GCA_FEDYOGI_TR": "vp_gca_fedyogi_tr_results.csv",
+    "LLM_VP_GCA_FEDYOGI_TR": "llm_vp_gca_fedyogi_tr_results.csv",
 }
 
 
@@ -55,9 +65,13 @@ def _single_result_row(base, scenario):
         return None
 
     data = pd.read_csv(path).iloc[0]
+    n_label = "1 (单种子)"
+    if "training_samples" in data and pd.notna(data.get("training_samples")):
+        n_label = f"1 (单种子; train={int(data.get('training_samples'))})"
     return {
-        "label": SCENARIO_LABELS[scenario],
-        "n": "1",
+        "label": experiment_display_name(scenario),
+        "scenario_key": scenario,
+        "n": n_label,
         "mape": _fmt_single(data.get("test_mape"), pct=True),
         "rmse": _fmt_single(data.get("test_rmse"), dollar=True),
         "mae": _fmt_single(data.get("test_mae"), dollar=True),
@@ -72,15 +86,20 @@ def _multi_seed_rows(base):
         return []
 
     df = pd.read_csv(path)
+    if "scenario_key" in df.columns:
+        df["scenario_key"] = df["scenario_key"].map(canonical_experiment_key)
+    else:
+        df["scenario_key"] = df["scenario"].map(canonical_experiment_key)
     rows = []
     for scenario in SCENARIO_ORDER:
-        match = df[df["scenario"] == scenario]
+        match = df[df["scenario_key"] == scenario]
         if match.empty:
             continue
 
         data = match.iloc[0]
         rows.append({
-            "label": SCENARIO_LABELS.get(scenario, scenario),
+            "label": experiment_display_name(scenario),
+            "scenario_key": scenario,
             "n": str(int(data.get("n_runs", 0))),
             "mape": _fmt_mean_std(data.get("test_mape_mean"), data.get("test_mape_std"), pct=True),
             "rmse": _fmt_mean_std(data.get("test_rmse_mean"), data.get("test_rmse_std"), dollar=True),
@@ -89,9 +108,11 @@ def _multi_seed_rows(base):
             "r2": _fmt_mean_std(data.get("test_r2_mean"), data.get("test_r2_std")),
         })
 
-        if scenario == "C" and "test_mape_corrected_mean" in data and pd.notna(data.get("test_mape_corrected_mean")):
+        if scenario in ("FEDYOGI", "VG_FEDYOGI_TR", "MAS_VG_FEDYOGI_TR") and "test_mape_corrected_mean" in data and pd.notna(data.get("test_mape_corrected_mean")):
+            corrected_key = f"{scenario}_bias_corrected"
             rows.append({
-                "label": "C + Bias Corr.",
+                "label": experiment_display_name(corrected_key),
+                "scenario_key": corrected_key,
                 "n": str(int(data.get("n_runs", 0))),
                 "mape": _fmt_mean_std(data.get("test_mape_corrected_mean"), data.get("test_mape_corrected_std"), pct=True),
                 "rmse": _fmt_mean_std(data.get("test_rmse_corrected_mean"), data.get("test_rmse_corrected_std"), dollar=True),
@@ -112,18 +133,23 @@ def generate_main_results_table():
     base = Path("results")
     rows = []
     multi_rows = _multi_seed_rows(base)
-    multi_labels = {row["label"] for row in multi_rows}
+    multi_by_key = {row["scenario_key"]: row for row in multi_rows}
 
     for scenario in SCENARIO_ORDER:
-        label = SCENARIO_LABELS[scenario]
-        if label in multi_labels:
-            rows.extend([row for row in multi_rows if row["label"] == label])
+        if scenario in multi_by_key:
+            rows.append(multi_by_key[scenario])
         else:
             single = _single_result_row(base, scenario)
             if single:
                 rows.append(single)
 
-    rows.extend([row for row in multi_rows if row["label"] == "C + Bias Corr."])
+    for corrected_key in [
+        "FEDYOGI_bias_corrected",
+        "VG_FEDYOGI_TR_bias_corrected",
+        "MAS_VG_FEDYOGI_TR_bias_corrected",
+    ]:
+        if corrected_key in multi_by_key:
+            rows.append(multi_by_key[corrected_key])
 
     if not rows:
         print("  [SKIP] No result files found")
@@ -180,12 +206,10 @@ Config & FedProx & Strategy & LLM & MAPE (\%) & Contribution \\
 """
 
     configs = [
-        ("ab-1", "B-baseline", "No", "size\\_only", "No", "Baseline", "test_mape"),
-        ("ab-2", "B+FedProx", "Yes", "size\\_only", "No", "+FedProx regularization", "test_mape"),
-        ("ab-3", "C-fixed-perf", "Yes", "perf\\_only", "No", "+Performance weighting", "test_mape"),
-        ("ab-4", "C-fixed-hybrid", "Yes", "hybrid", "No", "+Hybrid weighting", "test_mape"),
-        ("ab-5", "C-with-LLM", "Yes", "Dynamic", "Yes", "+LLM decision making", "test_mape"),
-        ("ab-6", "C-with-LLM+bias", "Yes", "Dynamic", "Yes", "+Bias correction", "test_mape_corrected"),
+        ("ab-1", ABLATION_NAMES["ab-1"], "No", "size\\_only", "No", "Baseline", "test_mape"),
+        ("ab-2", ABLATION_NAMES["ab-2"], "Yes", "size\\_only", "No", "+FedYogi-TR server adaptation", "test_mape"),
+        ("ab-3", ABLATION_NAMES["ab-3"], "Yes", "validation\\_guided", "No", "+Validation-guided candidate search", "test_mape"),
+        ("ab-4", ABLATION_NAMES["ab-4"], "Yes", "Dynamic", "Yes", "+LLM candidate selection and gating", "test_mape"),
     ]
 
     for exp_id, name, fedprox, strategy, llm, contribution, metric_prefix in configs:
@@ -237,9 +261,10 @@ Scenario & Size Category & N & MAPE (\%) & RMSE (\$) & MAE (\$) & MPE (\%) \\
 
     for scenario in df["scenario"].unique():
         sdf = df[df["scenario"] == scenario]
+        scenario_label = experiment_display_name(scenario)
         first = True
         for _, row in sdf.iterrows():
-            name = scenario if first else ""
+            name = scenario_label if first else ""
             first = False
             n = int(row["n"])
             if n == 0:

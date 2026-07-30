@@ -4,8 +4,8 @@
 生成9张论文所需的图表，所有图表使用英文标签、300 DPI、同时输出PNG+PDF。
 
 图表列表:
-  Fig.1 - 四场景(A/A'/B/C)性能指标对比条形图
-  Fig.2 - B与C收敛曲线对比(MAPE vs Round)
+  Fig.1 - Method performance comparison
+  Fig.2 - Federated method convergence comparison (MAPE vs Round)
   Fig.3 - LLM策略选择时间序列图
   Fig.4 - 三客户端val_mape随轮次变化
   Fig.5 - 预测vs真实散点图（多场景）
@@ -35,6 +35,8 @@ import matplotlib.pyplot as plt
 import warnings
 warnings.filterwarnings("ignore")
 
+from src.experiment_names import experiment_display_name
+
 # 论文级样式设置
 plt.rcParams.update({
     "font.family": "Arial",
@@ -55,11 +57,49 @@ COLORS = {
     "A": "#1f77b4",
     "A_prime": "#ff7f0e",
     "B": "#2ca02c",
-    "C": "#d62728",
-    "C_corrected": "#9467bd",
+    "FEDYOGI": "#9467bd",
+    "VG_FEDYOGI_TR": "#d62728",
+    "MAS_VG_FEDYOGI_TR": "#17becf",
 }
 
 OUTPUT_DIR = Path("results/figures")
+MAINLINE_SCENARIOS = ["A", "A_prime", "B", "FEDYOGI", "VG_FEDYOGI_TR", "MAS_VG_FEDYOGI_TR"]
+FEDERATED_MAINLINE_SCENARIOS = ["B", "FEDYOGI", "VG_FEDYOGI_TR", "MAS_VG_FEDYOGI_TR"]
+SCATTER_SCENARIOS = ["A_prime", "B", "FEDYOGI", "VG_FEDYOGI_TR", "MAS_VG_FEDYOGI_TR"]
+BIAS_CORRECTION_SCENARIOS = ["FEDYOGI", "VG_FEDYOGI_TR", "MAS_VG_FEDYOGI_TR"]
+
+RESULT_FILES = {
+    "A": "centralized_results.csv",
+    "A_prime": "centralized_nn_results.csv",
+    "B": "fedavg_results.csv",
+    "FEDYOGI": "fedyogi_results.csv",
+    "VG_FEDYOGI_TR": "vg_fedyogi_tr_results.csv",
+    "MAS_VG_FEDYOGI_TR": "mas_vg_fedyogi_tr_results.csv",
+}
+
+PREDICTION_FILES = {
+    "A": "centralized_predictions.csv",
+    "A_prime": "centralized_nn_predictions.csv",
+    "B": "fedavg_predictions.csv",
+    "FEDYOGI": "fedyogi_predictions.csv",
+    "VG_FEDYOGI_TR": "vg_fedyogi_tr_predictions.csv",
+    "MAS_VG_FEDYOGI_TR": "mas_vg_fedyogi_tr_predictions.csv",
+}
+
+ROUND_METRIC_FILES = {
+    "B": "scene_B_round_metrics.csv",
+    "FEDYOGI": "fedyogi_round_metrics.csv",
+    "VG_FEDYOGI_TR": "vg_fedyogi_tr_round_metrics.csv",
+    "MAS_VG_FEDYOGI_TR": "mas_vg_fedyogi_tr_round_metrics.csv",
+}
+
+CLIENT_METRIC_FILES = {
+    "MAS_VG_FEDYOGI_TR": "mas_vg_fedyogi_tr_client_metrics.csv",
+}
+
+LLM_DECISION_FILES = {
+    "MAS_VG_FEDYOGI_TR": "mas_vg_fedyogi_tr_llm_decisions.jsonl",
+}
 
 
 def save_fig(fig, name: str):
@@ -75,24 +115,21 @@ def save_fig(fig, name: str):
 # Fig.1: 四场景性能指标对比条形图
 # ============================================================
 def fig1_scenario_comparison():
-    """四场景(A/A'/B/C)性能指标对比"""
+    """Method-level performance comparison."""
     print("\n[Fig.1] Scenario Performance Comparison")
 
     base = Path("results")
     scenarios = {}
 
     # 加载各场景结果CSV
-    files = {
-        "A (GBR)": "centralized_results.csv",
-        "A' (NN)": "centralized_nn_results.csv",
-        "B (FedAvg)": "fedavg_results.csv",
-        "C (MAS-FL)": "scenario_c_results.csv",
-    }
-
-    for name, filename in files.items():
+    color_keys = []
+    for key in MAINLINE_SCENARIOS:
+        filename = RESULT_FILES[key]
         path = base / filename
         if path.exists():
             df = pd.read_csv(path)
+            name = experiment_display_name(key)
+            color_keys.append(key)
             scenarios[name] = {
                 "MAPE": df["test_mape"].values[0] * 100,
                 "RMSE": df["test_rmse"].values[0] / 1000,  # 转为k$
@@ -109,7 +146,7 @@ def fig1_scenario_comparison():
 
     names = list(scenarios.keys())
     x = np.arange(len(names))
-    colors = [COLORS.get(k.split()[0], "#333333") for k in names]
+    colors = [COLORS.get(k, "#333333") for k in color_keys]
 
     # (a) MAPE
     ax = axes[0, 0]
@@ -172,39 +209,43 @@ def fig1_scenario_comparison():
 # ============================================================
 def fig2_convergence_comparison():
     """B与C收敛曲线对比(MAPE vs Round)"""
-    print("\n[Fig.2] Convergence Comparison (B vs C)")
+    print("\n[Fig.2] Federated Method Convergence Comparison")
 
     base = Path("results/logs")
 
-    b_path = base / "scene_B_round_metrics.csv"
-    c_path = base / "scene_C_round_metrics.csv"
-
-    if not b_path.exists() or not c_path.exists():
-        print("  [SKIP] Missing round_metrics.csv for B or C")
+    available = {
+        key: base / filename
+        for key, filename in ROUND_METRIC_FILES.items()
+        if (base / filename).exists()
+    }
+    if len(available) < 2:
+        print("  [SKIP] Missing round_metrics.csv for federated methods")
         return
 
-    df_b = pd.read_csv(b_path)
-    df_c = pd.read_csv(c_path)
-
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.5))
-    fig.suptitle("Federated Learning Convergence: B (FedAvg) vs C (MAS-FL-LLM)",
+    fig.suptitle("Federated Learning Convergence by Method",
                  fontsize=13, fontweight="bold")
 
     # (a) MAPE convergence
-    ax1.plot(df_b["round"], df_b["global_val_mape"] * 100, "o-",
-             color=COLORS["B"], linewidth=2, markersize=4, label="B (FedAvg)")
-    ax1.plot(df_c["round"], df_c["global_val_mape"] * 100, "s-",
-             color=COLORS["C"], linewidth=2, markersize=4, label="C (MAS-FL-LLM)")
+    markers = {"B": "o", "FEDYOGI": "^", "VG_FEDYOGI_TR": "s", "MAS_VG_FEDYOGI_TR": "D"}
+    for key, path in available.items():
+        df_method = pd.read_csv(path)
+        ax1.plot(df_method["round"], df_method["global_val_mape"] * 100,
+                 marker=markers.get(key, "o"), linestyle="-",
+                 color=COLORS.get(key, "#333333"), linewidth=2, markersize=4,
+                 label=experiment_display_name(key))
     ax1.set_xlabel("Federated Round")
     ax1.set_ylabel("Global Validation MAPE (%)")
     ax1.set_title("(a) MAPE Convergence")
     ax1.legend()
 
     # (b) RMSE convergence
-    ax2.plot(df_b["round"], df_b["global_val_rmse"] / 1e6, "o-",
-             color=COLORS["B"], linewidth=2, markersize=4, label="B (FedAvg)")
-    ax2.plot(df_c["round"], df_c["global_val_rmse"] / 1e6, "s-",
-             color=COLORS["C"], linewidth=2, markersize=4, label="C (MAS-FL-LLM)")
+    for key, path in available.items():
+        df_method = pd.read_csv(path)
+        ax2.plot(df_method["round"], df_method["global_val_rmse"] / 1e6,
+                 marker=markers.get(key, "o"), linestyle="-",
+                 color=COLORS.get(key, "#333333"), linewidth=2, markersize=4,
+                 label=experiment_display_name(key))
     ax2.set_xlabel("Federated Round")
     ax2.set_ylabel("Global Validation RMSE (M$)")
     ax2.set_title("(b) RMSE Convergence")
@@ -218,57 +259,68 @@ def fig2_convergence_comparison():
 # Fig.3: LLM策略选择时间序列图
 # ============================================================
 def fig3_llm_strategy_timeline():
-    """LLM策略选择随轮次变化"""
+    """MAS-VG candidate request, selection, and gate timeline."""
     print("\n[Fig.3] LLM Strategy Selection Timeline")
 
-    decisions_path = Path("results/logs/scene_C_llm_decisions.jsonl")
+    round_path = Path("results/logs/mas_vg_fedyogi_tr_round_metrics.csv")
+    decisions_path = Path("results/logs/mas_vg_fedyogi_tr_llm_decisions.jsonl")
+    if not round_path.exists():
+        print("  [SKIP] No MAS-VG round metrics found")
+        return
     if not decisions_path.exists():
-        print("  [SKIP] No LLM decisions log found")
+        print("  [SKIP] No MAS-VG LLM decisions log found")
         return
 
-    decisions = []
+    rounds_df = pd.read_csv(round_path)
+    rounds = rounds_df["round"].tolist()
+    requested_ids = rounds_df["requested_candidate_id"].fillna("none").astype(str).tolist()
+    selected_ids = rounds_df["selected_candidate_id"].fillna("none").astype(str).tolist()
+    gate_statuses = rounds_df["gate_status"].fillna("unknown").astype(str).tolist()
+
+    candidate_ids = sorted({*requested_ids, *selected_ids})
+    candidate_to_y = {candidate_id: index for index, candidate_id in enumerate(candidate_ids)}
+    requested_y = [candidate_to_y[candidate_id] for candidate_id in requested_ids]
+    selected_y = [candidate_to_y[candidate_id] for candidate_id in selected_ids]
+
+    decision_rounds = []
     with open(decisions_path, "r", encoding="utf-8") as f:
         for line in f:
-            if line.strip():
-                decisions.append(json.loads(line.strip()))
-
-    rounds = [d["round"] for d in decisions]
-    strategies = [d["decision"]["chosen_strategy_name"] for d in decisions]
-    lr_scales = [d["decision"].get("lr_scale", 1.0) for d in decisions]
-    epoch_deltas = [d["decision"].get("epoch_delta", 0) for d in decisions]
-
-    strategy_names = sorted(set(strategies))
-    strategy_to_num = {s: i for i, s in enumerate(strategy_names)}
-    strategy_nums = [strategy_to_num[s] for s in strategies]
+            if not line.strip():
+                continue
+            payload = json.loads(line.strip())
+            decision_rounds.append(payload.get("round"))
 
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 8), sharex=True)
-    fig.suptitle("LLM Decision Timeline (Scenario C)", fontsize=13, fontweight="bold")
+    fig.suptitle("MAS-VG Candidate Selection and Gate Timeline", fontsize=13, fontweight="bold")
 
-    # (a) Strategy selection
-    scatter_colors = plt.cm.Set2(np.linspace(0, 1, len(strategy_names)))
-    for i, sname in enumerate(strategy_names):
-        mask = [s == sname for s in strategies]
-        r = [rounds[j] for j in range(len(rounds)) if mask[j]]
-        ax1.scatter(r, [i] * len(r), color=scatter_colors[i], s=50, label=sname, zorder=3)
-    ax1.set_ylabel("Strategy")
-    ax1.set_yticks(range(len(strategy_names)))
-    ax1.set_yticklabels(strategy_names)
-    ax1.set_title("(a) Strategy Selection per Round")
+    ax1.plot(rounds, requested_y, "o--", color="#7f7f7f", linewidth=1.5, markersize=4, label="Requested")
+    ax1.plot(rounds, selected_y, "o-", color=COLORS["MAS_VG_FEDYOGI_TR"], linewidth=2, markersize=4, label="Selected")
+    for round_id in decision_rounds:
+        ax1.axvline(round_id, color="#d9d9d9", linestyle=":", linewidth=0.8, zorder=0)
+    ax1.set_ylabel("Candidate ID")
+    ax1.set_yticks(range(len(candidate_ids)))
+    ax1.set_yticklabels(candidate_ids)
+    ax1.set_title("(a) Requested vs Selected Candidate")
     ax1.legend(loc="upper right", fontsize=8)
 
-    # (b) Learning rate scale
-    ax2.plot(rounds, lr_scales, "o-", color="#1f77b4", markersize=4)
-    ax2.axhline(y=1.0, color="gray", linestyle="--", alpha=0.5)
-    ax2.set_ylabel("LR Scale")
-    ax2.set_title("(b) Learning Rate Scale Factor")
+    gate_names = sorted(set(gate_statuses))
+    gate_to_y = {name: index for index, name in enumerate(gate_names)}
+    gate_colors = plt.cm.Set2(np.linspace(0, 1, len(gate_names)))
+    for gate_name, color in zip(gate_names, gate_colors):
+        gate_rounds = [rounds[index] for index, value in enumerate(gate_statuses) if value == gate_name]
+        gate_y = [gate_to_y[gate_name]] * len(gate_rounds)
+        ax2.scatter(gate_rounds, gate_y, color=color, s=45, label=gate_name, zorder=3)
+    ax2.set_ylabel("Gate Status")
+    ax2.set_yticks(range(len(gate_names)))
+    ax2.set_yticklabels(gate_names)
+    ax2.set_title("(b) Gate Decision per Round")
+    ax2.legend(loc="upper right", fontsize=8)
 
-    # (c) Epoch delta
-    ax3.bar(rounds, epoch_deltas, color=["green" if d >= 0 else "red" for d in epoch_deltas],
-            alpha=0.7, edgecolor="black", linewidth=0.5)
-    ax3.axhline(y=0, color="black", linewidth=1)
+    candidate_score = pd.to_numeric(rounds_df.get("candidate_score"), errors="coerce")
+    ax3.plot(rounds, candidate_score, "o-", color="#1f77b4", markersize=4)
     ax3.set_xlabel("Round")
-    ax3.set_ylabel("Epoch Delta")
-    ax3.set_title("(c) Local Epoch Adjustment")
+    ax3.set_ylabel("Candidate Score")
+    ax3.set_title("(c) Validation-Based Candidate Score")
 
     fig.tight_layout()
     save_fig(fig, "fig3_llm_strategy_timeline")
@@ -281,9 +333,9 @@ def fig4_client_mape_trends():
     """三客户端验证MAPE随轮次变化"""
     print("\n[Fig.4] Client Validation MAPE Trends")
 
-    client_path = Path("results/logs/scene_C_client_metrics.csv")
+    client_path = Path("results/logs/mas_vg_fedyogi_tr_client_metrics.csv")
     if not client_path.exists():
-        print("  [SKIP] No client metrics found")
+        print("  [SKIP] No MAS-VG client metrics found")
         return
 
     df = pd.read_csv(client_path)
@@ -300,7 +352,7 @@ def fig4_client_mape_trends():
 
     ax.set_xlabel("Federated Round")
     ax.set_ylabel("Client Validation MAPE (%)")
-    ax.set_title("Client-wise Validation MAPE Trends (Scenario C)", fontweight="bold")
+    ax.set_title("Client-wise Validation MAPE Trends in MAS-VG-FedYogi-TR", fontweight="bold")
     ax.legend()
     fig.tight_layout()
     save_fig(fig, "fig4_client_mape_trends")
@@ -314,13 +366,10 @@ def fig5_prediction_scatter():
     print("\n[Fig.5] Prediction vs True Value Scatter")
 
     base = Path("results")
-    pred_files = {
-        "A (GBR)": "centralized_predictions.csv",
-        "A' (NN)": "centralized_nn_predictions.csv",
-    }
-
     loaded = {}
-    for name, filename in pred_files.items():
+    for key in SCATTER_SCENARIOS:
+        name = experiment_display_name(key)
+        filename = PREDICTION_FILES[key]
         path = base / filename
         if path.exists():
             loaded[name] = pd.read_csv(path)
@@ -385,19 +434,7 @@ def fig6_ablation():
 
     fig, ax = plt.subplots(figsize=(11, 5.5))
 
-    label_map = {
-        "B-baseline": "Fixed-weight baseline",
-        "B+FedProx": "Baseline + proximal constraint",
-        "C-fixed-perf": "Performance-only weighting",
-        "C-fixed-hybrid": "Hybrid weighting",
-        "C-perf_only": "Performance-only weighting",
-        "C-perf\\_only": "Performance-only weighting",
-        "C-hybrid": "Hybrid weighting",
-        "C-LLM": "LLM-driven weighting",
-        "C-LLM+bias": "LLM weighting + bias correction",
-    }
-    raw_names = [name.replace("\\_", "_") for name in df["name"].tolist()]
-    names = [label_map.get(name, name) for name in raw_names]
+    names = [str(name).replace("\\_", "_") for name in df["name"].tolist()]
     mape = df[metric_col].to_numpy(dtype=float) * 100
     mape_std = (
         df[std_col].fillna(0).to_numpy(dtype=float) * 100
@@ -494,7 +531,8 @@ def fig7_multi_seed_boxplot():
         print("  [SKIP] No MAPE data in results")
         return
 
-    scenarios = sorted(df["scenario"].unique())
+    scenario_order = [experiment_display_name(key) for key in MAINLINE_SCENARIOS]
+    scenarios = [scenario for scenario in scenario_order if scenario in set(df["scenario"].unique())]
     data = [df[df["scenario"] == s]["test_mape"].values * 100 for s in scenarios]
 
     fig, ax = plt.subplots(figsize=(8, 5))
@@ -569,56 +607,54 @@ def fig9_bias_correction():
     """偏差校正前后对比"""
     print("\n[Fig.9] Bias Correction Before vs After")
 
-    result_path = Path("results/scenario_c_results.csv")
-    if not result_path.exists():
-        print("  [SKIP] No scenario C results found")
+    rows = []
+    for scenario_key in BIAS_CORRECTION_SCENARIOS:
+        result_path = Path("results") / RESULT_FILES[scenario_key]
+        if not result_path.exists():
+            continue
+        df = pd.read_csv(result_path)
+        if df.empty or "test_mape_corrected" not in df.columns:
+            continue
+        row = df.iloc[0]
+        rows.append({
+            "label": experiment_display_name(scenario_key),
+            "before": float(row["test_mape"]) * 100,
+            "after": float(row["test_mape_corrected"]) * 100,
+        })
+
+    if not rows:
+        print("  [SKIP] No bias-corrected adaptive results found")
         return
 
-    df = pd.read_csv(result_path)
+    labels = [row["label"] for row in rows]
+    before = [row["before"] for row in rows]
+    after = [row["after"] for row in rows]
+    x = np.arange(len(labels))
+    width = 0.36
 
-    has_corrected = "test_mape_corrected" in df.columns
-    if not has_corrected:
-        print("  [SKIP] No bias-corrected results in CSV")
-        return
+    fig, ax = plt.subplots(figsize=(10, 4.8))
+    fig.suptitle("Bias Correction Effect Across Adaptive Mainline Methods", fontsize=13, fontweight="bold")
 
-    metrics = ["MAPE", "RMSE", "MAE", "MPE"]
-    before = [
-        df["test_mape"].values[0] * 100,
-        df["test_rmse"].values[0] / 1000,
-        df["test_mae"].values[0] / 1000,
-        df["test_mpe"].values[0] * 100,
-    ]
-    after = [
-        df["test_mape_corrected"].values[0] * 100,
-        df["test_rmse_corrected"].values[0] / 1000,
-        df["test_mae_corrected"].values[0] / 1000,
-        df["test_mpe_corrected"].values[0] * 100,
-    ]
+    before_bars = ax.bar(x - width / 2, before, width, label="Before", color="#ff7f0e", edgecolor="black", alpha=0.8)
+    after_bars = ax.bar(x + width / 2, after, width, label="After", color="#2ca02c", edgecolor="black", alpha=0.8)
 
-    fig, axes = plt.subplots(1, 4, figsize=(14, 4))
-    fig.suptitle("Bias Correction Effect on Scenario C", fontsize=13, fontweight="bold")
+    ax.set_ylabel("Test MAPE (%)")
+    ax.set_title("Bias Correction Before vs After")
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=12, ha="right")
+    ax.legend()
 
-    for ax, metric, bval, aval in zip(axes, metrics, before, after):
-        x = [0, 1]
-        colors_ba = ["#ff7f0e", "#2ca02c"]
-        bars = ax.bar(x, [bval, aval], color=colors_ba, edgecolor="black", alpha=0.8)
-        ax.set_xticks(x)
-        ax.set_xticklabels(["Before", "After"])
-
-        unit = "%" if metric in ["MAPE", "MPE"] else "k$"
-        ax.set_ylabel(f"{metric} ({unit})")
-        ax.set_title(metric)
-
-        for bar, val in zip(bars, [bval, aval]):
-            ax.text(bar.get_x() + bar.get_width()/2, bar.get_height(),
-                    f"{val:.1f}", ha="center", va="bottom", fontsize=9, fontweight="bold")
-
-        # 添加改善百分比
-        if bval != 0:
-            change = (aval - bval) / abs(bval) * 100
-            color = "green" if change < 0 else "red"
-            ax.text(0.5, 0.95, f"{change:+.1f}%", transform=ax.transAxes,
-                    ha="center", va="top", fontsize=10, color=color, fontweight="bold")
+    for bars in (before_bars, after_bars):
+        for bar in bars:
+            val = bar.get_height()
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                val,
+                f"{val:.2f}",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+            )
 
     fig.tight_layout()
     save_fig(fig, "fig9_bias_correction")
@@ -629,7 +665,7 @@ def fig9_bias_correction():
 # ============================================================
 FIGURE_FUNCTIONS = {
     1: ("Scenario Performance Comparison", fig1_scenario_comparison),
-    2: ("Convergence Comparison (B vs C)", fig2_convergence_comparison),
+    2: ("Federated Method Convergence Comparison", fig2_convergence_comparison),
     3: ("LLM Strategy Selection Timeline", fig3_llm_strategy_timeline),
     4: ("Client MAPE Trends", fig4_client_mape_trends),
     5: ("Prediction vs True Scatter", fig5_prediction_scatter),

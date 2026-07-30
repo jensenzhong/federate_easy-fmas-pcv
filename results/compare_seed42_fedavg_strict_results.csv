@@ -1,0 +1,2 @@
+scenario,scenario_key,num_rounds,best_round,strict_no_server_validation,checkpoint_policy,validation_source,test_mape,test_rmse,test_mae,test_mpe,test_nrmse,test_r2,test_mape_corrected,test_rmse_corrected,test_mae_corrected,test_mpe_corrected,test_r2_corrected,bias_correction_value
+严格无服务器数据传统联邦学习（FedAvg-Final）,B_STRICT,20,20,True,final_round,client_reported,0.41803765,1669006.5,1177543.6,-0.16094753,0.18722574,0.3445158004760742,0.41803765,1669006.5,1177543.6,-0.16094753,0.3445158004760742,0.0

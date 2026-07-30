@@ -4,12 +4,12 @@
 消融矩阵:
 | 编号  | 配置名           | 轮数 | FedProx mu | 策略               | LLM |
 |-------|------------------|------|------------|-------------------|-----|
-| ab-1  | B-baseline       | 20   | 0.0        | size_only         | 无  |
-| ab-2  | B+FedProx        | 20   | 0.01       | size_only         | 无  |
-| ab-3  | C-fixed-perf     | 20   | 0.01       | perf_only(固定)   | 无  |
-| ab-4  | C-fixed-hybrid   | 20   | 0.01       | hybrid(固定)      | 无  |
-| ab-5  | C-with-LLM       | 20   | 0.01       | LLM动态           | 有  |
-| ab-6  | C-with-LLM+bias  | 20   | 0.01       | LLM动态+偏差校正  | 有  |
+| ab-1  | 传统联邦学习（FedAvg）                       | 20 | 0.0  | size_only       | 无 |
+| ab-2  | 传统联邦学习（FedAvg+FedProx）                | 20 | 0.01 | size_only       | 无 |
+| ab-3  | 多智能体协同联邦学习（固定性能加权）           | 20 | 0.01 | perf_only(固定) | 无 |
+| ab-4  | 多智能体协同联邦学习（固定混合加权）           | 20 | 0.01 | hybrid(固定)    | 无 |
+| ab-5  | 多智能体协同联邦学习（LLM动态决策）            | 20 | 0.01 | LLM动态         | 有 |
+| ab-6  | 多智能体协同联邦学习（LLM动态决策+偏差校正）   | 20 | 0.01 | LLM动态+偏差校正| 有 |
 
 用法:
     python scripts/run_ablation.py                          # 运行全部消融实验 (5个种子)
@@ -29,12 +29,14 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from src.experiment_names import ABLATION_NAMES
+
 DEFAULT_SEEDS = [42, 123, 456, 789, 2024]
 
 ABLATION_CONFIGS = [
     {
         "id": "ab-1",
-        "name": "B-baseline",
+        "name": ABLATION_NAMES["ab-1"],
         "description": "Pure FedAvg baseline (no FedProx)",
         "script": "experiments/scenario_B_fedavg.py",
         "args": ["--num_rounds", "20", "--fedprox_mu", "0.0", "--strategy", "size_only",
@@ -42,39 +44,46 @@ ABLATION_CONFIGS = [
     },
     {
         "id": "ab-2",
-        "name": "B+FedProx",
-        "description": "FedAvg + FedProx regularization",
-        "script": "experiments/scenario_B_fedavg.py",
-        "args": ["--num_rounds", "20", "--fedprox_mu", "0.01", "--strategy", "size_only",
-                 "--output_prefix", "ablation_ab2"],
+        "name": ABLATION_NAMES["ab-2"],
+        "description": "FedYogi-TR adaptive federated baseline",
+        "script": "experiments/scenario_C_llm.py",
+        "args": [
+            "--num_rounds", "20",
+            "--strategy", "size_only",
+            "--server_optimizer", "fedyogi",
+            "--output_prefix", "ablation_ab2",
+            "--method_key", "FEDYOGI",
+        ],
     },
     {
         "id": "ab-3",
-        "name": "C-fixed-perf",
-        "description": "Fixed perf_only strategy + FedProx",
+        "name": ABLATION_NAMES["ab-3"],
+        "description": "Validation-guided FedYogi-TR without LLM candidate selection",
         "script": "experiments/scenario_C_llm.py",
-        "args": ["--num_rounds", "20", "--strategy", "perf_only"],
+        "args": [
+            "--num_rounds", "20",
+            "--strategy", "size_only",
+            "--server_optimizer", "fedyogi",
+            "--adaptive_mode", "validation_guided",
+            "--output_prefix", "ablation_ab3",
+            "--method_key", "VG_FEDYOGI_TR",
+        ],
     },
     {
         "id": "ab-4",
-        "name": "C-fixed-hybrid",
-        "description": "Fixed hybrid strategy + FedProx",
+        "name": ABLATION_NAMES["ab-4"],
+        "description": "Validation-guided FedYogi-TR with multi-agent LLM candidate selection",
         "script": "experiments/scenario_C_llm.py",
-        "args": ["--num_rounds", "20", "--strategy", "hybrid"],
-    },
-    {
-        "id": "ab-5",
-        "name": "C-with-LLM",
-        "description": "Full MAS-FL-LLM (dynamic strategy selection, 20 rounds)",
-        "script": "experiments/scenario_C_llm.py",
-        "args": ["--num_rounds", "20", "--use_llm"],
-    },
-    {
-        "id": "ab-6",
-        "name": "C-with-LLM+bias",
-        "description": "Bias-corrected metrics derived from the same ab-5 LLM run",
-        "derive_from": "ab-5",
-        "note": "Derived from ab-5 corrected metrics to avoid a second stochastic LLM run."
+        "args": [
+            "--num_rounds", "20",
+            "--use_llm",
+            "--temperature", "0",
+            "--server_optimizer", "fedyogi",
+            "--adaptive_mode", "mas_validation_guided",
+            "--llm_score_tolerance", "0.003",
+            "--output_prefix", "ablation_ab4",
+            "--method_key", "MAS_VG_FEDYOGI_TR",
+        ],
     },
 ]
 
@@ -200,30 +209,6 @@ def _parse_output_metrics(stdout: str) -> dict:
     return metrics
 
 
-def derive_bias_correction_rows(df):
-    """Create ab-6 rows from ab-5 corrected metrics without rerunning LLM."""
-    import pandas as pd
-
-    if df.empty or "id" not in df.columns:
-        return pd.DataFrame()
-
-    source = df[(df["id"] == "ab-5") & (df["success"] == True)].copy()
-    if source.empty:
-        return pd.DataFrame()
-
-    corrected_cols = [
-        "test_mape_corrected", "test_rmse_corrected", "test_mae_corrected",
-        "test_mpe_corrected", "test_r2_corrected",
-    ]
-    if not any(col in source.columns and source[col].notna().any() for col in corrected_cols):
-        return pd.DataFrame()
-
-    source["id"] = "ab-6"
-    source["name"] = "C-with-LLM+bias"
-    source["description"] = "Derived bias-corrected metrics from ab-5"
-    return source
-
-
 def generate_summary(all_results: list, output_dir: str):
     """生成消融实验统计汇总CSV"""
     import pandas as pd
@@ -232,10 +217,6 @@ def generate_summary(all_results: list, output_dir: str):
     if df.empty:
         print("  No results to summarize.")
         return
-
-    derived_df = derive_bias_correction_rows(df)
-    if not derived_df.empty:
-        df = pd.concat([df, derived_df], ignore_index=True)
 
     # 保存原始结果
     raw_path = Path(output_dir) / "ablation_logs" / "ablation_all_results.csv"
@@ -328,13 +309,9 @@ def main():
     else:
         print(f"Running all {len(configs)} experiments")
 
-    runnable_configs = [c for c in configs if "derive_from" not in c]
-    derived_configs = [c for c in configs if "derive_from" in c]
-    if derived_configs:
-        print(f"Derived experiments: {[c['id'] for c in derived_configs]} will be computed from source runs.")
-
+    runnable_configs = list(configs)
     total_runs = len(runnable_configs) * len(seeds)
-    print(f"Total runs: {total_runs} ({len(runnable_configs)} runnable configs x {len(seeds)} seeds)")
+    print(f"Total runs: {total_runs} ({len(runnable_configs)} configs x {len(seeds)} seeds)")
 
     all_results = []
     run_count = 0
@@ -350,9 +327,6 @@ def main():
     print("ABLATION STUDY RUN STATUS")
     print("=" * 70)
     for config in configs:
-        if "derive_from" in config:
-            print(f"  [DERIVED] {config['id']}: {config['name']} from {config['derive_from']}")
-            continue
         exp_results = [r for r in all_results if r["id"] == config["id"]]
         ok_count = sum(1 for r in exp_results if r["success"])
         total = len(exp_results)

@@ -28,7 +28,9 @@
         "alpha_min": 0.1,
         "alpha_max": 0.6
       }
-    }
+    },
+    "server_optimizer": "fedavg",
+    "max_coordinate_step_ratio": null
   },
   "training_summary": {
     "total_rounds": 20,
@@ -46,30 +48,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 12.892064884500293,
+        "update_norm": 12.892064884500293,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 1592.2831787109376,
-          "val_mape": "0.99998534",
-          "val_rmse": "3987787.8",
-          "val_mae": "3242024.5",
-          "val_mpe": "-0.99998534"
+          "val_mape": 0.9999853372573853,
+          "val_rmse": 3987787.75,
+          "val_mae": 3242024.5,
+          "val_mpe": -0.9999853372573853,
+          "update_norm": 12.975531005703132,
+          "update_delta_norm": 12.975531005703132,
+          "validation_gap": 1.9999706745147705
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 1628.647900390625,
-          "val_mape": "0.99999136",
-          "val_rmse": "4608958.5",
-          "val_mae": "3895077.0",
-          "val_mpe": "-0.99999136"
+          "val_mape": 0.9999913573265076,
+          "val_rmse": 4608958.5,
+          "val_mae": 3895077.0,
+          "val_mpe": -0.9999913573265076,
+          "update_norm": 12.890612660970094,
+          "update_delta_norm": 12.890612660970094,
+          "validation_gap": 1.9999827146530151
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 1392.4431884765625,
-          "val_mape": "0.9999985",
-          "val_rmse": "2321858.8",
-          "val_mae": "1997774.5",
-          "val_mpe": "-0.9999985"
+          "val_mape": 0.9999985098838806,
+          "val_rmse": 2321858.75,
+          "val_mae": 1997774.5,
+          "val_mpe": -0.9999985098838806,
+          "update_norm": 13.317518509646249,
+          "update_delta_norm": 13.317518509646249,
+          "validation_gap": 1.9999970197677612
         }
       },
       "global_val": {
@@ -91,30 +116,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 3.3699641774754303,
+        "update_norm": 3.3699641774754303,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 1539.899658203125,
-          "val_mape": "0.9999651",
-          "val_rmse": "3987550.5",
-          "val_mae": "3241896.8",
-          "val_mpe": "-0.9999651"
+          "val_mape": 0.9999650716781616,
+          "val_rmse": 3987550.5,
+          "val_mae": 3241896.75,
+          "val_mpe": -0.9999650716781616,
+          "update_norm": 4.1104088677861546,
+          "update_delta_norm": 4.1104088677861546,
+          "validation_gap": 1.9999301433563232
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 1572.8317626953126,
-          "val_mape": "0.9999747",
-          "val_rmse": "4608826.0",
-          "val_mae": "3894983.2",
-          "val_mpe": "-0.9999747"
+          "val_mape": 0.9999747276306152,
+          "val_rmse": 4608826.0,
+          "val_mae": 3894983.25,
+          "val_mpe": -0.9999747276306152,
+          "update_norm": 4.293333033847553,
+          "update_delta_norm": 4.293333033847553,
+          "validation_gap": 1.9999494552612305
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 1334.8492919921875,
-          "val_mape": "0.9999873",
-          "val_rmse": "2321805.0",
-          "val_mae": "1997738.2",
-          "val_mpe": "-0.9999873"
+          "val_mape": 0.9999873042106628,
+          "val_rmse": 2321805.0,
+          "val_mae": 1997738.25,
+          "val_mpe": -0.9999873042106628,
+          "update_norm": 3.838743785431941,
+          "update_delta_norm": 3.838743785431941,
+          "validation_gap": 1.9999746084213257
         }
       },
       "global_val": {
@@ -136,30 +184,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 3.471852905768525,
+        "update_norm": 3.471852905768525,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 1458.072412109375,
-          "val_mape": "0.9998844",
-          "val_rmse": "3987100.5",
-          "val_mae": "3241542.0",
-          "val_mpe": "-0.9998844"
+          "val_mape": 0.9998844265937805,
+          "val_rmse": 3987100.5,
+          "val_mae": 3241542.0,
+          "val_mpe": -0.9998844265937805,
+          "update_norm": 4.385264151980759,
+          "update_delta_norm": 4.385264151980759,
+          "validation_gap": 1.999768853187561
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 1493.97880859375,
-          "val_mape": "0.99991727",
-          "val_rmse": "4608582.0",
-          "val_mae": "3894753.2",
-          "val_mpe": "-0.99991727"
+          "val_mape": 0.9999172687530518,
+          "val_rmse": 4608582.0,
+          "val_mae": 3894753.25,
+          "val_mpe": -0.9999172687530518,
+          "update_norm": 4.3438676226994835,
+          "update_delta_norm": 4.3438676226994835,
+          "validation_gap": 1.9998345375061035
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 1247.215576171875,
-          "val_mape": "0.99992615",
-          "val_rmse": "2321521.0",
-          "val_mae": "1997546.5",
-          "val_mpe": "-0.99992615"
+          "val_mape": 0.9999261498451233,
+          "val_rmse": 2321521.0,
+          "val_mae": 1997546.5,
+          "val_mpe": -0.9999261498451233,
+          "update_norm": 3.637308429599281,
+          "update_delta_norm": 3.637308429599281,
+          "validation_gap": 1.9998522996902466
         }
       },
       "global_val": {
@@ -181,30 +252,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 3.67469048300629,
+        "update_norm": 3.67469048300629,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 1373.965185546875,
-          "val_mape": "0.999773",
-          "val_rmse": "3986325.5",
-          "val_mae": "3241000.8",
-          "val_mpe": "-0.999773"
+          "val_mape": 0.9997730255126953,
+          "val_rmse": 3986325.5,
+          "val_mae": 3241000.75,
+          "val_mpe": -0.9997730255126953,
+          "update_norm": 4.397263815847734,
+          "update_delta_norm": 4.397263815847734,
+          "validation_gap": 1.9995460510253906
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 1402.3179931640625,
-          "val_mape": "0.9997155",
-          "val_rmse": "4607796.0",
-          "val_mae": "3893973.0",
-          "val_mpe": "-0.9997155"
+          "val_mape": 0.9997155070304871,
+          "val_rmse": 4607796.0,
+          "val_mae": 3893973.0,
+          "val_mpe": -0.9997155070304871,
+          "update_norm": 4.834184454575024,
+          "update_delta_norm": 4.834184454575024,
+          "validation_gap": 1.9994310140609741
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 1178.13525390625,
-          "val_mape": "0.9997051",
-          "val_rmse": "2320834.5",
-          "val_mae": "1996972.6",
-          "val_mpe": "-0.9997051"
+          "val_mape": 0.9997050762176514,
+          "val_rmse": 2320834.5,
+          "val_mae": 1996972.625,
+          "val_mpe": -0.9997050762176514,
+          "update_norm": 3.867322925085584,
+          "update_delta_norm": 3.867322925085584,
+          "validation_gap": 1.9994101524353027
         }
       },
       "global_val": {
@@ -226,30 +320,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 4.068064859246858,
+        "update_norm": 4.068064859246858,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 1322.288427734375,
-          "val_mape": "0.99948543",
-          "val_rmse": "3984605.5",
-          "val_mae": "3239730.2",
-          "val_mpe": "-0.99948543"
+          "val_mape": 0.999485433101654,
+          "val_rmse": 3984605.5,
+          "val_mae": 3239730.25,
+          "val_mpe": -0.999485433101654,
+          "update_norm": 4.74042112996326,
+          "update_delta_norm": 4.74042112996326,
+          "validation_gap": 1.998970866203308
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 1312.5082275390625,
-          "val_mape": "0.9991702",
-          "val_rmse": "4605978.0",
-          "val_mae": "3891998.2",
-          "val_mpe": "-0.9991702"
+          "val_mape": 0.999170184135437,
+          "val_rmse": 4605978.0,
+          "val_mae": 3891998.25,
+          "val_mpe": -0.999170184135437,
+          "update_norm": 4.975250538054319,
+          "update_delta_norm": 4.975250538054319,
+          "validation_gap": 1.998340368270874
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 1115.01513671875,
-          "val_mape": "0.9994323",
-          "val_rmse": "2319961.5",
-          "val_mae": "1996266.6",
-          "val_mpe": "-0.9994323"
+          "val_mape": 0.9994323253631592,
+          "val_rmse": 2319961.5,
+          "val_mae": 1996266.625,
+          "val_mpe": -0.9994323253631592,
+          "update_norm": 4.641991165930036,
+          "update_delta_norm": 4.641991165930036,
+          "validation_gap": 1.9988646507263184
         }
       },
       "global_val": {
@@ -271,30 +388,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 4.526006523042921,
+        "update_norm": 4.526006523042921,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 1212.9967529296875,
-          "val_mape": "0.99910975",
-          "val_rmse": "3982022.5",
-          "val_mae": "3237948.5",
-          "val_mpe": "-0.99910975"
+          "val_mape": 0.9991097450256348,
+          "val_rmse": 3982022.5,
+          "val_mae": 3237948.5,
+          "val_mpe": -0.9991097450256348,
+          "update_norm": 5.049840901107153,
+          "update_delta_norm": 5.049840901107153,
+          "validation_gap": 1.9982194900512695
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 1244.9407958984375,
-          "val_mape": "0.9984037",
-          "val_rmse": "4602888.0",
-          "val_mae": "3888947.2",
-          "val_mpe": "-0.9984037"
+          "val_mape": 0.9984037280082703,
+          "val_rmse": 4602888.0,
+          "val_mae": 3888947.25,
+          "val_mpe": -0.9984037280082703,
+          "update_norm": 5.604866289917829,
+          "update_delta_norm": 5.604866289917829,
+          "validation_gap": 1.9968074560165405
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 1063.7697021484375,
-          "val_mape": "0.99901456",
-          "val_rmse": "2318604.8",
-          "val_mae": "1995184.9",
-          "val_mpe": "-0.99901456"
+          "val_mape": 0.9990145564079285,
+          "val_rmse": 2318604.75,
+          "val_mae": 1995184.875,
+          "val_mpe": -0.9990145564079285,
+          "update_norm": 4.901063426550761,
+          "update_delta_norm": 4.901063426550761,
+          "validation_gap": 1.998029112815857
         }
       },
       "global_val": {
@@ -316,30 +456,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 4.680554790795539,
+        "update_norm": 4.680554790795539,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 1126.54658203125,
-          "val_mape": "0.99814767",
-          "val_rmse": "3976821.5",
-          "val_mae": "3234023.5",
-          "val_mpe": "-0.99814767"
+          "val_mape": 0.9981476664543152,
+          "val_rmse": 3976821.5,
+          "val_mae": 3234023.5,
+          "val_mpe": -0.9981476664543152,
+          "update_norm": 5.286261391705038,
+          "update_delta_norm": 5.286261391705038,
+          "validation_gap": 1.9962953329086304
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 1142.3478759765626,
-          "val_mape": "0.99655765",
-          "val_rmse": "4596000.0",
-          "val_mae": "3881925.5",
-          "val_mpe": "-0.99655765"
+          "val_mape": 0.9965576529502869,
+          "val_rmse": 4596000.0,
+          "val_mae": 3881925.5,
+          "val_mpe": -0.9965576529502869,
+          "update_norm": 5.456029818279769,
+          "update_delta_norm": 5.456029818279769,
+          "validation_gap": 1.9931153059005737
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 974.0205078125,
-          "val_mape": "0.9981234",
-          "val_rmse": "2315291.5",
-          "val_mae": "1992758.5",
-          "val_mpe": "-0.9981234"
+          "val_mape": 0.9981234073638916,
+          "val_rmse": 2315291.5,
+          "val_mae": 1992758.5,
+          "val_mpe": -0.9981234073638916,
+          "update_norm": 5.317355524587808,
+          "update_delta_norm": 5.317355524587808,
+          "validation_gap": 1.9962468147277832
         }
       },
       "global_val": {
@@ -361,30 +524,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 5.110459851562435,
+        "update_norm": 5.110459851562435,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 1040.05126953125,
-          "val_mape": "0.9968056",
-          "val_rmse": "3970162.0",
-          "val_mae": "3228730.0",
-          "val_mpe": "-0.9968056"
+          "val_mape": 0.9968056082725525,
+          "val_rmse": 3970162.0,
+          "val_mae": 3228730.0,
+          "val_mpe": -0.9968056082725525,
+          "update_norm": 5.800468533951107,
+          "update_delta_norm": 5.800468533951107,
+          "validation_gap": 1.993611216545105
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 1045.303125,
-          "val_mape": "0.9936366",
-          "val_rmse": "4584739.0",
-          "val_mae": "3870613.5",
-          "val_mpe": "-0.9936366"
+          "val_mape": 0.9936366081237793,
+          "val_rmse": 4584739.0,
+          "val_mae": 3870613.5,
+          "val_mpe": -0.9936366081237793,
+          "update_norm": 5.2395218662346705,
+          "update_delta_norm": 5.2395218662346705,
+          "validation_gap": 1.9872732162475586
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 864.4995849609375,
-          "val_mape": "0.9965691",
-          "val_rmse": "2310040.2",
-          "val_mae": "1988705.5",
-          "val_mpe": "-0.9965691"
+          "val_mape": 0.9965690970420837,
+          "val_rmse": 2310040.25,
+          "val_mae": 1988705.5,
+          "val_mpe": -0.9965690970420837,
+          "update_norm": 6.359284976096291,
+          "update_delta_norm": 6.359284976096291,
+          "validation_gap": 1.9931381940841675
         }
       },
       "global_val": {
@@ -406,30 +592,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 4.241584600091979,
+        "update_norm": 4.241584600091979,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 938.93173828125,
-          "val_mape": "0.9938194",
-          "val_rmse": "3954071.0",
-          "val_mae": "3216438.0",
-          "val_mpe": "-0.9938194"
+          "val_mape": 0.9938194155693054,
+          "val_rmse": 3954071.0,
+          "val_mae": 3216438.0,
+          "val_mpe": -0.9938194155693054,
+          "update_norm": 4.255519606139189,
+          "update_delta_norm": 4.255519606139189,
+          "validation_gap": 1.9876388311386108
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 931.4634643554688,
-          "val_mape": "0.98916256",
-          "val_rmse": "4567684.0",
-          "val_mae": "3853428.8",
-          "val_mpe": "-0.98916256"
+          "val_mape": 0.9891625642776489,
+          "val_rmse": 4567684.0,
+          "val_mae": 3853428.75,
+          "val_mpe": -0.9891625642776489,
+          "update_norm": 4.692762275671995,
+          "update_delta_norm": 4.692762275671995,
+          "validation_gap": 1.9783251285552979
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 774.1147827148437,
-          "val_mape": "0.99395114",
-          "val_rmse": "2301422.5",
-          "val_mae": "1982014.0",
-          "val_mpe": "-0.99395114"
+          "val_mape": 0.993951141834259,
+          "val_rmse": 2301422.5,
+          "val_mae": 1982014.0,
+          "val_mpe": -0.993951141834259,
+          "update_norm": 6.142523567634842,
+          "update_delta_norm": 6.142523567634842,
+          "validation_gap": 1.987902283668518
         }
       },
       "global_val": {
@@ -451,30 +660,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 4.4785129404675095,
+        "update_norm": 4.4785129404675095,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 826.0521484375,
-          "val_mape": "0.989228",
-          "val_rmse": "3927045.5",
-          "val_mae": "3196772.5",
-          "val_mpe": "-0.989228"
+          "val_mape": 0.9892280101776123,
+          "val_rmse": 3927045.5,
+          "val_mae": 3196772.5,
+          "val_mpe": -0.9892280101776123,
+          "update_norm": 4.690582635188974,
+          "update_delta_norm": 4.690582635188974,
+          "validation_gap": 1.9784560203552246
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 844.5688720703125,
-          "val_mape": "0.98270357",
-          "val_rmse": "4543813.5",
-          "val_mae": "3828822.0",
-          "val_mpe": "-0.98270357"
+          "val_mape": 0.9827035665512085,
+          "val_rmse": 4543813.5,
+          "val_mae": 3828822.0,
+          "val_mpe": -0.9827035665512085,
+          "update_norm": 5.615031522483933,
+          "update_delta_norm": 5.615031522483933,
+          "validation_gap": 1.965407133102417
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 701.7961303710938,
-          "val_mape": "0.9896362",
-          "val_rmse": "2287172.0",
-          "val_mae": "1971135.4",
-          "val_mpe": "-0.9896362"
+          "val_mape": 0.9896361827850342,
+          "val_rmse": 2287172.0,
+          "val_mae": 1971135.375,
+          "val_mpe": -0.9896361827850342,
+          "update_norm": 5.373924539940191,
+          "update_delta_norm": 5.373924539940191,
+          "validation_gap": 1.9792723655700684
         }
       },
       "global_val": {
@@ -496,30 +728,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 4.324287103317088,
+        "update_norm": 4.324287103317088,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 727.1139404296875,
-          "val_mape": "0.9823985",
-          "val_rmse": "3894230.2",
-          "val_mae": "3170938.0",
-          "val_mpe": "-0.9823985"
+          "val_mape": 0.982398509979248,
+          "val_rmse": 3894230.25,
+          "val_mae": 3170938.0,
+          "val_mpe": -0.982398509979248,
+          "update_norm": 4.585352824323386,
+          "update_delta_norm": 4.585352824323386,
+          "validation_gap": 1.964797019958496
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 752.7975952148438,
-          "val_mape": "0.9718283",
-          "val_rmse": "4502835.5",
-          "val_mae": "3787334.8",
-          "val_mpe": "-0.9718283"
+          "val_mape": 0.971828281879425,
+          "val_rmse": 4502835.5,
+          "val_mae": 3787334.75,
+          "val_mpe": -0.971828281879425,
+          "update_norm": 5.817626935722099,
+          "update_delta_norm": 5.817626935722099,
+          "validation_gap": 1.94365656375885
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 605.168359375,
-          "val_mape": "0.9793888",
-          "val_rmse": "2256757.5",
-          "val_mae": "1946446.9",
-          "val_mpe": "-0.9793888"
+          "val_mape": 0.9793887734413147,
+          "val_rmse": 2256757.5,
+          "val_mae": 1946446.875,
+          "val_mpe": -0.9793887734413147,
+          "update_norm": 4.846349327248503,
+          "update_delta_norm": 4.846349327248503,
+          "validation_gap": 1.9587775468826294
         }
       },
       "global_val": {
@@ -541,30 +796,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 4.084908527265932,
+        "update_norm": 4.084908527265932,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 633.0723388671875,
-          "val_mape": "0.97158957",
-          "val_rmse": "3842044.2",
-          "val_mae": "3129927.8",
-          "val_mpe": "-0.97158957"
+          "val_mape": 0.9715895652770996,
+          "val_rmse": 3842044.25,
+          "val_mae": 3129927.75,
+          "val_mpe": -0.9715895652770996,
+          "update_norm": 4.965632722620263,
+          "update_delta_norm": 4.965632722620263,
+          "validation_gap": 1.9431791305541992
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 633.2041137695312,
-          "val_mape": "0.95377684",
-          "val_rmse": "4423618.0",
-          "val_mae": "3713320.0",
-          "val_mpe": "-0.95377684"
+          "val_mape": 0.9537768363952637,
+          "val_rmse": 4423618.0,
+          "val_mae": 3713320.0,
+          "val_mpe": -0.9537768363952637,
+          "update_norm": 5.524960723952646,
+          "update_delta_norm": 5.524960723952646,
+          "validation_gap": 1.9075536727905273
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 523.6219360351563,
-          "val_mape": "0.9654115",
-          "val_rmse": "2220732.5",
-          "val_mae": "1916289.5",
-          "val_mpe": "-0.9654115"
+          "val_mape": 0.9654114842414856,
+          "val_rmse": 2220732.5,
+          "val_mae": 1916289.5,
+          "val_mpe": -0.9654114842414856,
+          "update_norm": 4.218099631550155,
+          "update_delta_norm": 4.218099631550155,
+          "validation_gap": 1.9308229684829712
         }
       },
       "global_val": {
@@ -586,30 +864,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 2.6878473140030774,
+        "update_norm": 2.6878473140030774,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 521.3724365234375,
-          "val_mape": "0.9508874",
-          "val_rmse": "3757413.8",
-          "val_mae": "3059521.2",
-          "val_mpe": "-0.9508874"
+          "val_mape": 0.9508873820304871,
+          "val_rmse": 3757413.75,
+          "val_mae": 3059521.25,
+          "val_mpe": -0.9508873820304871,
+          "update_norm": 4.0626777017066775,
+          "update_delta_norm": 4.0626777017066775,
+          "validation_gap": 1.9017747640609741
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 561.2738037109375,
-          "val_mape": "0.9330013",
-          "val_rmse": "4337156.5",
-          "val_mae": "3630599.2",
-          "val_mpe": "-0.9330013"
+          "val_mape": 0.9330012798309326,
+          "val_rmse": 4337156.5,
+          "val_mae": 3630599.25,
+          "val_mpe": -0.9330012798309326,
+          "update_norm": 4.188682378578117,
+          "update_delta_norm": 4.188682378578117,
+          "validation_gap": 1.8660025596618652
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 412.2792907714844,
-          "val_mape": "0.9453979",
-          "val_rmse": "2169963.0",
-          "val_mae": "1874084.6",
-          "val_mpe": "-0.9453979"
+          "val_mape": 0.9453979134559631,
+          "val_rmse": 2169963.0,
+          "val_mae": 1874084.625,
+          "val_mpe": -0.9453979134559631,
+          "update_norm": 3.4033970689315747,
+          "update_delta_norm": 3.4033970689315747,
+          "validation_gap": 1.8907958269119263
         }
       },
       "global_val": {
@@ -631,30 +932,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 4.166822570855866,
+        "update_norm": 4.166822570855866,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 433.6623229980469,
-          "val_mape": "0.927735",
-          "val_rmse": "3655953.0",
-          "val_mae": "2978835.0",
-          "val_mpe": "-0.927735"
+          "val_mape": 0.9277349710464478,
+          "val_rmse": 3655953.0,
+          "val_mae": 2978835.0,
+          "val_mpe": -0.9277349710464478,
+          "update_norm": 4.621324663573392,
+          "update_delta_norm": 4.621324663573392,
+          "validation_gap": 1.8554699420928955
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 426.3044799804687,
-          "val_mape": "0.8974028",
-          "val_rmse": "4182511.8",
-          "val_mae": "3488344.8",
-          "val_mpe": "-0.8974028"
+          "val_mape": 0.897402822971344,
+          "val_rmse": 4182511.75,
+          "val_mae": 3488344.75,
+          "val_mpe": -0.897402822971344,
+          "update_norm": 5.439961478883403,
+          "update_delta_norm": 5.439961478883403,
+          "validation_gap": 1.794805645942688
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 325.3017913818359,
-          "val_mape": "0.9204204",
-          "val_rmse": "2124482.5",
-          "val_mae": "1832229.4",
-          "val_mpe": "-0.9204204"
+          "val_mape": 0.9204204082489014,
+          "val_rmse": 2124482.5,
+          "val_mae": 1832229.375,
+          "val_mpe": -0.9204204082489014,
+          "update_norm": 5.21914615438005,
+          "update_delta_norm": 5.21914615438005,
+          "validation_gap": 1.8408408164978027
         }
       },
       "global_val": {
@@ -676,30 +1000,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 3.873766735521406,
+        "update_norm": 3.873766735521406,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 345.7380004882813,
-          "val_mape": "0.87727505",
-          "val_rmse": "3496508.0",
-          "val_mae": "2828304.5",
-          "val_mpe": "-0.87727505"
+          "val_mape": 0.8772750496864319,
+          "val_rmse": 3496508.0,
+          "val_mae": 2828304.5,
+          "val_mpe": -0.8772750496864319,
+          "update_norm": 3.588910492093879,
+          "update_delta_norm": 3.588910492093879,
+          "validation_gap": 1.7545500993728638
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 324.8283996582031,
-          "val_mape": "0.8553025",
-          "val_rmse": "4014420.0",
-          "val_mae": "3326595.8",
-          "val_mpe": "-0.8553025"
+          "val_mape": 0.8553025126457214,
+          "val_rmse": 4014420.0,
+          "val_mae": 3326595.75,
+          "val_mpe": -0.8553025126457214,
+          "update_norm": 5.130460499126748,
+          "update_delta_norm": 5.130460499126748,
+          "validation_gap": 1.7106050252914429
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 259.6316650390625,
-          "val_mape": "0.8727243",
-          "val_rmse": "1990479.1",
-          "val_mae": "1716854.0",
-          "val_mpe": "-0.8727243"
+          "val_mape": 0.8727242946624756,
+          "val_rmse": 1990479.125,
+          "val_mae": 1716854.0,
+          "val_mpe": -0.8727242946624756,
+          "update_norm": 6.660324076459846,
+          "update_delta_norm": 6.660324076459846,
+          "validation_gap": 1.7454485893249512
         }
       },
       "global_val": {
@@ -721,30 +1068,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 3.411128230254343,
+        "update_norm": 3.411128230254343,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 265.4906860351563,
-          "val_mape": "0.8246103",
-          "val_rmse": "3283621.8",
-          "val_mae": "2645578.0",
-          "val_mpe": "-0.8246103"
+          "val_mape": 0.8246102929115295,
+          "val_rmse": 3283621.75,
+          "val_mae": 2645578.0,
+          "val_mpe": -0.8246102929115295,
+          "update_norm": 3.4942849784161654,
+          "update_delta_norm": 3.4942849784161654,
+          "validation_gap": 1.649220585823059
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 242.99508361816407,
-          "val_mape": "0.8022891",
-          "val_rmse": "3817403.0",
-          "val_mae": "3129118.0",
-          "val_mpe": "-0.8022891"
+          "val_mape": 0.8022891283035278,
+          "val_rmse": 3817403.0,
+          "val_mae": 3129118.0,
+          "val_mpe": -0.8022891283035278,
+          "update_norm": 6.409427373157123,
+          "update_delta_norm": 6.409427373157123,
+          "validation_gap": 1.6045782566070557
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 186.38860015869142,
-          "val_mape": "0.8330272",
-          "val_rmse": "1897665.4",
-          "val_mae": "1631159.5",
-          "val_mpe": "-0.8330272"
+          "val_mape": 0.833027184009552,
+          "val_rmse": 1897665.375,
+          "val_mae": 1631159.5,
+          "val_mpe": -0.833027184009552,
+          "update_norm": 4.514099733340149,
+          "update_delta_norm": 4.514099733340149,
+          "validation_gap": 1.666054368019104
         }
       },
       "global_val": {
@@ -766,30 +1136,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 2.7127875601222553,
+        "update_norm": 2.7127875601222553,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 198.5358428955078,
-          "val_mape": "0.7638167",
-          "val_rmse": "3032689.5",
-          "val_mae": "2429129.2",
-          "val_mpe": "-0.7638167"
+          "val_mape": 0.7638167142868042,
+          "val_rmse": 3032689.5,
+          "val_mae": 2429129.25,
+          "val_mpe": -0.7638167142868042,
+          "update_norm": 3.190575638105877,
+          "update_delta_norm": 3.190575638105877,
+          "validation_gap": 1.5276334285736084
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 197.3246307373047,
-          "val_mape": "0.7131498",
-          "val_rmse": "3522316.5",
-          "val_mae": "2815925.8",
-          "val_mpe": "-0.7131498"
+          "val_mape": 0.7131497859954834,
+          "val_rmse": 3522316.5,
+          "val_mae": 2815925.75,
+          "val_mpe": -0.7131497859954834,
+          "update_norm": 3.557387374490322,
+          "update_delta_norm": 3.557387374490322,
+          "validation_gap": 1.4262995719909668
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 128.43700103759767,
-          "val_mape": "0.75795203",
-          "val_rmse": "1753537.8",
-          "val_mae": "1494626.5",
-          "val_mpe": "-0.75795203"
+          "val_mape": 0.7579520344734192,
+          "val_rmse": 1753537.75,
+          "val_mae": 1494626.5,
+          "val_mpe": -0.7579520344734192,
+          "update_norm": 5.698482158247207,
+          "update_delta_norm": 5.698482158247207,
+          "validation_gap": 1.5159040689468384
         }
       },
       "global_val": {
@@ -811,30 +1204,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 2.8899522014945433,
+        "update_norm": 2.8899522014945433,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 135.849755859375,
-          "val_mape": "0.7021805",
-          "val_rmse": "2705008.0",
-          "val_mae": "2172039.2",
-          "val_mpe": "-0.666984"
+          "val_mape": 0.7021805047988892,
+          "val_rmse": 2705008.0,
+          "val_mae": 2172039.25,
+          "val_mpe": -0.6669840216636658,
+          "update_norm": 3.808281340343292,
+          "update_delta_norm": 3.808281340343292,
+          "validation_gap": 1.3691644668579102
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 140.24708251953126,
-          "val_mape": "0.6252179",
-          "val_rmse": "3236934.8",
-          "val_mae": "2503437.0",
-          "val_mpe": "-0.6252179"
+          "val_mape": 0.6252179145812988,
+          "val_rmse": 3236934.75,
+          "val_mae": 2503437.0,
+          "val_mpe": -0.6252179145812988,
+          "update_norm": 4.6602817610817375,
+          "update_delta_norm": 4.6602817610817375,
+          "validation_gap": 1.2504358291625977
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 85.08391952514648,
-          "val_mape": "0.6147097",
-          "val_rmse": "1495920.9",
-          "val_mae": "1230417.6",
-          "val_mpe": "-0.61091197"
+          "val_mape": 0.6147096753120422,
+          "val_rmse": 1495920.875,
+          "val_mae": 1230417.625,
+          "val_mpe": -0.6109119653701782,
+          "update_norm": 4.933140363401637,
+          "update_delta_norm": 4.933140363401637,
+          "validation_gap": 1.2256217002868652
         }
       },
       "global_val": {
@@ -856,30 +1272,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 1.9040251241305979,
+        "update_norm": 1.9040251241305979,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 97.78331680297852,
-          "val_mape": "0.60467786",
-          "val_rmse": "2344651.0",
-          "val_mae": "1827382.5",
-          "val_mpe": "-0.53320736"
+          "val_mape": 0.6046778559684753,
+          "val_rmse": 2344651.0,
+          "val_mae": 1827382.5,
+          "val_mpe": -0.533207356929779,
+          "update_norm": 3.8415028175640797,
+          "update_delta_norm": 3.8415028175640797,
+          "validation_gap": 1.1378852128982544
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 103.42505493164063,
-          "val_mape": "0.52468073",
-          "val_rmse": "2903615.5",
-          "val_mae": "2139723.5",
-          "val_mpe": "-0.51798135"
+          "val_mape": 0.5246807336807251,
+          "val_rmse": 2903615.5,
+          "val_mae": 2139723.5,
+          "val_mpe": -0.5179813504219055,
+          "update_norm": 3.590041424720013,
+          "update_delta_norm": 3.590041424720013,
+          "validation_gap": 1.0426621437072754
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 53.38401412963867,
-          "val_mape": "0.48442787",
-          "val_rmse": "1326579.5",
-          "val_mae": "1020985.9",
-          "val_mpe": "-0.4136306"
+          "val_mape": 0.48442786931991577,
+          "val_rmse": 1326579.5,
+          "val_mae": 1020985.875,
+          "val_mpe": -0.4136306047439575,
+          "update_norm": 4.508549798517822,
+          "update_delta_norm": 4.508549798517822,
+          "validation_gap": 0.8980584740638733
         }
       },
       "global_val": {
@@ -901,30 +1340,53 @@
         "Client 2": 0.3424657534246575,
         "Client 3": 0.319634703196347
       },
+      "strategy_params_override": {},
+      "server_optimizer": "fedavg",
+      "server_update": {
+        "server_optimizer": "fedavg",
+        "server_lr": 1.0,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 1.0,
+        "aggregation_delta_norm": 2.8207417770203684,
+        "update_norm": 2.8207417770203684,
+        "update_clipped": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
       "client_metrics": {
         "Client 1": {
           "n_samples": 148,
           "train_loss": 70.24118347167969,
-          "val_mape": "0.5252925",
-          "val_rmse": "2082174.9",
-          "val_mae": "1551294.5",
-          "val_mpe": "-0.40232816"
+          "val_mape": 0.5252925157546997,
+          "val_rmse": 2082174.875,
+          "val_mae": 1551294.5,
+          "val_mpe": -0.40232816338539124,
+          "update_norm": 3.954960721585257,
+          "update_delta_norm": 3.954960721585257,
+          "validation_gap": 0.9276206493377686
         },
         "Client 2": {
           "n_samples": 150,
           "train_loss": 85.72443466186523,
-          "val_mape": "0.43128836",
-          "val_rmse": "2537416.2",
-          "val_mae": "1790913.6",
-          "val_mpe": "-0.37736708"
+          "val_mape": 0.43128836154937744,
+          "val_rmse": 2537416.25,
+          "val_mae": 1790913.625,
+          "val_mpe": -0.3773670792579651,
+          "update_norm": 3.9898181838467566,
+          "update_delta_norm": 3.9898181838467566,
+          "validation_gap": 0.8086554408073425
         },
         "Client 3": {
           "n_samples": 140,
           "train_loss": 36.38401832580566,
-          "val_mape": "0.36359775",
-          "val_rmse": "1091366.2",
-          "val_mae": "805923.8",
-          "val_mpe": "-0.26506698"
+          "val_mape": 0.3635977506637573,
+          "val_rmse": 1091366.25,
+          "val_mae": 805923.8125,
+          "val_mpe": -0.2650669813156128,
+          "update_norm": 4.415867748665082,
+          "update_delta_norm": 4.415867748665082,
+          "validation_gap": 0.6286647319793701
         }
       },
       "global_val": {

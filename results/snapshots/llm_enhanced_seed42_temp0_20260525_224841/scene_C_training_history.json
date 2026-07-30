@@ -1,0 +1,4728 @@
+{
+  "training_config": {
+    "default_strategy": "size_only",
+    "default_lr": 0.0005,
+    "default_local_epochs": 20,
+    "strategies_config": {
+      "size_only": {
+        "description": "权重与客户端样本数成正比",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "perf_only": {
+        "description": "权重与1/val_mape成正比，表现好的客户端权重更大",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "hybrid": {
+        "description": "结合样本数和性能的加权",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "fairness_clip": {
+        "description": "限制大客户端权重上限，保护小客户端贡献",
+        "lambda_hybrid": 0.3,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      }
+    }
+  },
+  "training_summary": {
+    "total_rounds": 20,
+    "best_round": 20,
+    "best_val_mape": "0.38908306"
+  },
+  "round_history": [
+    {
+      "round": 0,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "size_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "size_only achieves the lowest aggregate_val_mape (0.9999723519597735) among all candidates",
+          "size_only has the smallest client_mape_gap (5.233287811279297e-05), indicating better fairness",
+          "All strategies produce nearly identical aggregate MAPE values, but size_only is marginally best"
+        ],
+        "risk": "low risk; all strategies perform similarly, but size_only is simplest and slightly better",
+        "reasoning": "At round 1, all candidate strategies yield nearly identical aggregate validation MAPE (~0.999972). size_only achieves the lowest MAPE (0.9999723519597735) and the smallest client MAPE gap, indicating slightly better performance and fairness. Since there is no historical trend to exploit, the simplest and marginally best strategy is chosen.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.33335042770196405,
+          "Client 2": 0.33332821337391383,
+          "Client 3": 0.333321358924122
+        },
+        "hybrid": {
+          "Client 1": 0.3356249855404797,
+          "Client 2": 0.33789698339928564,
+          "Client 3": 0.32647803106023454
+        },
+        "fairness_clip": {
+          "Client 1": 0.33653480867588603,
+          "Client 2": 0.33972449140943445,
+          "Client 3": 0.3237406999146795
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.9999723519597735,
+          "aggregate_val_rmse": 3662940.3526785714,
+          "aggregate_val_mae": 3063566.3928571427,
+          "aggregate_val_mpe": -0.9999723519597735,
+          "client_mape_gap": 5.233287811279297e-05,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9999421834945679,
+              "val_rmse": 3987498.25,
+              "val_mae": 3241816.0,
+              "val_mpe": -0.9999421834945679
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9999815225601196,
+              "val_rmse": 4608882.0,
+              "val_mae": 3895016.5,
+              "val_mpe": -0.9999815225601196
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9999945163726807,
+              "val_rmse": 2321857.5,
+              "val_mae": 1997772.25,
+              "val_mpe": -0.9999945163726807
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.33335042770196405,
+            "Client 2": 0.33332821337391383,
+            "Client 3": 0.333321358924122
+          },
+          "aggregate_val_mape": 0.9999721060906138,
+          "aggregate_val_rmse": 3662937.129464286,
+          "aggregate_val_mae": 3063564.3526785714,
+          "aggregate_val_mpe": -0.9999721060906138,
+          "client_mape_gap": 5.322694778442383e-05,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9999414682388306,
+              "val_rmse": 3987490.25,
+              "val_mae": 3241811.5,
+              "val_mpe": -0.9999414682388306
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9999813437461853,
+              "val_rmse": 4608880.5,
+              "val_mae": 3895014.75,
+              "val_mpe": -0.9999813437461853
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.999994695186615,
+              "val_rmse": 2321857.5,
+              "val_mae": 1997772.5,
+              "val_mpe": -0.999994695186615
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.3356249855404797,
+            "Client 2": 0.33789698339928564,
+            "Client 3": 0.32647803106023454
+          },
+          "aggregate_val_mape": 0.9999722103987422,
+          "aggregate_val_rmse": 3662938.65625,
+          "aggregate_val_mae": 3063565.4553571427,
+          "aggregate_val_mpe": -0.9999722103987422,
+          "client_mape_gap": 5.27501106262207e-05,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9999417662620544,
+              "val_rmse": 3987494.25,
+              "val_mae": 3241814.0,
+              "val_mpe": -0.9999417662620544
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9999815225601196,
+              "val_rmse": 4608881.0,
+              "val_mae": 3895015.5,
+              "val_mpe": -0.9999815225601196
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9999945163726807,
+              "val_rmse": 2321857.5,
+              "val_mae": 1997772.5,
+              "val_mpe": -0.9999945163726807
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.33653480867588603,
+            "Client 2": 0.33972449140943445,
+            "Client 3": 0.3237406999146795
+          },
+          "aggregate_val_mape": 0.9999723115137645,
+          "aggregate_val_rmse": 3662939.4196428573,
+          "aggregate_val_mae": 3063565.7991071427,
+          "aggregate_val_mpe": -0.9999723115137645,
+          "client_mape_gap": 5.245208740234375e-05,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9999420642852783,
+              "val_rmse": 3987496.0,
+              "val_mae": 3241814.75,
+              "val_mpe": -0.9999420642852783
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9999815225601196,
+              "val_rmse": 4608881.5,
+              "val_mae": 3895016.0,
+              "val_mpe": -0.9999815225601196
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9999945163726807,
+              "val_rmse": 2321857.5,
+              "val_mae": 1997772.25,
+              "val_mpe": -0.9999945163726807
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1566.158251953125,
+          "val_mape": 0.9999087452888489,
+          "val_rmse": 3987421.5,
+          "val_mae": 3241735.25,
+          "val_mpe": -0.9999087452888489
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1602.8050048828125,
+          "val_mape": 0.9999753832817078,
+          "val_rmse": 4608825.5,
+          "val_mae": 3894989.5,
+          "val_mpe": -0.9999753832817078
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1353.9193359375,
+          "val_mape": 0.9999959468841553,
+          "val_rmse": 2321843.5,
+          "val_mae": 1997765.75,
+          "val_mpe": -0.9999959468841553
+        }
+      },
+      "global_val": {
+        "mape": "0.9999809",
+        "mae": "2983858.0",
+        "rmse": "3907211.8",
+        "mpe": "-0.9999809",
+        "nrmse": "0.35126776",
+        "r2": -1.398935079574585
+      }
+    },
+    {
+      "round": 1,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "size_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "size_only achieved the best global MAPE (0.999981) in round 1",
+          "size_only candidate preview shows lowest aggregate MAPE (0.9998837) among all strategies",
+          "size_only candidate preview shows lowest RMSE (3662258.12) and MAE (3063094.73)",
+          "size_only has the smallest client MAPE gap (0.0002248) in candidate preview, indicating better fairness",
+          "perf_only and hybrid show slightly higher aggregate MAPE (0.9998823 and 0.9998831 respectively)",
+          "fairness_clip shows intermediate aggregate MAPE (0.9998833) but higher RMSE than size_only"
+        ],
+        "risk": "low risk - size_only has proven effective and shows best validation metrics across all candidates",
+        "reasoning": "Based on validation evidence, size_only consistently achieves the lowest aggregate MAPE, RMSE, and MAE in both historical performance (round 1) and candidate preview. It also minimizes client MAPE gap, suggesting better balance. Other strategies show marginal or no improvement. Keeping lr_scale=1.0 and epoch_delta=0 maintains stable convergence without overfitting risk.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.3333471297360213,
+          "Client 2": 0.33334780540403525,
+          "Client 3": 0.33330506485994343
+        },
+        "hybrid": {
+          "Client 1": 0.33562333655750837,
+          "Client 2": 0.3379067794143464,
+          "Client 3": 0.32646988402814525
+        },
+        "fairness_clip": {
+          "Client 1": 0.3365338192861032,
+          "Client 2": 0.33973036901847087,
+          "Client 3": 0.323735811695426
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.9998836772782462,
+          "aggregate_val_rmse": 3662258.120535714,
+          "aggregate_val_mae": 3063094.7276785714,
+          "aggregate_val_mpe": -0.9998836772782462,
+          "client_mape_gap": 0.00022482872009277344,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9997649788856506,
+              "val_rmse": 3986107.25,
+              "val_mae": 3240875.0,
+              "val_mpe": -0.9997649788856506
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9999018311500549,
+              "val_rmse": 4608297.5,
+              "val_mae": 3894589.0,
+              "val_mpe": -0.9999018311500549
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9999898076057434,
+              "val_rmse": 2321820.25,
+              "val_mae": 1997749.375,
+              "val_mpe": -0.9999898076057434
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.3333471297360213,
+            "Client 2": 0.33334780540403525,
+            "Client 3": 0.33330506485994343
+          },
+          "aggregate_val_mape": 0.9998823457530567,
+          "aggregate_val_rmse": 3662249.0625,
+          "aggregate_val_mae": 3063088.0848214286,
+          "aggregate_val_mpe": -0.9998823457530567,
+          "client_mape_gap": 0.0002275705337524414,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9997620582580566,
+              "val_rmse": 3986084.5,
+              "val_mae": 3240859.25,
+              "val_mpe": -0.9997620582580566
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9999009966850281,
+              "val_rmse": 4608294.5,
+              "val_mae": 3894586.0,
+              "val_mpe": -0.9999009966850281
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9999896287918091,
+              "val_rmse": 2321819.25,
+              "val_mae": 1997748.5,
+              "val_mpe": -0.9999896287918091
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.33562333655750837,
+            "Client 2": 0.3379067794143464,
+            "Client 3": 0.32646988402814525
+          },
+          "aggregate_val_mape": 0.9998830705881119,
+          "aggregate_val_rmse": 3662253.46875,
+          "aggregate_val_mae": 3063091.5133928573,
+          "aggregate_val_mpe": -0.9998830705881119,
+          "client_mape_gap": 0.00022619962692260742,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9997636079788208,
+              "val_rmse": 3986095.75,
+              "val_mae": 3240867.25,
+              "val_mpe": -0.9997636079788208
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9999014139175415,
+              "val_rmse": 4608296.0,
+              "val_mae": 3894587.75,
+              "val_mpe": -0.9999014139175415
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9999898076057434,
+              "val_rmse": 2321819.5,
+              "val_mae": 1997748.875,
+              "val_mpe": -0.9999898076057434
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.3365338192861032,
+            "Client 2": 0.33973036901847087,
+            "Client 3": 0.323735811695426
+          },
+          "aggregate_val_mape": 0.9998832930411611,
+          "aggregate_val_rmse": 3662255.410714286,
+          "aggregate_val_mae": 3063092.78125,
+          "aggregate_val_mpe": -0.9998832930411611,
+          "client_mape_gap": 0.0002257227897644043,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.999764084815979,
+              "val_rmse": 3986100.5,
+              "val_mae": 3240870.25,
+              "val_mpe": -0.999764084815979
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9999015927314758,
+              "val_rmse": 4608296.5,
+              "val_mae": 3894588.25,
+              "val_mpe": -0.9999015927314758
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9999898076057434,
+              "val_rmse": 2321820.0,
+              "val_mae": 1997749.125,
+              "val_mpe": -0.9999898076057434
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1485.2103759765625,
+          "val_mape": 0.9998223185539246,
+          "val_rmse": 3986748.75,
+          "val_mae": 3241275.25,
+          "val_mpe": -0.9998223185539246
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1489.45,
+          "val_mape": 0.9998202919960022,
+          "val_rmse": 4607532.0,
+          "val_mae": 3894112.5,
+          "val_mpe": -0.9998202919960022
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1297.5092529296876,
+          "val_mape": 0.9999485015869141,
+          "val_rmse": 2321607.25,
+          "val_mae": 1997609.375,
+          "val_mpe": -0.9999485015869141
+        }
+      },
+      "global_val": {
+        "mape": "0.9999092",
+        "mae": "2983392.8",
+        "rmse": "3906264.0",
+        "mpe": "-0.9999092",
+        "nrmse": "0.35118255",
+        "r2": -1.3977713584899902
+      }
+    },
+    {
+      "round": 2,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "size_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "size_only achieved best_val_mape of 0.999909 at round 2, with consistent improvement from round 1 (0.999981) to round 2 (0.999909), a relative improvement of 7.2e-05",
+          "size_only candidate preview shows aggregate_val_mape of 0.9996798, which is slightly better than perf_only (0.9996768), hybrid (0.9996782), and fairness_clip (0.9996789)",
+          "size_only has the lowest client_mape_gap (0.0004658) among all candidates, indicating better fairness across clients",
+          "size_only has been effective in both previous rounds, with decreasing MAPE and no signs of overfitting or instability"
+        ],
+        "risk": "low risk; size_only has shown consistent improvement and the candidate preview confirms it remains competitive",
+        "reasoning": "size_only has delivered the best validation MAPE so far (0.999909 at round 2) and continues to show the best aggregate MAPE in the candidate preview. The strategy is stable and fair, with the lowest client gap. No adjustment to learning rate or epochs is needed as MAPE is steadily decreasing.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.33337060337711766,
+          "Client 2": 0.333336113098589,
+          "Client 3": 0.3332932835242934
+        },
+        "hybrid": {
+          "Client 1": 0.33563507337805654,
+          "Client 2": 0.3379009332616233,
+          "Client 3": 0.32646399336032017
+        },
+        "fairness_clip": {
+          "Client 1": 0.33654086137843214,
+          "Client 2": 0.339726861326837,
+          "Client 3": 0.3237322772947309
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.9996797687241009,
+          "aggregate_val_rmse": 3661079.1696428573,
+          "aggregate_val_mae": 3062208.53125,
+          "aggregate_val_mpe": -0.9996797687241009,
+          "client_mape_gap": 0.00046575069427490234,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9994764924049377,
+              "val_rmse": 3984044.0,
+              "val_mae": 3239486.75,
+              "val_mpe": -0.9994764924049377
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9996343851089478,
+              "val_rmse": 4607119.0,
+              "val_mae": 3893519.25,
+              "val_mpe": -0.9996343851089478
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9999422430992126,
+              "val_rmse": 2321574.25,
+              "val_mae": 1997586.875,
+              "val_mpe": -0.9999422430992126
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.33337060337711766,
+            "Client 2": 0.333336113098589,
+            "Client 3": 0.3332932835242934
+          },
+          "aggregate_val_mape": 0.9996767523033279,
+          "aggregate_val_rmse": 3661067.8883928573,
+          "aggregate_val_mae": 3062197.495535714,
+          "aggregate_val_mpe": -0.9996767523033279,
+          "client_mape_gap": 0.0004658699035644531,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.999474287033081,
+              "val_rmse": 3984032.25,
+              "val_mae": 3239477.0,
+              "val_mpe": -0.999474287033081
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9996296763420105,
+              "val_rmse": 4607106.5,
+              "val_mae": 3893502.75,
+              "val_mpe": -0.9996296763420105
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9999401569366455,
+              "val_rmse": 2321564.75,
+              "val_mae": 1997580.25,
+              "val_mpe": -0.9999401569366455
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.33563507337805654,
+            "Client 2": 0.3379009332616233,
+            "Client 3": 0.32646399336032017
+          },
+          "aggregate_val_mape": 0.999678230711392,
+          "aggregate_val_rmse": 3661073.4866071427,
+          "aggregate_val_mae": 3062203.0803571427,
+          "aggregate_val_mpe": -0.999678230711392,
+          "client_mape_gap": 0.0004658699035644531,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9994753003120422,
+              "val_rmse": 3984038.25,
+              "val_mae": 3239482.0,
+              "val_mpe": -0.9994753003120422
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9996320605278015,
+              "val_rmse": 4607112.5,
+              "val_mae": 3893511.25,
+              "val_mpe": -0.9996320605278015
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9999411702156067,
+              "val_rmse": 2321569.5,
+              "val_mae": 1997583.375,
+              "val_mpe": -0.9999411702156067
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.33654086137843214,
+            "Client 2": 0.339726861326837,
+            "Client 3": 0.3237322772947309
+          },
+          "aggregate_val_mape": 0.9996789108429637,
+          "aggregate_val_rmse": 3661075.660714286,
+          "aggregate_val_mae": 3062205.089285714,
+          "aggregate_val_mpe": -0.9996789108429637,
+          "client_mape_gap": 0.00046569108963012695,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.99947589635849,
+              "val_rmse": 3984040.5,
+              "val_mae": 3239483.75,
+              "val_mpe": -0.99947589635849
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9996330738067627,
+              "val_rmse": 4607115.0,
+              "val_mae": 3893514.0,
+              "val_mpe": -0.9996330738067627
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9999415874481201,
+              "val_rmse": 2321571.25,
+              "val_mae": 1997584.875,
+              "val_mpe": -0.9999415874481201
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1381.1313232421876,
+          "val_mape": 0.9994586110115051,
+          "val_rmse": 3984445.25,
+          "val_mae": 3239624.75,
+          "val_mpe": -0.9994586110115051
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1410.133642578125,
+          "val_mape": 0.9995620250701904,
+          "val_rmse": 4606547.0,
+          "val_mae": 3893125.5,
+          "val_mpe": -0.9995620250701904
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1194.47734375,
+          "val_mape": 0.9996904730796814,
+          "val_rmse": 2320625.5,
+          "val_mae": 1996862.25,
+          "val_mpe": -0.9996904730796814
+        }
+      },
+      "global_val": {
+        "mape": "0.99970984",
+        "mae": "2982413.8",
+        "rmse": "3904598.8",
+        "mpe": "-0.99970984",
+        "nrmse": "0.35103285",
+        "r2": -1.3957276344299316
+      }
+    },
+    {
+      "round": 3,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "size_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "size_only has the lowest aggregate_val_mape (0.999307) among all candidates in the validation preview",
+          "size_only has been consistently improving MAPE over the last 3 rounds (from 0.999981 to 0.99971), with a relative improvement of 0.000271",
+          "The current best_val_mape (0.99971) was achieved with size_only in round 3",
+          "All candidate strategies show very similar aggregate MAPE values (difference < 0.000006), but size_only slightly outperforms"
+        ],
+        "risk": "Client 3 has higher val_mape (0.999824) than others, and size_only gives it the lowest weight, which may increase client gap over time",
+        "reasoning": "size_only has demonstrated consistent improvement in global MAPE over the last 3 rounds and achieves the lowest aggregate_val_mape in the validation preview. The differences between strategies are minimal, but size_only has a proven track record. Keeping lr_scale=1.0 and epoch_delta=0 maintains current stable convergence.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.3332841489864495,
+          "Client 2": 0.33343993160461355,
+          "Client 3": 0.33327591940893697
+        },
+        "hybrid": {
+          "Client 1": 0.3355918461827224,
+          "Client 2": 0.33795284251463553,
+          "Client 3": 0.326455311302642
+        },
+        "fairness_clip": {
+          "Client 1": 0.33651492506123165,
+          "Client 2": 0.3397580068786444,
+          "Client 3": 0.323727068060124
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.9993074163794518,
+          "aggregate_val_rmse": 3659255.875,
+          "aggregate_val_mae": 3060750.90625,
+          "aggregate_val_mpe": -0.9993074163794518,
+          "client_mape_gap": 0.0008296370506286621,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9989940524101257,
+              "val_rmse": 3980983.0,
+              "val_mae": 3237372.5,
+              "val_mpe": -0.9989940524101257
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9991316795349121,
+              "val_rmse": 4605379.0,
+              "val_mae": 3891712.5,
+              "val_mpe": -0.9991316795349121
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9998236894607544,
+              "val_rmse": 2320969.5,
+              "val_mae": 1997190.875,
+              "val_mpe": -0.9998236894607544
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.3332841489864495,
+            "Client 2": 0.33343993160461355,
+            "Client 3": 0.33327591940893697
+          },
+          "aggregate_val_mape": 0.9993001339691026,
+          "aggregate_val_rmse": 3659233.5848214286,
+          "aggregate_val_mae": 3060728.4375,
+          "aggregate_val_mpe": -0.9993001339691026,
+          "client_mape_gap": 0.0008328557014465332,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9989852905273438,
+              "val_rmse": 3980955.25,
+              "val_mae": 3237345.25,
+              "val_mpe": -0.9989852905273438
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9991242289543152,
+              "val_rmse": 4605364.5,
+              "val_mae": 3891689.75,
+              "val_mpe": -0.9991242289543152
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9998181462287903,
+              "val_rmse": 2320944.75,
+              "val_mae": 1997173.75,
+              "val_mpe": -0.9998181462287903
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.3355918461827224,
+            "Client 2": 0.33795284251463553,
+            "Client 3": 0.326455311302642
+          },
+          "aggregate_val_mape": 0.999303726213319,
+          "aggregate_val_rmse": 3659244.7276785714,
+          "aggregate_val_mae": 3060739.6473214286,
+          "aggregate_val_mpe": -0.999303726213319,
+          "client_mape_gap": 0.0008311271667480469,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9989897012710571,
+              "val_rmse": 3980969.25,
+              "val_mae": 3237358.75,
+              "val_mpe": -0.9989897012710571
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9991278648376465,
+              "val_rmse": 4605371.5,
+              "val_mae": 3891701.0,
+              "val_mpe": -0.9991278648376465
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9998208284378052,
+              "val_rmse": 2320957.25,
+              "val_mae": 1997182.5,
+              "val_mpe": -0.9998208284378052
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.33651492506123165,
+            "Client 2": 0.3397580068786444,
+            "Client 3": 0.323727068060124
+          },
+          "aggregate_val_mape": 0.9993051226649966,
+          "aggregate_val_rmse": 3659249.21875,
+          "aggregate_val_mae": 3060744.25,
+          "aggregate_val_mpe": -0.9993051226649966,
+          "client_mape_gap": 0.0008304715156555176,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9989914298057556,
+              "val_rmse": 3980975.25,
+              "val_mae": 3237364.25,
+              "val_mpe": -0.9989914298057556
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9991292357444763,
+              "val_rmse": 4605374.0,
+              "val_mae": 3891705.75,
+              "val_mpe": -0.9991292357444763
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9998219013214111,
+              "val_rmse": 2320962.25,
+              "val_mae": 1997186.0,
+              "val_mpe": -0.9998219013214111
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1302.5690673828126,
+          "val_mape": 0.9993242025375366,
+          "val_rmse": 3983071.5,
+          "val_mae": 3238817.5,
+          "val_mpe": -0.9993242025375366
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1331.3237548828124,
+          "val_mape": 0.998857319355011,
+          "val_rmse": 4603410.0,
+          "val_mae": 3890245.5,
+          "val_mpe": -0.998857319355011
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1137.86513671875,
+          "val_mape": 0.9993488788604736,
+          "val_rmse": 2319152.0,
+          "val_mae": 1995836.0,
+          "val_mpe": -0.9993488788604736
+        }
+      },
+      "global_val": {
+        "mape": "0.99930394",
+        "mae": "2980871.8",
+        "rmse": "3902641.5",
+        "mpe": "-0.99930394",
+        "nrmse": "0.3508569",
+        "r2": -1.3933265209197998
+      }
+    },
+    {
+      "round": 4,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "size_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "size_only has been used for all 4 rounds and consistently improved MAPE each round (from 0.999981 to 0.999304), with the largest relative improvement in round 4 (-0.000406).",
+          "Candidate validation previews show all four strategies produce nearly identical aggregate MAPE (~0.99842), with size_only being the best at 0.9984235.",
+          "size_only has the lowest client MAPE gap in the preview (0.0018596), indicating better fairness across clients.",
+          "The current round's client validation metrics show Client 2 has the best MAPE (0.99715) and Client 3 the worst (0.99861), but size_only weights appropriately balance sample sizes.",
+          "No evidence of overfitting or stagnation; MAPE is still improving steadily."
+        ],
+        "risk": "Low risk. The strategy has been working well and continues to show improvement. The main risk is that improvement may slow as MAPE approaches a lower bound.",
+        "reasoning": "size_only has delivered consistent MAPE reductions over 4 rounds with no signs of degradation. The candidate preview confirms it is marginally the best strategy for the next round. Since the model is still improving and not yet converged, maintaining the current successful approach is optimal. No learning rate or epoch adjustment is needed as convergence is steady.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.33318797221632834,
+          "Client 2": 0.33364947137978085,
+          "Client 3": 0.3331625564038908
+        },
+        "hybrid": {
+          "Client 1": 0.3355437577976619,
+          "Client 2": 0.3380576124022192,
+          "Client 3": 0.3263986298001189
+        },
+        "fairness_clip": {
+          "Client 1": 0.33648607203019537,
+          "Client 2": 0.33982086881119455,
+          "Client 3": 0.3236930591586102
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.9984235018491745,
+          "aggregate_val_rmse": 3655556.910714286,
+          "aggregate_val_mae": 3057466.1383928573,
+          "aggregate_val_mpe": -0.9984235018491745,
+          "client_mape_gap": 0.0018596053123474121,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9980915188789368,
+              "val_rmse": 3976513.0,
+              "val_mae": 3233889.0,
+              "val_mpe": -0.9980915188789368
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9976893067359924,
+              "val_rmse": 4600158.0,
+              "val_mae": 3886344.0,
+              "val_mpe": -0.9976893067359924
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9995489120483398,
+              "val_rmse": 2319691.0,
+              "val_mae": 1996315.375,
+              "val_mpe": -0.9995489120483398
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.33318797221632834,
+            "Client 2": 0.33364947137978085,
+            "Client 3": 0.3331625564038908
+          },
+          "aggregate_val_mape": 0.9984082760555404,
+          "aggregate_val_rmse": 3655521.254464286,
+          "aggregate_val_mae": 3057424.5625,
+          "aggregate_val_mpe": -0.9984082760555404,
+          "client_mape_gap": 0.001863241195678711,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9980725646018982,
+              "val_rmse": 3976485.25,
+              "val_mae": 3233846.25,
+              "val_mpe": -0.9980725646018982
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9976742267608643,
+              "val_rmse": 4600128.5,
+              "val_mae": 3886297.25,
+              "val_mpe": -0.9976742267608643
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.999537467956543,
+              "val_rmse": 2319640.5,
+              "val_mae": 1996280.5,
+              "val_mpe": -0.999537467956543
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.3355437577976619,
+            "Client 2": 0.3380576124022192,
+            "Client 3": 0.3263986298001189
+          },
+          "aggregate_val_mape": 0.9984159597328731,
+          "aggregate_val_rmse": 3655539.129464286,
+          "aggregate_val_mae": 3057445.285714286,
+          "aggregate_val_mpe": -0.9984159597328731,
+          "client_mape_gap": 0.0018613934516906738,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9980822205543518,
+              "val_rmse": 3976499.25,
+              "val_mae": 3233867.5,
+              "val_mpe": -0.9980822205543518
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9976817965507507,
+              "val_rmse": 4600143.5,
+              "val_mae": 3886320.5,
+              "val_mpe": -0.9976817965507507
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9995431900024414,
+              "val_rmse": 2319665.5,
+              "val_mae": 1996298.0,
+              "val_mpe": -0.9995431900024414
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.33648607203019537,
+            "Client 2": 0.33982086881119455,
+            "Client 3": 0.3236930591586102
+          },
+          "aggregate_val_mape": 0.9984190506594521,
+          "aggregate_val_rmse": 3655546.410714286,
+          "aggregate_val_mae": 3057453.941964286,
+          "aggregate_val_mpe": -0.9984190506594521,
+          "client_mape_gap": 0.0018607378005981445,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9980859160423279,
+              "val_rmse": 3976505.0,
+              "val_mae": 3233876.5,
+              "val_mpe": -0.9980859160423279
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.997684895992279,
+              "val_rmse": 4600149.5,
+              "val_mae": 3886330.5,
+              "val_mpe": -0.997684895992279
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9995456337928772,
+              "val_rmse": 2319675.75,
+              "val_mae": 1996304.875,
+              "val_mpe": -0.9995456337928772
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1221.1829833984375,
+          "val_mape": 0.9985336661338806,
+          "val_rmse": 3977863.25,
+          "val_mae": 3235132.75,
+          "val_mpe": -0.9985336661338806
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1243.792236328125,
+          "val_mape": 0.9971525073051453,
+          "val_rmse": 4596874.0,
+          "val_mae": 3883642.5,
+          "val_mpe": -0.9971525073051453
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1053.8883544921875,
+          "val_mape": 0.9986098408699036,
+          "val_rmse": 2316574.5,
+          "val_mae": 1993849.375,
+          "val_mpe": -0.9986098408699036
+        }
+      },
+      "global_val": {
+        "mape": "0.99838775",
+        "mae": "2977469.2",
+        "rmse": "3898337.0",
+        "mpe": "-0.99838775",
+        "nrmse": "0.3504699",
+        "r2": -1.388049602508545
+      }
+    },
+    {
+      "round": 5,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "size_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "size_only has the lowest aggregate_val_mape (0.997003) among all candidates",
+          "size_only has the lowest aggregate_val_rmse (3649793) and aggregate_val_mae (3052214)",
+          "size_only has been consistently improving MAPE over the last 5 rounds (delta -0.001593)",
+          "Current round 6 validation preview shows size_only outperforms perf_only, hybrid, and fairness_clip on aggregate MAPE"
+        ],
+        "risk": "Client 3 has higher val_mape (0.999017) than Client 2 (0.995395), indicating potential client drift; monitor client gap",
+        "reasoning": "size_only achieves the best aggregate validation MAPE in the current round preview, continues the strong improvement trend seen in rounds 1-5, and requires no hyperparameter tuning. The marginal effect history shows consistent MAPE reduction with size_only. Switching to other strategies would not improve performance based on validation evidence.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.3329446987587927,
+          "Client 2": 0.3340195446889011,
+          "Client 3": 0.33303575655230605
+        },
+        "hybrid": {
+          "Client 1": 0.335422121068894,
+          "Client 2": 0.3382426490567793,
+          "Client 3": 0.3263352298743265
+        },
+        "fairness_clip": {
+          "Client 1": 0.3364130899929346,
+          "Client 2": 0.3399318908039306,
+          "Client 3": 0.3236550192031347
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.9970033669045993,
+          "aggregate_val_rmse": 3649793.0178571427,
+          "aggregate_val_mae": 3052213.9821428573,
+          "aggregate_val_mpe": -0.9970033669045993,
+          "client_mape_gap": 0.0036229491233825684,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9967041015625,
+              "val_rmse": 3969431.0,
+              "val_mae": 3228314.5,
+              "val_mpe": -0.9967041015625
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9953945279121399,
+              "val_rmse": 4592392.5,
+              "val_mae": 3877958.75,
+              "val_mpe": -0.9953945279121399
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9990174770355225,
+              "val_rmse": 2317431.25,
+              "val_mae": 1994710.625,
+              "val_mpe": -0.9990174770355225
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.3329446987587927,
+            "Client 2": 0.3340195446889011,
+            "Client 3": 0.33303575655230605
+          },
+          "aggregate_val_mape": 0.996979832649231,
+          "aggregate_val_rmse": 3649755.0089285714,
+          "aggregate_val_mae": 3052158.6071428573,
+          "aggregate_val_mpe": -0.996979832649231,
+          "client_mape_gap": 0.003616631031036377,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9966731071472168,
+              "val_rmse": 3969417.5,
+              "val_mae": 3228254.5,
+              "val_mpe": -0.9966731071472168
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9953778982162476,
+              "val_rmse": 4592383.5,
+              "val_mae": 3877919.25,
+              "val_mpe": -0.9953778982162476
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9989945292472839,
+              "val_rmse": 2317336.75,
+              "val_mae": 1994643.375,
+              "val_mpe": -0.9989945292472839
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.335422121068894,
+            "Client 2": 0.3382426490567793,
+            "Client 3": 0.3263352298743265
+          },
+          "aggregate_val_mape": 0.9969917184540203,
+          "aggregate_val_rmse": 3649773.9285714286,
+          "aggregate_val_mae": 3052186.4196428573,
+          "aggregate_val_mpe": -0.9969917184540203,
+          "client_mape_gap": 0.003619849681854248,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.996688723564148,
+              "val_rmse": 3969424.5,
+              "val_mae": 3228284.75,
+              "val_mpe": -0.996688723564148
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9953863024711609,
+              "val_rmse": 4592387.5,
+              "val_mae": 3877939.0,
+              "val_mpe": -0.9953863024711609
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9990061521530151,
+              "val_rmse": 2317384.0,
+              "val_mae": 1994677.125,
+              "val_mpe": -0.9990061521530151
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.3364130899929346,
+            "Client 2": 0.3399318908039306,
+            "Client 3": 0.3236550192031347
+          },
+          "aggregate_val_mape": 0.9969963708094188,
+          "aggregate_val_rmse": 3649781.5625,
+          "aggregate_val_mae": 3052197.3348214286,
+          "aggregate_val_mpe": -0.9969963708094188,
+          "client_mape_gap": 0.0036209821701049805,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9966948628425598,
+              "val_rmse": 3969427.0,
+              "val_mae": 3228296.75,
+              "val_mpe": -0.9966948628425598
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9953896403312683,
+              "val_rmse": 4592389.5,
+              "val_mae": 3877946.5,
+              "val_mpe": -0.9953896403312683
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9990106225013733,
+              "val_rmse": 2317403.0,
+              "val_mae": 1994690.5,
+              "val_mpe": -0.9990106225013733
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1123.6280029296875,
+          "val_mape": 0.9975609183311462,
+          "val_rmse": 3970864.75,
+          "val_mae": 3230378.0,
+          "val_mpe": -0.9975609183311462
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1149.5338134765625,
+          "val_mape": 0.9943508505821228,
+          "val_rmse": 4585781.5,
+          "val_mae": 3872627.0,
+          "val_mpe": -0.9943508505821228
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 985.1456787109375,
+          "val_mape": 0.997288167476654,
+          "val_rmse": 2312005.0,
+          "val_mae": 1990342.0,
+          "val_mpe": -0.997288167476654
+        }
+      },
+      "global_val": {
+        "mape": "0.99696046",
+        "mae": "2972459.8",
+        "rmse": "3892353.8",
+        "mpe": "-0.99696046",
+        "nrmse": "0.349932",
+        "r2": -1.3807246685028076
+      }
+    },
+    {
+      "round": 6,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "size_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "size_only has the lowest aggregate_val_mape (0.994223) among all candidates in the validation preview",
+          "size_only has consistently improved MAPE over 6 rounds (from 0.999981 to 0.99696), with accelerating improvement (delta MAPE -0.001427 in round 6)",
+          "perf_only, hybrid, and fairness_clip all show slightly higher aggregate_val_mape (0.994191, 0.994207, 0.994214) than size_only",
+          "Client 2 has the best val_mape (0.98898) but size_only gives it higher weight (0.3425) which aligns with its larger sample size and good performance",
+          "The client_mape_gap for size_only (0.00648) is only slightly higher than other strategies, indicating no significant fairness issue"
+        ],
+        "risk": "Client 3 has higher val_mape (0.99773) and may be underweighted, but the gap is small and size_only continues to show strong convergence",
+        "reasoning": "size_only has delivered consistent MAPE reduction over 6 rounds with accelerating improvement. The validation preview confirms it achieves the lowest aggregate MAPE among all strategies. Given the current convergence trend and no evidence of overfitting or stagnation, continuing with size_only at current learning rate and epochs is the safest choice to maintain progress.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.3324932258079953,
+          "Client 2": 0.3346852053247421,
+          "Client 3": 0.33282156886726266
+        },
+        "hybrid": {
+          "Client 1": 0.3351963845934953,
+          "Client 2": 0.3385754793746998,
+          "Client 3": 0.32622813603180484
+        },
+        "fairness_clip": {
+          "Client 1": 0.3362776481076954,
+          "Client 2": 0.34013158899468293,
+          "Client 3": 0.32359076289762173
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.9942234137228557,
+          "aggregate_val_rmse": 3637957.3035714286,
+          "aggregate_val_mae": 3041786.5758928573,
+          "aggregate_val_mpe": -0.9942234137228557,
+          "client_mape_gap": 0.006477832794189453,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9938731789588928,
+              "val_rmse": 3955791.5,
+              "val_mae": 3217262.0,
+              "val_mpe": -0.9938731789588928
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9912518858909607,
+              "val_rmse": 4576049.0,
+              "val_mae": 3861814.25,
+              "val_mpe": -0.9912518858909607
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9977297186851501,
+              "val_rmse": 2312257.75,
+              "val_mae": 1990977.75,
+              "val_mpe": -0.9977297186851501
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.3324932258079953,
+            "Client 2": 0.3346852053247421,
+            "Client 3": 0.33282156886726266
+          },
+          "aggregate_val_mape": 0.9941913868699755,
+          "aggregate_val_rmse": 3637905.8660714286,
+          "aggregate_val_mae": 3041719.191964286,
+          "aggregate_val_mpe": -0.9941913868699755,
+          "client_mape_gap": 0.006437540054321289,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9938251972198486,
+              "val_rmse": 3955758.5,
+              "val_mae": 3217168.25,
+              "val_mpe": -0.9938251972198486
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9912476539611816,
+              "val_rmse": 4576086.0,
+              "val_mae": 3861824.5,
+              "val_mpe": -0.9912476539611816
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9976851940155029,
+              "val_rmse": 2312093.5,
+              "val_mae": 1990856.25,
+              "val_mpe": -0.9976851940155029
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.3351963845934953,
+            "Client 2": 0.3385754793746998,
+            "Client 3": 0.32622813603180484
+          },
+          "aggregate_val_mape": 0.994207389652729,
+          "aggregate_val_rmse": 3637931.4553571427,
+          "aggregate_val_mae": 3041752.9241071427,
+          "aggregate_val_mpe": -0.994207389652729,
+          "client_mape_gap": 0.006457805633544922,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9938492178916931,
+              "val_rmse": 3955775.0,
+              "val_mae": 3217215.5,
+              "val_mpe": -0.9938492178916931
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.991249680519104,
+              "val_rmse": 4576067.0,
+              "val_mae": 3861819.0,
+              "val_mpe": -0.991249680519104
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9977074861526489,
+              "val_rmse": 2312175.75,
+              "val_mae": 1990917.125,
+              "val_mpe": -0.9977074861526489
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.3362776481076954,
+            "Client 2": 0.34013158899468293,
+            "Client 3": 0.32359076289762173
+          },
+          "aggregate_val_mape": 0.994213801409517,
+          "aggregate_val_rmse": 3637941.723214286,
+          "aggregate_val_mae": 3041766.316964286,
+          "aggregate_val_mpe": -0.994213801409517,
+          "client_mape_gap": 0.00646597146987915,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9938587546348572,
+              "val_rmse": 3955781.5,
+              "val_mae": 3217233.75,
+              "val_mpe": -0.9938587546348572
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9912505149841309,
+              "val_rmse": 4576059.5,
+              "val_mae": 3861817.25,
+              "val_mpe": -0.9912505149841309
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.99771648645401,
+              "val_rmse": 2312208.75,
+              "val_mae": 1990941.375,
+              "val_mpe": -0.99771648645401
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1058.8463989257812,
+          "val_mape": 0.995500385761261,
+          "val_rmse": 3957075.0,
+          "val_mae": 3220606.0,
+          "val_mpe": -0.995500385761261
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1041.363330078125,
+          "val_mape": 0.9889804720878601,
+          "val_rmse": 4563381.0,
+          "val_mae": 3851142.0,
+          "val_mpe": -0.9889804720878601
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 873.3754516601563,
+          "val_mape": 0.9945182800292969,
+          "val_rmse": 2302846.25,
+          "val_mae": 1983368.875,
+          "val_mpe": -0.9945182800292969
+        }
+      },
+      "global_val": {
+        "mape": "0.9940998",
+        "mae": "2962512.2",
+        "rmse": "3879952.2",
+        "mpe": "-0.9940998",
+        "nrmse": "0.34881708",
+        "r2": -1.3655784130096436
+      }
+    },
+    {
+      "round": 7,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "size_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "size_only has consistently improved MAPE over 7 rounds (from 0.999981 to 0.9941), with accelerating improvements in recent rounds (delta -0.002861 in round 7).",
+          "Candidate validation preview shows size_only achieves the lowest aggregate MAPE (0.989287) among all strategies, outperforming perf_only (0.989221), hybrid (0.989254), and fairness_clip (0.989267).",
+          "size_only also has the lowest aggregate RMSE (3616072) and MAE (3023194) in the preview, indicating better overall prediction accuracy.",
+          "The client MAPE gap (0.00971) is slightly higher than other strategies, but the overall MAPE improvement is more significant and the gap is still manageable."
+        ],
+        "risk": "Client MAPE gap may increase if some clients consistently underperform, but current trend shows overall MAPE is improving rapidly.",
+        "reasoning": "size_only has demonstrated strong and consistent MAPE reduction over 7 rounds, with accelerating improvements. The candidate validation preview confirms it achieves the best aggregate metrics among all strategies. Given the remaining 13 rounds and current strong performance, continuing with size_only at current learning rate and epochs is the safest choice to maintain convergence.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.3321940200084297,
+          "Client 2": 0.33470115558753377,
+          "Client 3": 0.33310482440403666
+        },
+        "hybrid": {
+          "Client 1": 0.33504678169371255,
+          "Client 2": 0.3385834545060956,
+          "Client 3": 0.32636976380019184
+        },
+        "fairness_clip": {
+          "Client 1": 0.3361878863678257,
+          "Client 2": 0.3401363740735204,
+          "Client 3": 0.32367573955865386
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.9892871028610638,
+          "aggregate_val_rmse": 3616072.4821428573,
+          "aggregate_val_mae": 3023194.1741071427,
+          "aggregate_val_mpe": -0.9892871028610638,
+          "client_mape_gap": 0.00970911979675293,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9890460968017578,
+              "val_rmse": 3930954.5,
+              "val_mae": 3197843.5,
+              "val_mpe": -0.9890460968017578
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9846875071525574,
+              "val_rmse": 4547964.0,
+              "val_mae": 3835069.0,
+              "val_mpe": -0.9846875071525574
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9943966269493103,
+              "val_rmse": 2300033.75,
+              "val_mae": 1981863.125,
+              "val_mpe": -0.9943966269493103
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.3321940200084297,
+            "Client 2": 0.33470115558753377,
+            "Client 3": 0.33310482440403666
+          },
+          "aggregate_val_mape": 0.9892208916800362,
+          "aggregate_val_rmse": 3615926.6785714286,
+          "aggregate_val_mae": 3023035.2946428573,
+          "aggregate_val_mpe": -0.9892208916800362,
+          "client_mape_gap": 0.0096282958984375,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9889729022979736,
+              "val_rmse": 3930950.5,
+              "val_mae": 3197721.5,
+              "val_mpe": -0.9889729022979736
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9846642017364502,
+              "val_rmse": 4547894.0,
+              "val_mae": 3834987.75,
+              "val_mpe": -0.9846642017364502
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9942924976348877,
+              "val_rmse": 2299658.25,
+              "val_mae": 1981583.375,
+              "val_mpe": -0.9942924976348877
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.33504678169371255,
+            "Client 2": 0.3385834545060956,
+            "Client 3": 0.32636976380019184
+          },
+          "aggregate_val_mape": 0.9892540371843747,
+          "aggregate_val_rmse": 3615999.410714286,
+          "aggregate_val_mae": 3023114.348214286,
+          "aggregate_val_mpe": -0.9892540371843747,
+          "client_mape_gap": 0.009668827056884766,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9890096783638,
+              "val_rmse": 3930952.5,
+              "val_mae": 3197782.25,
+              "val_mpe": -0.9890096783638
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9846757650375366,
+              "val_rmse": 4547928.5,
+              "val_mae": 3835027.25,
+              "val_mpe": -0.9846757650375366
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9943445920944214,
+              "val_rmse": 2299846.0,
+              "val_mae": 1981723.5,
+              "val_mpe": -0.9943445920944214
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.3361878863678257,
+            "Client 2": 0.3401363740735204,
+            "Client 3": 0.32367573955865386
+          },
+          "aggregate_val_mape": 0.9892672555787223,
+          "aggregate_val_rmse": 3616028.6026785714,
+          "aggregate_val_mae": 3023146.3883928573,
+          "aggregate_val_mpe": -0.9892672555787223,
+          "client_mape_gap": 0.00968480110168457,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9890241026878357,
+              "val_rmse": 3930953.25,
+              "val_mae": 3197806.75,
+              "val_mpe": -0.9890241026878357
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9846805930137634,
+              "val_rmse": 4547942.5,
+              "val_mae": 3835044.25,
+              "val_mpe": -0.9846805930137634
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.994365394115448,
+              "val_rmse": 2299921.25,
+              "val_mae": 1981779.375,
+              "val_mpe": -0.994365394115448
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 951.7706298828125,
+          "val_mape": 0.9907402396202087,
+          "val_rmse": 3928027.0,
+          "val_mae": 3199427.75,
+          "val_mpe": -0.9907402396202087
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 948.3029907226562,
+          "val_mape": 0.9833189249038696,
+          "val_rmse": 4538610.0,
+          "val_mae": 3827824.75,
+          "val_mpe": -0.9833189249038696
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 794.5941284179687,
+          "val_mape": 0.988031268119812,
+          "val_rmse": 2282557.75,
+          "val_mae": 1967248.625,
+          "val_mpe": -0.988031268119812
+        }
+      },
+      "global_val": {
+        "mape": "0.9890836",
+        "mae": "2945824.2",
+        "rmse": "3859849.5",
+        "mpe": "-0.9890836",
+        "nrmse": "0.34700978",
+        "r2": -1.3411290645599365
+      }
+    },
+    {
+      "round": 8,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "size_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "size_only has consistently improved MAPE from 0.999981 to 0.989084 over 8 rounds, with accelerating improvements (last 3 rounds delta -0.007877, last 5 rounds delta -0.01022)",
+          "Candidate validation preview shows size_only achieves lowest aggregate MAPE (0.982988) among all strategies, outperforming perf_only (0.982877), hybrid (0.982933), and fairness_clip (0.982955)",
+          "size_only weights are proportional to sample sizes (148, 150, 140), which are nearly equal, providing stable and fair aggregation without introducing performance-based bias that could increase variance",
+          "Client MAPE gap (0.013757) is slightly higher than perf_only (0.013617) but still reasonable, and the model is converging well with consistent improvement"
+        ],
+        "risk": "Low risk - size_only has shown steady improvement and the candidate preview confirms it is the best option for the next round",
+        "reasoning": "size_only has been the sole strategy used so far, and it has delivered consistent, accelerating MAPE reductions from 0.999981 to 0.989084. The candidate validation preview confirms that size_only yields the lowest aggregate MAPE (0.982988) compared to all other strategies. Since the model is still converging well (last 3 rounds delta -0.007877) and client sample sizes are nearly equal, switching to a performance-based strategy could introduce unnecessary variance. Keeping lr_scale=1.0 and epoch_delta=0 maintains the current effective training pace.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.3311287473366271,
+          "Client 2": 0.3349990029188579,
+          "Client 3": 0.3338722497445149
+        },
+        "hybrid": {
+          "Client 1": 0.33451414535781127,
+          "Client 2": 0.3387323781717577,
+          "Client 3": 0.32675347647043096
+        },
+        "fairness_clip": {
+          "Client 1": 0.33586830456628497,
+          "Client 2": 0.3402257282729177,
+          "Client 3": 0.3239059671607974
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.9829877795917648,
+          "aggregate_val_rmse": 3585366.1339285714,
+          "aggregate_val_mae": 2998343.8125,
+          "aggregate_val_mpe": -0.9829877795917648,
+          "client_mape_gap": 0.013757288455963135,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9820129871368408,
+              "val_rmse": 3891781.5,
+              "val_mae": 3167845.25,
+              "val_mpe": -0.9820129871368408
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9767956137657166,
+              "val_rmse": 4509955.5,
+              "val_mae": 3801678.25,
+              "val_mpe": -0.9767956137657166
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9905529022216797,
+              "val_rmse": 2285972.25,
+              "val_mae": 1971461.5,
+              "val_mpe": -0.9905529022216797
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.3311287473366271,
+            "Client 2": 0.3349990029188579,
+            "Client 3": 0.3338722497445149
+          },
+          "aggregate_val_mape": 0.982876888343266,
+          "aggregate_val_rmse": 3585092.2678571427,
+          "aggregate_val_mae": 2998068.1875,
+          "aggregate_val_mpe": -0.982876888343266,
+          "client_mape_gap": 0.013617157936096191,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9818803071975708,
+              "val_rmse": 3891551.0,
+              "val_mae": 3167527.25,
+              "val_mpe": -0.9818803071975708
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9767640829086304,
+              "val_rmse": 4509893.0,
+              "val_mae": 3801591.25,
+              "val_mpe": -0.9767640829086304
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9903812408447266,
+              "val_rmse": 2285429.5,
+              "val_mae": 1971031.5,
+              "val_mpe": -0.9903812408447266
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.33451414535781127,
+            "Client 2": 0.3387323781717577,
+            "Client 3": 0.32675347647043096
+          },
+          "aggregate_val_mape": 0.9829325016055789,
+          "aggregate_val_rmse": 3585228.9866071427,
+          "aggregate_val_mae": 2998205.8660714286,
+          "aggregate_val_mpe": -0.9829325016055789,
+          "client_mape_gap": 0.013687491416931152,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9819469451904297,
+              "val_rmse": 3891666.75,
+              "val_mae": 3167686.25,
+              "val_mpe": -0.9819469451904297
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9767798185348511,
+              "val_rmse": 4509923.0,
+              "val_mae": 3801634.0,
+              "val_mpe": -0.9767798185348511
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9904673099517822,
+              "val_rmse": 2285701.0,
+              "val_mae": 1971246.875,
+              "val_mpe": -0.9904673099517822
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.33586830456628497,
+            "Client 2": 0.3402257282729177,
+            "Client 3": 0.3239059671607974
+          },
+          "aggregate_val_mape": 0.9829546617610114,
+          "aggregate_val_rmse": 3585283.7098214286,
+          "aggregate_val_mae": 2998260.9910714286,
+          "aggregate_val_mpe": -0.9829546617610114,
+          "client_mape_gap": 0.013715386390686035,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9819735288619995,
+              "val_rmse": 3891712.75,
+              "val_mae": 3167749.5,
+              "val_mpe": -0.9819735288619995
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9767861366271973,
+              "val_rmse": 4509935.5,
+              "val_mae": 3801651.75,
+              "val_mpe": -0.9767861366271973
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9905015230178833,
+              "val_rmse": 2285809.5,
+              "val_mae": 1971332.875,
+              "val_mpe": -0.9905015230178833
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 824.5666015625,
+          "val_mape": 0.9863178730010986,
+          "val_rmse": 3898422.0,
+          "val_mae": 3178533.25,
+          "val_mpe": -0.9863178730010986
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 848.150732421875,
+          "val_mape": 0.9749228954315186,
+          "val_rmse": 4494145.0,
+          "val_mae": 3790695.25,
+          "val_mpe": -0.9749228954315186
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 704.8552978515625,
+          "val_mape": 0.9782130718231201,
+          "val_rmse": 2259626.25,
+          "val_mae": 1946730.0,
+          "val_mpe": -0.9782130718231201
+        }
+      },
+      "global_val": {
+        "mape": "0.98225737",
+        "mae": "2921622.2",
+        "rmse": "3829900.5",
+        "mpe": "-0.98225737",
+        "nrmse": "0.3443173",
+        "r2": -1.3049397468566895
+      }
+    },
+    {
+      "round": 9,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "size_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "size_only has consistently reduced MAPE over 9 rounds, from 0.999981 to 0.982257, with accelerating improvements (last 3 rounds delta -0.011842, last 5 rounds delta -0.01613)",
+          "Current candidate validation previews show all strategies yield nearly identical aggregate MAPE (~0.9732-0.9733), with size_only having the lowest at 0.9733197",
+          "size_only has the smallest client MAPE gap (0.020828) among candidates, indicating better fairness",
+          "The marginal effect history shows size_only has been effective and stable, with no signs of overfitting or oscillation"
+        ],
+        "risk": "Continued improvement may slow as MAPE approaches lower bound, but current trend is positive and no alternative strategy shows clear advantage",
+        "reasoning": "size_only has demonstrated consistent and accelerating MAPE reduction over 9 rounds. All candidate strategies show nearly identical validation preview performance, with size_only marginally best. Given the strong historical evidence and no clear benefit from switching, continuing with size_only is the safest choice to maintain convergence.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.3304105111037398,
+          "Client 2": 0.33657162310524935,
+          "Client 3": 0.33301786579101084
+        },
+        "hybrid": {
+          "Client 1": 0.3341550272413676,
+          "Client 2": 0.33951868826495346,
+          "Client 3": 0.32632628449367895
+        },
+        "fairness_clip": {
+          "Client 1": 0.3356528336964188,
+          "Client 2": 0.3406975143288351,
+          "Client 3": 0.3236496519747462
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.9733197071722576,
+          "aggregate_val_rmse": 3539316.5178571427,
+          "aggregate_val_mae": 2960763.1428571427,
+          "aggregate_val_mpe": -0.9733197071722576,
+          "client_mape_gap": 0.020828425884246826,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9695999026298523,
+              "val_rmse": 3827162.5,
+              "val_mae": 3117665.25,
+              "val_mpe": -0.9695999026298523
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9650971293449402,
+              "val_rmse": 4455563.5,
+              "val_mae": 3753265.25,
+              "val_mpe": -0.9650971293449402
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.985925555229187,
+              "val_rmse": 2268329.5,
+              "val_mae": 1958614.25,
+              "val_mpe": -0.985925555229187
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.3304105111037398,
+            "Client 2": 0.33657162310524935,
+            "Client 3": 0.33301786579101084
+          },
+          "aggregate_val_mape": 0.973182235445295,
+          "aggregate_val_rmse": 3539034.370535714,
+          "aggregate_val_mae": 2960449.870535714,
+          "aggregate_val_mpe": -0.973182235445295,
+          "client_mape_gap": 0.020661532878875732,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9693899750709534,
+              "val_rmse": 3826887.75,
+              "val_mae": 3117217.25,
+              "val_mpe": -0.9693899750709534
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9650780558586121,
+              "val_rmse": 4455603.5,
+              "val_mae": 3753249.75,
+              "val_mpe": -0.9650780558586121
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9857395887374878,
+              "val_rmse": 2267699.5,
+              "val_mae": 1958128.875,
+              "val_mpe": -0.9857395887374878
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.3341550272413676,
+            "Client 2": 0.33951868826495346,
+            "Client 3": 0.32632628449367895
+          },
+          "aggregate_val_mape": 0.9732512086629868,
+          "aggregate_val_rmse": 3539175.6383928573,
+          "aggregate_val_mae": 2960606.9776785714,
+          "aggregate_val_mpe": -0.9732512086629868,
+          "client_mape_gap": 0.020745277404785156,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9694953560829163,
+              "val_rmse": 3827025.75,
+              "val_mae": 3117442.0,
+              "val_mpe": -0.9694953560829163
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9650875926017761,
+              "val_rmse": 4455582.5,
+              "val_mae": 3753257.25,
+              "val_mpe": -0.9650875926017761
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9858328700065613,
+              "val_rmse": 2268015.5,
+              "val_mae": 1958372.5,
+              "val_mpe": -0.9858328700065613
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.3356528336964188,
+            "Client 2": 0.3406975143288351,
+            "Client 3": 0.3236496519747462
+          },
+          "aggregate_val_mape": 0.9732786566019058,
+          "aggregate_val_rmse": 3539231.8348214286,
+          "aggregate_val_mae": 2960669.5,
+          "aggregate_val_mpe": -0.9732786566019058,
+          "client_mape_gap": 0.020778536796569824,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9695373177528381,
+              "val_rmse": 3827080.25,
+              "val_mae": 3117531.5,
+              "val_mpe": -0.9695373177528381
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9650914072990417,
+              "val_rmse": 4455574.5,
+              "val_mae": 3753260.25,
+              "val_mpe": -0.9650914072990417
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9858699440956116,
+              "val_rmse": 2268141.25,
+              "val_mae": 1958469.375,
+              "val_mpe": -0.9858699440956116
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 747.9397094726562,
+          "val_mape": 0.9775047302246094,
+          "val_rmse": 3847763.0,
+          "val_mae": 3139790.0,
+          "val_mpe": -0.9775047302246094
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 753.381884765625,
+          "val_mape": 0.9596109986305237,
+          "val_rmse": 4422062.5,
+          "val_mae": 3726410.0,
+          "val_mpe": -0.9596109986305237
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 632.81015625,
+          "val_mape": 0.9698513746261597,
+          "val_rmse": 2233921.75,
+          "val_mae": 1926241.125,
+          "val_mpe": -0.9698513746261597
+        }
+      },
+      "global_val": {
+        "mape": "0.97142625",
+        "mae": "2883527.2",
+        "rmse": "3781742.0",
+        "mpe": "-0.97142625",
+        "nrmse": "0.33998773",
+        "r2": -1.247337818145752
+      }
+    },
+    {
+      "round": 10,
+      "strategy_name": "perf_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.32855065564097646,
+        "Client 2": 0.3372064700748668,
+        "Client 3": 0.3342428742841567
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "perf_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "perf_only achieves the lowest aggregate_val_mape (0.958659) among all candidates",
+          "perf_only has the smallest client_mape_gap (0.029254), indicating better fairness",
+          "Client 3 has higher val_mape (0.978) than others; perf_only gives it more weight (0.334) than size_only (0.320), helping reduce its error",
+          "size_only has been used for 10 rounds with consistent improvement, but the improvement rate is slowing (last 3 rounds delta -0.017657 vs earlier larger gains)",
+          "perf_only preview shows slightly better aggregate metrics than the current best (0.971426), suggesting potential for further improvement"
+        ],
+        "risk": "perf_only may over-weight clients with temporarily low MAPE, but current client gaps are moderate and preview shows stable improvement",
+        "reasoning": "After 10 rounds of size_only with diminishing returns, perf_only offers the best validation preview with lower MAPE and better client balance. The marginal effect of size_only is decreasing, so switching to a performance-weighted strategy can leverage client-specific improvements.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.32855065564097646,
+          "Client 2": 0.3372064700748668,
+          "Client 3": 0.3342428742841567
+        },
+        "hybrid": {
+          "Client 1": 0.3332250995099859,
+          "Client 2": 0.33983611174976214,
+          "Client 3": 0.32693878874025184
+        },
+        "fairness_clip": {
+          "Client 1": 0.3350948770575898,
+          "Client 2": 0.3408879684197203,
+          "Client 3": 0.3240171545226899
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.9590300055486816,
+          "aggregate_val_rmse": 3483053.6026785714,
+          "aggregate_val_mae": 2911432.7723214286,
+          "aggregate_val_mpe": -0.9590300055486816,
+          "client_mape_gap": 0.029544055461883545,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9514216184616089,
+              "val_rmse": 3747691.75,
+              "val_mae": 3053382.0,
+              "val_mpe": -0.9514216184616089
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9485642313957214,
+              "val_rmse": 4391008.5,
+              "val_mae": 3689667.25,
+              "val_mpe": -0.9485642313957214
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.978108286857605,
+              "val_rmse": 2245316.5,
+              "val_mae": 1940127.75,
+              "val_mpe": -0.978108286857605
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.32855065564097646,
+            "Client 2": 0.3372064700748668,
+            "Client 3": 0.3342428742841567
+          },
+          "aggregate_val_mape": 0.9586591284189906,
+          "aggregate_val_rmse": 3482343.5758928573,
+          "aggregate_val_mae": 2910609.8526785714,
+          "aggregate_val_mpe": -0.9586591284189906,
+          "client_mape_gap": 0.029253602027893066,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9508576393127441,
+              "val_rmse": 3746860.75,
+              "val_mae": 3052205.5,
+              "val_mpe": -0.9508576393127441
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9484338164329529,
+              "val_rmse": 4391088.5,
+              "val_mae": 3689467.75,
+              "val_mpe": -0.9484338164329529
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.977687418460846,
+              "val_rmse": 2243900.25,
+              "val_mae": 1939020.0,
+              "val_mpe": -0.977687418460846
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.3332250995099859,
+            "Client 2": 0.33983611174976214,
+            "Client 3": 0.32693878874025184
+          },
+          "aggregate_val_mape": 0.9588458868009704,
+          "aggregate_val_rmse": 3482700.2589285714,
+          "aggregate_val_mae": 2911024.0491071427,
+          "aggregate_val_mpe": -0.9588458868009704,
+          "client_mape_gap": 0.02939927577972412,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9511412382125854,
+              "val_rmse": 3747277.0,
+              "val_mae": 3052796.25,
+              "val_mpe": -0.9511412382125854
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9484999775886536,
+              "val_rmse": 4391049.0,
+              "val_mae": 3689569.75,
+              "val_mpe": -0.9484999775886536
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9778992533683777,
+              "val_rmse": 2244612.25,
+              "val_mae": 1939577.375,
+              "val_mpe": -0.9778992533683777
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.3350948770575898,
+            "Client 2": 0.3408879684197203,
+            "Client 3": 0.3240171545226899
+          },
+          "aggregate_val_mape": 0.9589198391352382,
+          "aggregate_val_rmse": 3482841.785714286,
+          "aggregate_val_mae": 2911188.098214286,
+          "aggregate_val_mpe": -0.9589198391352382,
+          "client_mape_gap": 0.02945733070373535,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9512537121772766,
+              "val_rmse": 3747443.0,
+              "val_mae": 3053030.75,
+              "val_mpe": -0.9512537121772766
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9485259056091309,
+              "val_rmse": 4391032.5,
+              "val_mae": 3689609.75,
+              "val_mpe": -0.9485259056091309
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9779832363128662,
+              "val_rmse": 2244894.75,
+              "val_mae": 1939798.0,
+              "val_mpe": -0.9779832363128662
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 639.3315185546875,
+          "val_mape": 0.9669346213340759,
+          "val_rmse": 3781749.5,
+          "val_mae": 3092270.75,
+          "val_mpe": -0.9669346213340759
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 640.7073120117187,
+          "val_mape": 0.9421141743659973,
+          "val_rmse": 4345075.5,
+          "val_mae": 3655032.75,
+          "val_mpe": -0.9421141743659973
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 520.1052795410156,
+          "val_mape": 0.9504675269126892,
+          "val_rmse": 2181372.0,
+          "val_mae": 1881408.25,
+          "val_mpe": -0.9504675269126892
+        }
+      },
+      "global_val": {
+        "mape": "0.95519483",
+        "mae": "2830777.5",
+        "rmse": "3719027.8",
+        "mpe": "-0.95519483",
+        "nrmse": "0.33434957",
+        "r2": -1.1734189987182617
+      }
+    },
+    {
+      "round": 11,
+      "strategy_name": "perf_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.32784889164198644,
+        "Client 2": 0.3392673892622907,
+        "Client 3": 0.33288371909572284
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "perf_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "Round 11 switched from size_only to perf_only and achieved the best MAPE so far (0.955195), with a delta of -0.016231, the largest single-round improvement.",
+          "Candidate validation preview shows perf_only yields the lowest aggregate MAPE (0.942059) among all strategies, slightly better than hybrid (0.942285) and fairness_clip (0.942374), and notably better than size_only (0.942507).",
+          "Perf_only also produces the lowest RMSE and MAE in the preview, indicating better overall prediction accuracy.",
+          "The client MAPE gap is smallest with perf_only (0.039451), suggesting more balanced performance across clients."
+        ],
+        "risk": "Perf_only may increase client gap over time if high-MAPE clients are consistently downweighted, but current evidence shows it reduces gap and improves global MAPE.",
+        "reasoning": "Perf_only has consistently delivered the best validation MAPE improvements, both in the last round and in the candidate preview. It outperforms size_only and the other strategies on all aggregate metrics. Given the strong recent improvement and preview results, continuing with perf_only is the most evidence-backed choice.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.32784889164198644,
+          "Client 2": 0.3392673892622907,
+          "Client 3": 0.33288371909572284
+        },
+        "hybrid": {
+          "Client 1": 0.33287421751049096,
+          "Client 2": 0.3408665713434741,
+          "Client 3": 0.32625921114603496
+        },
+        "fairness_clip": {
+          "Client 1": 0.33488434785789273,
+          "Client 2": 0.34150624417594744,
+          "Client 3": 0.3236094079661597
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.942507168012006,
+          "aggregate_val_rmse": 3429225.9553571427,
+          "aggregate_val_mae": 2860481.9866071427,
+          "aggregate_val_mpe": -0.942507168012006,
+          "client_mape_gap": 0.03966313600540161,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9302625060081482,
+              "val_rmse": 3671798.5,
+              "val_mae": 2986162.0,
+              "val_mpe": -0.9302625060081482
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9294993877410889,
+              "val_rmse": 4331289.0,
+              "val_mae": 3624662.75,
+              "val_mpe": -0.9294993877410889
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9691625237464905,
+              "val_rmse": 2220999.5,
+              "val_mae": 1921184.5,
+              "val_mpe": -0.9691625237464905
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.32784889164198644,
+            "Client 2": 0.3392673892622907,
+            "Client 3": 0.33288371909572284
+          },
+          "aggregate_val_mape": 0.942059443465301,
+          "aggregate_val_rmse": 3428553.84375,
+          "aggregate_val_mae": 2859578.7276785714,
+          "aggregate_val_mpe": -0.942059443465301,
+          "client_mape_gap": 0.039450764656066895,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9296471476554871,
+              "val_rmse": 3671631.25,
+              "val_mae": 2985287.0,
+              "val_mpe": -0.9296471476554871
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9292410612106323,
+              "val_rmse": 4331015.0,
+              "val_mae": 3624068.25,
+              "val_mpe": -0.9292410612106323
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9686918258666992,
+              "val_rmse": 2219374.25,
+              "val_mae": 1919925.5,
+              "val_mpe": -0.9686918258666992
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.33287421751049096,
+            "Client 2": 0.3408665713434741,
+            "Client 3": 0.32625921114603496
+          },
+          "aggregate_val_mape": 0.9422845137970788,
+          "aggregate_val_rmse": 3428891.348214286,
+          "aggregate_val_mae": 2860032.6116071427,
+          "aggregate_val_mpe": -0.9422845137970788,
+          "client_mape_gap": 0.03955817222595215,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9299557209014893,
+              "val_rmse": 3671714.5,
+              "val_mae": 2985725.25,
+              "val_mpe": -0.9299557209014893
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9293709993362427,
+              "val_rmse": 4331152.5,
+              "val_mae": 3624367.25,
+              "val_mpe": -0.9293709993362427
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9689291715621948,
+              "val_rmse": 2220191.25,
+              "val_mae": 1920559.375,
+              "val_mpe": -0.9689291715621948
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.33488434785789273,
+            "Client 2": 0.34150624417594744,
+            "Client 3": 0.3236094079661597
+          },
+          "aggregate_val_mape": 0.9423738622239658,
+          "aggregate_val_rmse": 3429025.5089285714,
+          "aggregate_val_mae": 2860212.8660714286,
+          "aggregate_val_mpe": -0.9423738622239658,
+          "client_mape_gap": 0.039600491523742676,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9300786852836609,
+              "val_rmse": 3671748.0,
+              "val_mae": 2985900.25,
+              "val_mpe": -0.9300786852836609
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9294224977493286,
+              "val_rmse": 4331207.0,
+              "val_mae": 3624485.5,
+              "val_mpe": -0.9294224977493286
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9690229892730713,
+              "val_rmse": 2220515.75,
+              "val_mae": 1920810.625,
+              "val_mpe": -0.9690229892730713
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 550.0131774902344,
+          "val_mape": 0.9512215852737427,
+          "val_rmse": 3701406.75,
+          "val_mae": 3030497.5,
+          "val_mpe": -0.9512215852737427
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 557.244384765625,
+          "val_mape": 0.9192069172859192,
+          "val_rmse": 4272265.5,
+          "val_mae": 3577254.0,
+          "val_mpe": -0.9192069172859192
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 447.33021240234376,
+          "val_mape": 0.936834454536438,
+          "val_rmse": 2142795.75,
+          "val_mae": 1850920.625,
+          "val_mpe": -0.936834454536438
+        }
+      },
+      "global_val": {
+        "mape": "0.94035536",
+        "mae": "2781941.5",
+        "rmse": "3657952.2",
+        "mpe": "-0.94035536",
+        "nrmse": "0.32885873",
+        "r2": -1.1026194095611572
+      }
+    },
+    {
+      "round": 12,
+      "strategy_name": "perf_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.32654207817121766,
+        "Client 2": 0.3426325988558785,
+        "Client 3": 0.3308253229729039
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "perf_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "perf_only achieved the lowest aggregate_val_mape (0.918592) among all candidates in the validation preview",
+          "perf_only also achieved the lowest aggregate_val_rmse (3344972) and aggregate_val_mae (2782321)",
+          "perf_only has been consistently improving MAPE in recent rounds (rounds 11-12), with relative improvements of 1.67% and 1.55%",
+          "The client MAPE gap for perf_only (0.054514) is the smallest among all candidates, indicating better fairness",
+          "size_only has a slightly higher aggregate_val_mape (0.919182) and larger client gap (0.054545)"
+        ],
+        "risk": "Client 3 still has higher MAPE (~0.955) than Clients 1 and 2 (~0.901), but perf_only reduces this gap slightly compared to size_only",
+        "reasoning": "perf_only shows the best aggregate validation MAPE in the preview, continues the positive trend from rounds 11-12, and minimizes client disparity. No learning rate or epoch adjustment is needed as MAPE is steadily decreasing.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.32654207817121766,
+          "Client 2": 0.3426325988558785,
+          "Client 3": 0.3308253229729039
+        },
+        "hybrid": {
+          "Client 1": 0.33222081077510657,
+          "Client 2": 0.34254917614026803,
+          "Client 3": 0.32523001308462546
+        },
+        "fairness_clip": {
+          "Client 1": 0.3344923038166621,
+          "Client 2": 0.34251580705402385,
+          "Client 3": 0.3229918891293141
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.9191815714750972,
+          "aggregate_val_rmse": 3346220.7723214286,
+          "aggregate_val_mae": 2783729.7901785714,
+          "aggregate_val_mpe": -0.9191815714750972,
+          "client_mape_gap": 0.054544687271118164,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9026433825492859,
+              "val_rmse": 3566567.25,
+              "val_mae": 2894744.5,
+              "val_mpe": -0.9026433825492859
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9011389017105103,
+              "val_rmse": 4225122.0,
+              "val_mae": 3518352.75,
+              "val_mpe": -0.9011389017105103
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9556835889816284,
+              "val_rmse": 2185903.75,
+              "val_mae": 1891112.25,
+              "val_mpe": -0.9556835889816284
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.32654207817121766,
+            "Client 2": 0.3426325988558785,
+            "Client 3": 0.3308253229729039
+          },
+          "aggregate_val_mape": 0.918591704751764,
+          "aggregate_val_rmse": 3344972.28125,
+          "aggregate_val_mae": 2782320.7633928573,
+          "aggregate_val_mpe": -0.918591704751764,
+          "client_mape_gap": 0.05451405048370361,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9017847776412964,
+              "val_rmse": 3565876.75,
+              "val_mae": 2893335.25,
+              "val_mpe": -0.9017847776412964
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9007019400596619,
+              "val_rmse": 4223896.5,
+              "val_mae": 3516895.25,
+              "val_mpe": -0.9007019400596619
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9552159905433655,
+              "val_rmse": 2184042.0,
+              "val_mae": 1889754.625,
+              "val_mpe": -0.9552159905433655
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.33222081077510657,
+            "Client 2": 0.34254917614026803,
+            "Client 3": 0.32523001308462546
+          },
+          "aggregate_val_mape": 0.9188878142407962,
+          "aggregate_val_rmse": 3345599.1741071427,
+          "aggregate_val_mae": 2783028.1473214286,
+          "aggregate_val_mpe": -0.9188878142407962,
+          "client_mape_gap": 0.05453014373779297,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9022153615951538,
+              "val_rmse": 3566223.25,
+              "val_mae": 2894042.0,
+              "val_mpe": -0.9022153615951538
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9009211659431458,
+              "val_rmse": 4224510.0,
+              "val_mae": 3517626.25,
+              "val_mpe": -0.9009211659431458
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9554513096809387,
+              "val_rmse": 2184979.0,
+              "val_mae": 1890437.75,
+              "val_mpe": -0.9554513096809387
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.3344923038166621,
+            "Client 2": 0.34251580705402385,
+            "Client 3": 0.3229918891293141
+          },
+          "aggregate_val_mape": 0.9190057047775814,
+          "aggregate_val_rmse": 3345848.4508928573,
+          "aggregate_val_mae": 2783309.535714286,
+          "aggregate_val_mpe": -0.9190057047775814,
+          "client_mape_gap": 0.05453610420227051,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.9023869037628174,
+              "val_rmse": 3566361.25,
+              "val_mae": 2894323.25,
+              "val_mpe": -0.9023869037628174
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.9010086059570312,
+              "val_rmse": 4224755.0,
+              "val_mae": 3517917.5,
+              "val_mpe": -0.9010086059570312
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9555447101593018,
+              "val_rmse": 2185350.25,
+              "val_mae": 1890708.875,
+              "val_mpe": -0.9555447101593018
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 454.2160949707031,
+          "val_mape": 0.9317994117736816,
+          "val_rmse": 3610381.25,
+          "val_mae": 2954385.75,
+          "val_mpe": -0.9317994117736816
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 483.689990234375,
+          "val_mape": 0.8880407214164734,
+          "val_rmse": 4149819.25,
+          "val_mae": 3455695.25,
+          "val_mpe": -0.8880407214164734
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 362.66229858398435,
+          "val_mape": 0.9197352528572083,
+          "val_rmse": 2083178.0,
+          "val_mae": 1806327.375,
+          "val_mpe": -0.9197352528572083
+        }
+      },
+      "global_val": {
+        "mape": "0.91693544",
+        "mae": "2708048.5",
+        "rmse": "3572836.0",
+        "mpe": "-0.91693544",
+        "nrmse": "0.32120657",
+        "r2": -1.0059068202972412
+      }
+    },
+    {
+      "round": 13,
+      "strategy_name": "perf_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3226862026297733,
+        "Client 2": 0.344662266104299,
+        "Client 3": 0.33265153126592767
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "perf_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "perf_only has the lowest aggregate_val_mape (0.88664) among all candidates",
+          "perf_only has the lowest aggregate_val_rmse (3234437) and aggregate_val_mae (2681635)",
+          "perf_only has been consistently improving MAPE over the last 3 rounds (delta -0.0383, relative -4.0%)",
+          "perf_only achieved the best global MAPE so far (0.9169 at round 13) and continues to improve",
+          "Client 2 (best performer) gets higher weight under perf_only, which aligns with its lower val_mape (0.8464)"
+        ],
+        "risk": "Client 3 has higher val_mape (0.8770) and may be slightly underweighted, but the gap is small and perf_only still gives it fair weight (0.3327)",
+        "reasoning": "perf_only yields the best aggregate validation MAPE (0.88664) and RMSE among all candidate strategies. It has been the most effective strategy in recent rounds, delivering consistent and substantial MAPE reductions. The client gap is similar across strategies, so perf_only's superior aggregate performance makes it the optimal choice.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.3226862026297733,
+          "Client 2": 0.344662266104299,
+          "Client 3": 0.33265153126592767
+        },
+        "hybrid": {
+          "Client 1": 0.33029287300438437,
+          "Client 2": 0.34356400976447826,
+          "Client 3": 0.3261431172311373
+        },
+        "fairness_clip": {
+          "Client 1": 0.33333554115422886,
+          "Client 2": 0.34312470722855,
+          "Client 3": 0.3235397516172212
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.8876804219824928,
+          "aggregate_val_rmse": 3236716.183035714,
+          "aggregate_val_mae": 2684221.0133928573,
+          "aggregate_val_mpe": -0.8876804219824928,
+          "client_mape_gap": 0.06234091520309448,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.8696852326393127,
+              "val_rmse": 3433026.0,
+              "val_mae": 2782651.5,
+              "val_mpe": -0.8696852326393127
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.8665931820869446,
+              "val_rmse": 4091917.75,
+              "val_mae": 3387038.75,
+              "val_mpe": -0.8665931820869446
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9289340972900391,
+              "val_rmse": 2126787.5,
+              "val_mae": 1838459.0,
+              "val_mpe": -0.9289340972900391
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.3226862026297733,
+            "Client 2": 0.344662266104299,
+            "Client 3": 0.33265153126592767
+          },
+          "aggregate_val_mape": 0.8866425667490277,
+          "aggregate_val_rmse": 3234436.65625,
+          "aggregate_val_mae": 2681634.7321428573,
+          "aggregate_val_mpe": -0.8866425667490277,
+          "client_mape_gap": 0.06235307455062866,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.8683486580848694,
+              "val_rmse": 3432003.5,
+              "val_mae": 2780357.5,
+              "val_mpe": -0.8683486580848694
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.8657028079032898,
+              "val_rmse": 4088991.75,
+              "val_mae": 3383724.25,
+              "val_mpe": -0.8657028079032898
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9280558824539185,
+              "val_rmse": 2123863.5,
+              "val_mae": 1836332.875,
+              "val_mpe": -0.9280558824539185
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.33029287300438437,
+            "Client 2": 0.34356400976447826,
+            "Client 3": 0.3261431172311373
+          },
+          "aggregate_val_mape": 0.8871651696307319,
+          "aggregate_val_rmse": 3235581.8616071427,
+          "aggregate_val_mae": 2682935.9866071427,
+          "aggregate_val_mpe": -0.8871651696307319,
+          "client_mape_gap": 0.06234776973724365,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.8690213561058044,
+              "val_rmse": 3432519.25,
+              "val_mae": 2781512.75,
+              "val_mpe": -0.8690213561058044
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.8661509156227112,
+              "val_rmse": 4090458.0,
+              "val_mae": 3385390.0,
+              "val_mpe": -0.8661509156227112
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9284986853599548,
+              "val_rmse": 2125334.25,
+              "val_mae": 1837403.5,
+              "val_mpe": -0.9284986853599548
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.33333554115422886,
+            "Client 2": 0.34312470722855,
+            "Client 3": 0.3235397516172212
+          },
+          "aggregate_val_mape": 0.8873721808195114,
+          "aggregate_val_rmse": 3236036.776785714,
+          "aggregate_val_mae": 2683451.7633928573,
+          "aggregate_val_mpe": -0.8873721808195114,
+          "client_mape_gap": 0.062345147132873535,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.8692879676818848,
+              "val_rmse": 3432723.0,
+              "val_mae": 2781970.25,
+              "val_mpe": -0.8692879676818848
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.8663285970687866,
+              "val_rmse": 4091042.5,
+              "val_mae": 3386051.0,
+              "val_mpe": -0.8663285970687866
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.9286737442016602,
+              "val_rmse": 2125917.5,
+              "val_mae": 1837827.5,
+              "val_mpe": -0.9286737442016602
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 364.33811645507814,
+          "val_mape": 0.9040867686271667,
+          "val_rmse": 3471097.0,
+          "val_mae": 2844608.25,
+          "val_mpe": -0.9040867686271667
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 370.7797790527344,
+          "val_mape": 0.8464410901069641,
+          "val_rmse": 3996414.0,
+          "val_mae": 3307276.5,
+          "val_mpe": -0.8464410901069641
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 267.1885101318359,
+          "val_mape": 0.8770027756690979,
+          "val_rmse": 2012369.125,
+          "val_mae": 1738184.25,
+          "val_mpe": -0.8770027756690979
+        }
+      },
+      "global_val": {
+        "mape": "0.88004494",
+        "mae": "2601940.0",
+        "rmse": "3453767.2",
+        "mpe": "-0.88004494",
+        "nrmse": "0.31050202",
+        "r2": -0.874436616897583
+      }
+    },
+    {
+      "round": 14,
+      "strategy_name": "perf_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.31799676171692826,
+        "Client 2": 0.33985649605760176,
+        "Client 3": 0.34214674222547
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "perf_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "perf_only has the lowest aggregate_val_mape (0.84236) among all candidates in the validation preview",
+          "perf_only has the lowest aggregate_val_rmse (3105305) and aggregate_val_mae (2559658)",
+          "perf_only has been consistently improving MAPE over the last 4 rounds (0.9714→0.9552→0.9404→0.9169→0.8800), with increasing marginal gains",
+          "The client MAPE gap (0.05735) is similar to other strategies, indicating no significant fairness degradation"
+        ],
+        "risk": "Client MAPE gap has been increasing (0.0179→0.0576 over last 4 rounds), which may indicate growing disparity between clients",
+        "reasoning": "perf_only achieves the best aggregate validation MAPE (0.84236) in the preview, continuing its strong recent trend of rapid improvement. The marginal gains have been increasing each round, suggesting the model is still converging well. While the client gap is growing, the overall MAPE reduction is substantial and the remaining rounds are limited, so maintaining the effective perf_only strategy is optimal.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.31799676171692826,
+          "Client 2": 0.33985649605760176,
+          "Client 3": 0.34214674222547
+        },
+        "hybrid": {
+          "Client 1": 0.32794815254796184,
+          "Client 2": 0.34116112474112964,
+          "Client 3": 0.33089072271090847
+        },
+        "fairness_clip": {
+          "Client 1": 0.3319287088803753,
+          "Client 2": 0.34168297621454075,
+          "Client 3": 0.32638831490508385
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.8445087618061474,
+          "aggregate_val_rmse": 3109048.035714286,
+          "aggregate_val_mae": 2564289.40625,
+          "aggregate_val_mpe": -0.8445087618061474,
+          "client_mape_gap": 0.05725586414337158,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.8251564502716064,
+              "val_rmse": 3261959.25,
+              "val_mae": 2638284.75,
+              "val_mpe": -0.8251564502716064
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.8279524445533752,
+              "val_rmse": 3960127.0,
+              "val_mae": 3250111.75,
+              "val_mpe": -0.8279524445533752
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.882412314414978,
+              "val_rmse": 2049280.625,
+              "val_mae": 1762259.625,
+              "val_mpe": -0.882412314414978
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.31799676171692826,
+            "Client 2": 0.33985649605760176,
+            "Client 3": 0.34214674222547
+          },
+          "aggregate_val_mape": 0.8423613033124379,
+          "aggregate_val_rmse": 3105305.15625,
+          "aggregate_val_mae": 2559658.0758928573,
+          "aggregate_val_mpe": -0.8423613033124379,
+          "client_mape_gap": 0.057345449924468994,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.8227711915969849,
+              "val_rmse": 3260905.5,
+              "val_mae": 2634580.25,
+              "val_mpe": -0.8227711915969849
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.8261831998825073,
+              "val_rmse": 3955470.0,
+              "val_mae": 3244439.0,
+              "val_mpe": -0.8261831998825073
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.8801166415214539,
+              "val_rmse": 2043664.125,
+              "val_mae": 1757749.25,
+              "val_mpe": -0.8801166415214539
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.32794815254796184,
+            "Client 2": 0.34116112474112964,
+            "Client 3": 0.33089072271090847
+          },
+          "aggregate_val_mape": 0.8434468635490963,
+          "aggregate_val_rmse": 3107188.9508928573,
+          "aggregate_val_mae": 2561996.473214286,
+          "aggregate_val_mpe": -0.8434468635490963,
+          "client_mape_gap": 0.05729454755783081,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.8239789605140686,
+              "val_rmse": 3261443.5,
+              "val_mae": 2636459.25,
+              "val_mpe": -0.8239789605140686
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.8270789980888367,
+              "val_rmse": 3957815.5,
+              "val_mae": 3247303.25,
+              "val_mpe": -0.8270789980888367
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.8812735080718994,
+              "val_rmse": 2046481.125,
+              "val_mae": 1760017.5,
+              "val_mpe": -0.8812735080718994
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.3319287088803753,
+            "Client 2": 0.34168297621454075,
+            "Client 3": 0.32638831490508385
+          },
+          "aggregate_val_mape": 0.8438745162316731,
+          "aggregate_val_rmse": 3107935.5714285714,
+          "aggregate_val_mae": 2562919.2008928573,
+          "aggregate_val_mpe": -0.8438745162316731,
+          "client_mape_gap": 0.05727750062942505,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.8244537115097046,
+              "val_rmse": 3261652.5,
+              "val_mae": 2637195.75,
+              "val_mpe": -0.8244537115097046
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.8274310827255249,
+              "val_rmse": 3958744.0,
+              "val_mae": 3248433.5,
+              "val_mpe": -0.8274310827255249
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.8817312121391296,
+              "val_rmse": 2047603.25,
+              "val_mae": 1760917.75,
+              "val_mpe": -0.8817312121391296
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 277.7970916748047,
+          "val_mape": 0.8628624081611633,
+          "val_rmse": 3302180.5,
+          "val_mae": 2706501.25,
+          "val_mpe": -0.8628624081611633
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 278.3955932617188,
+          "val_mape": 0.8073626160621643,
+          "val_rmse": 3834628.25,
+          "val_mae": 3150420.75,
+          "val_mpe": -0.8073626160621643
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 193.941748046875,
+          "val_mape": 0.8019583225250244,
+          "val_rmse": 1931008.5,
+          "val_mae": 1643362.5,
+          "val_mpe": -0.8019583225250244
+        }
+      },
+      "global_val": {
+        "mape": "0.8298727",
+        "mae": "2481266.0",
+        "rmse": "3323620.5",
+        "mpe": "-0.8298727",
+        "nrmse": "0.2988015",
+        "r2": -0.7358310222625732
+      }
+    },
+    {
+      "round": 15,
+      "strategy_name": "perf_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3092324948051463,
+        "Client 2": 0.337420473126398,
+        "Client 3": 0.35334703206845564
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "perf_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "perf_only has the lowest aggregate_val_mape (0.76743) among all candidates in the validation preview",
+          "perf_only has consistently delivered the largest relative improvements in recent rounds (e.g., -0.050172 delta in round 15, -0.036891 in round 14)",
+          "perf_only weights give more influence to Client 3 (0.3533) which has the lowest current val_mape (0.71037), aligning with performance-based aggregation",
+          "The client_mape_gap for perf_only (0.05297) is slightly higher than others but still acceptable, and the overall MAPE reduction trend is strong"
+        ],
+        "risk": "Client 1's weight is reduced further (0.3092), which may increase client gap if Client 1's data distribution is underrepresented, but the validation preview shows perf_only still achieves the best aggregate MAPE",
+        "reasoning": "perf_only has been the most effective strategy in recent rounds, delivering the largest MAPE reductions. The validation preview confirms it yields the lowest aggregate MAPE (0.76743) among all candidates. Given only 5 rounds remain, continuing with the best-performing strategy is optimal.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.3092324948051463,
+          "Client 2": 0.337420473126398,
+          "Client 3": 0.35334703206845564
+        },
+        "hybrid": {
+          "Client 1": 0.32356601909207083,
+          "Client 2": 0.33994311327552773,
+          "Client 3": 0.3364908676324013
+        },
+        "fairness_clip": {
+          "Client 1": 0.3292994288068407,
+          "Client 2": 0.3409521693351797,
+          "Client 3": 0.32974840185797966
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.771984223808561,
+          "aggregate_val_rmse": 2921717.848214286,
+          "aggregate_val_mae": 2377397.558035714,
+          "aggregate_val_mpe": -0.771984223808561,
+          "client_mape_gap": 0.052058279514312744,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.7492095828056335,
+              "val_rmse": 3043280.5,
+              "val_mae": 2427586.75,
+              "val_mpe": -0.7492095828056335
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.7670164704322815,
+              "val_rmse": 3760332.25,
+              "val_mae": 3039028.25,
+              "val_mpe": -0.7670164704322815
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.8012678623199463,
+              "val_rmse": 1908197.625,
+              "val_mae": 1626032.125,
+              "val_mpe": -0.8012678623199463
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.3092324948051463,
+            "Client 2": 0.337420473126398,
+            "Client 3": 0.35334703206845564
+          },
+          "aggregate_val_mape": 0.7674327514001301,
+          "aggregate_val_rmse": 2913846.879464286,
+          "aggregate_val_mae": 2367684.0758928573,
+          "aggregate_val_mpe": -0.7674327514001301,
+          "client_mape_gap": 0.052971839904785156,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.7437424063682556,
+              "val_rmse": 3038952.75,
+              "val_mae": 2418088.75,
+              "val_mpe": -0.7437424063682556
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.7633827328681946,
+              "val_rmse": 3752432.0,
+              "val_mae": 3028688.5,
+              "val_mpe": -0.7633827328681946
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.7967142462730408,
+              "val_rmse": 1896617.5,
+              "val_mae": 1616752.25,
+              "val_mpe": -0.7967142462730408
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.32356601909207083,
+            "Client 2": 0.33994311327552773,
+            "Client 3": 0.3364908676324013
+          },
+          "aggregate_val_mape": 0.7697423579437392,
+          "aggregate_val_rmse": 2917812.870535714,
+          "aggregate_val_mae": 2372610.2678571427,
+          "aggregate_val_mpe": -0.7697423579437392,
+          "client_mape_gap": 0.05247610807418823,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.746528148651123,
+              "val_rmse": 3041163.75,
+              "val_mae": 2422943.25,
+              "val_mpe": -0.746528148651123
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.7652347683906555,
+              "val_rmse": 3756449.25,
+              "val_mae": 3033948.75,
+              "val_mpe": -0.7652347683906555
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.7990042567253113,
+              "val_rmse": 1902381.875,
+              "val_mae": 1621401.5,
+              "val_mpe": -0.7990042567253113
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.3292994288068407,
+            "Client 2": 0.3409521693351797,
+            "Client 3": 0.32974840185797966
+          },
+          "aggregate_val_mape": 0.7706472692745072,
+          "aggregate_val_rmse": 2919383.0178571427,
+          "aggregate_val_mae": 2374542.3214285714,
+          "aggregate_val_mpe": -0.7706472692745072,
+          "client_mape_gap": 0.05229973793029785,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.7476131916046143,
+              "val_rmse": 3042022.25,
+              "val_mae": 2424825.75,
+              "val_mpe": -0.7476131916046143
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.7659559845924377,
+              "val_rmse": 3758019.0,
+              "val_mae": 3036003.0,
+              "val_mpe": -0.7659559845924377
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.7999129295349121,
+              "val_rmse": 1904703.625,
+              "val_mae": 1623256.875,
+              "val_mpe": -0.7999129295349121
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 219.5094421386719,
+          "val_mape": 0.811708927154541,
+          "val_rmse": 3160204.75,
+          "val_mae": 2564702.0,
+          "val_mpe": -0.811708927154541
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 204.04541931152343,
+          "val_mape": 0.7438989877700806,
+          "val_rmse": 3623831.0,
+          "val_mae": 2925783.5,
+          "val_mpe": -0.7438989877700806
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 125.44288482666016,
+          "val_mape": 0.7103688716888428,
+          "val_rmse": 1775563.75,
+          "val_mae": 1487532.375,
+          "val_mpe": -0.7103688716888428
+        }
+      },
+      "global_val": {
+        "mape": "0.75090575",
+        "mae": "2287954.0",
+        "rmse": "3132401.0",
+        "mpe": "-0.75090575",
+        "nrmse": "0.2816104",
+        "r2": -0.5418399572372437
+      }
+    },
+    {
+      "round": 16,
+      "strategy_name": "perf_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3051133390429003,
+        "Client 2": 0.33231687826035045,
+        "Client 3": 0.36256978269674933
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "perf_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "perf_only has the lowest aggregate_val_mape (0.66087) among all candidates in the validation preview",
+          "perf_only has been consistently improving MAPE for the last 6 rounds (rounds 11-16), with increasing relative improvements",
+          "The last 3 rounds show strong MAPE reduction (delta -0.1291, relative -14.67%), indicating the strategy is still effective",
+          "perf_only's validation preview shows lower RMSE (2,658,921) and MAE (2,106,319) compared to other strategies",
+          "Client 3, which has the best local performance, receives higher weight in perf_only (0.3626), aligning with its superior validation metrics"
+        ],
+        "risk": "Client MAPE gap has been increasing (from 0.0179 at round 10 to 0.1013 at round 16), which may lead to fairness issues if the trend continues, but the overall MAPE improvement is substantial and the gap is still manageable",
+        "reasoning": "perf_only has demonstrated the strongest and most consistent MAPE reduction over the last 6 rounds, with each round achieving new bests. The validation preview confirms it currently yields the lowest aggregate MAPE (0.66087) compared to size_only (0.66894), hybrid (0.66499), and fairness_clip (0.66659). Given only 4 rounds remaining, continuing with the best-performing strategy is optimal. The learning rate and epochs are kept unchanged as the current settings are producing steady improvements without signs of oscillation or stagnation.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.3051133390429003,
+          "Client 2": 0.33231687826035045,
+          "Client 3": 0.36256978269674933
+        },
+        "hybrid": {
+          "Client 1": 0.32150644121094785,
+          "Client 2": 0.337391315842504,
+          "Client 3": 0.3411022429465482
+        },
+        "fairness_clip": {
+          "Client 1": 0.3280636820781669,
+          "Client 2": 0.33942109087536537,
+          "Client 3": 0.3325152270464677
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.6689391529985836,
+          "aggregate_val_rmse": 2670951.910714286,
+          "aggregate_val_mae": 2122585.3258928573,
+          "aggregate_val_mpe": -0.6680265313812664,
+          "client_mape_gap": 0.059837400913238525,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.6326960325241089,
+              "val_rmse": 2726429.25,
+              "val_mae": 2120044.25,
+              "val_mpe": -0.6326960325241089
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.6828297972679138,
+              "val_rmse": 3506082.75,
+              "val_mae": 2760870.25,
+              "val_mpe": -0.6828297972679138
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.6925334334373474,
+              "val_rmse": 1730865.5,
+              "val_mae": 1451522.375,
+              "val_mpe": -0.6896941661834717
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.3051133390429003,
+            "Client 2": 0.33231687826035045,
+            "Client 3": 0.36256978269674933
+          },
+          "aggregate_val_mape": 0.6608708128333092,
+          "aggregate_val_rmse": 2658921.3125,
+          "aggregate_val_mae": 2106318.651785714,
+          "aggregate_val_mpe": -0.6600599044135639,
+          "client_mape_gap": 0.060708463191986084,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.6234552264213562,
+              "val_rmse": 2719394.25,
+              "val_mae": 2103755.25,
+              "val_mpe": -0.6234552264213562
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.6762194633483887,
+              "val_rmse": 3495675.25,
+              "val_mae": 2743588.25,
+              "val_mpe": -0.6762194633483887
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.6841636896133423,
+              "val_rmse": 1711848.5,
+              "val_mae": 1436351.0,
+              "val_mpe": -0.6816408634185791
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.32150644121094785,
+            "Client 2": 0.337391315842504,
+            "Client 3": 0.3411022429465482
+          },
+          "aggregate_val_mape": 0.6649868158357484,
+          "aggregate_val_rmse": 2665008.964285714,
+          "aggregate_val_mae": 2114616.5625,
+          "aggregate_val_mpe": -0.6641170712453979,
+          "client_mape_gap": 0.06022590398788452,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.6281769871711731,
+              "val_rmse": 2722984.0,
+              "val_mae": 2112098.25,
+              "val_mpe": -0.6281769871711731
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.6796129941940308,
+              "val_rmse": 3501092.0,
+              "val_mae": 2752486.5,
+              "val_mpe": -0.6796129941940308
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.6884028911590576,
+              "val_rmse": 1721281.0,
+              "val_mae": 1443967.625,
+              "val_mpe": -0.6856970191001892
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.3280636820781669,
+            "Client 2": 0.33942109087536537,
+            "Client 3": 0.3325152270464677
+          },
+          "aggregate_val_mape": 0.6665874496102333,
+          "aggregate_val_rmse": 2667404.7723214286,
+          "aggregate_val_mae": 2117844.0089285714,
+          "aggregate_val_mpe": -0.6656986038599696,
+          "client_mape_gap": 0.06006026268005371,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.630008339881897,
+              "val_rmse": 2724379.25,
+              "val_mae": 2115323.5,
+              "val_mpe": -0.630008339881897
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.6809212565422058,
+              "val_rmse": 3503139.25,
+              "val_mae": 2755902.25,
+              "val_mpe": -0.6809212565422058
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.6900686025619507,
+              "val_rmse": 1725100.875,
+              "val_mae": 1446998.625,
+              "val_mpe": -0.6873033046722412
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 143.0992172241211,
+          "val_mape": 0.7181789875030518,
+          "val_rmse": 2901634.5,
+          "val_mae": 2321356.0,
+          "val_mpe": -0.7181789875030518
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 139.9338821411133,
+          "val_mape": 0.6593886017799377,
+          "val_rmse": 3347993.5,
+          "val_mae": 2643576.25,
+          "val_mpe": -0.6593886017799377
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 88.64546852111816,
+          "val_mape": 0.6043689846992493,
+          "val_rmse": 1575623.875,
+          "val_mae": 1304706.75,
+          "val_mpe": -0.5733935236930847
+        }
+      },
+      "global_val": {
+        "mape": "0.628405",
+        "mae": "1997810.6",
+        "rmse": "2858385.8",
+        "mpe": "-0.6253137",
+        "nrmse": "0.25697577",
+        "r2": -0.28388547897338867
+      }
+    },
+    {
+      "round": 17,
+      "strategy_name": "perf_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3144117215912125,
+        "Client 2": 0.33507651593090604,
+        "Client 3": 0.35051176247788146
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "perf_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "perf_only has the lowest aggregate_val_mape (0.55407) among all candidates",
+          "perf_only has the lowest client_mape_gap (0.08263), indicating better fairness",
+          "perf_only has been consistently improving MAPE over the last 7 rounds (from 0.9714 to 0.6284)",
+          "The relative improvement per round has been increasing, with last round achieving 16.3% improvement",
+          "Current client val_mape values (0.583, 0.547, 0.523) show Client 3 performs best, and perf_only gives it highest weight (0.351)"
+        ],
+        "risk": "Client gap has been increasing (from 0.0074 to 0.1138) which may lead to model bias toward best-performing client",
+        "reasoning": "perf_only strategy shows the best aggregate validation MAPE (0.55407) and lowest client gap (0.08263) in the candidate preview. The strategy has demonstrated strong and accelerating improvement over recent rounds, with the last round achieving the largest relative improvement (16.3%). With only 3 rounds remaining, continuing the successful perf_only strategy with current learning rate and epochs is the safest choice to maximize final performance.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.3144117215912125,
+          "Client 2": 0.33507651593090604,
+          "Client 3": 0.35051176247788146
+        },
+        "hybrid": {
+          "Client 1": 0.32615563248510393,
+          "Client 2": 0.33877113467778175,
+          "Client 3": 0.3350732328371142
+        },
+        "fairness_clip": {
+          "Client 1": 0.33085319684266057,
+          "Client 2": 0.3402489821765321,
+          "Client 3": 0.3288978209808074
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.5599631230745997,
+          "aggregate_val_rmse": 2383065.8973214286,
+          "aggregate_val_mae": 1823483.236607143,
+          "aggregate_val_mpe": -0.5313556391213622,
+          "client_mape_gap": 0.0861096978187561,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.5140886902809143,
+              "val_rmse": 2395956.5,
+              "val_mae": 1775609.0,
+              "val_mpe": -0.4965386688709259
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.5677199363708496,
+              "val_rmse": 3188290.0,
+              "val_mae": 2404235.5,
+              "val_mpe": -0.5623847842216492
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.6001983880996704,
+              "val_rmse": 1519500.375,
+              "val_mae": 1261000.875,
+              "val_mpe": -0.5353538990020752
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.3144117215912125,
+            "Client 2": 0.33507651593090604,
+            "Client 3": 0.35051176247788146
+          },
+          "aggregate_val_mape": 0.554068290761539,
+          "aggregate_val_rmse": 2378871.714285714,
+          "aggregate_val_mae": 1814278.720982143,
+          "aggregate_val_mpe": -0.5255210841340678,
+          "client_mape_gap": 0.08263391256332397,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.5088312029838562,
+              "val_rmse": 2400053.5,
+              "val_mae": 1770239.125,
+              "val_mpe": -0.49014225602149963
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.5638768076896667,
+              "val_rmse": 3187371.0,
+              "val_mae": 2396348.0,
+              "val_mpe": -0.5582410097122192
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.5914651155471802,
+              "val_rmse": 1503097.25,
+              "val_mae": 1246358.5,
+              "val_mpe": -0.5283277034759521
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.32615563248510393,
+            "Client 2": 0.33877113467778175,
+            "Client 3": 0.3350732328371142
+          },
+          "aggregate_val_mape": 0.5570602140256337,
+          "aggregate_val_rmse": 2380976.441964286,
+          "aggregate_val_mae": 1818968.033482143,
+          "aggregate_val_mpe": -0.5284730893160615,
+          "client_mape_gap": 0.0843421220779419,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.5115107893943787,
+              "val_rmse": 2397973.75,
+              "val_mae": 1773001.875,
+              "val_mpe": -0.49338802695274353
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.5658586621284485,
+              "val_rmse": 3187957.5,
+              "val_mae": 2400469.75,
+              "val_mpe": -0.5603674054145813
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.5958529114723206,
+              "val_rmse": 1511221.5,
+              "val_mae": 1253680.5,
+              "val_mpe": -0.5318410992622375
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.33085319684266057,
+            "Client 2": 0.3402489821765321,
+            "Client 3": 0.3288978209808074
+          },
+          "aggregate_val_mape": 0.5582320051533836,
+          "aggregate_val_rmse": 2381814.1651785714,
+          "aggregate_val_mae": 1820795.0669642857,
+          "aggregate_val_mpe": -0.5296344054596764,
+          "client_mape_gap": 0.08504259586334229,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.5125538110733032,
+              "val_rmse": 2397159.0,
+              "val_mae": 1774063.0,
+              "val_mpe": -0.494659423828125
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.5666176080703735,
+              "val_rmse": 3188119.75,
+              "val_mae": 2402018.25,
+              "val_mpe": -0.5611873865127563
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.5975964069366455,
+              "val_rmse": 1514516.5,
+              "val_mae": 1256610.0,
+              "val_mpe": -0.5332465171813965
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 90.17663116455078,
+          "val_mape": 0.583303689956665,
+          "val_rmse": 2457922.75,
+          "val_mae": 1900991.0,
+          "val_mpe": -0.5773507952690125
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 90.78291778564453,
+          "val_mape": 0.5473302006721497,
+          "val_rmse": 3019804.5,
+          "val_mae": 2277819.5,
+          "val_mpe": -0.5473302006721497
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 64.89855575561523,
+          "val_mape": 0.5232277512550354,
+          "val_rmse": 1354182.75,
+          "val_mae": 1090731.0,
+          "val_mpe": -0.3920512795448303
+        }
+      },
+      "global_val": {
+        "mape": "0.5160867",
+        "mae": "1712497.0",
+        "rmse": "2585376.8",
+        "mpe": "-0.49327922",
+        "nrmse": "0.2324316",
+        "r2": -0.050345659255981445
+      }
+    },
+    {
+      "round": 18,
+      "strategy_name": "perf_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.29980272856171086,
+        "Client 2": 0.37066934134989155,
+        "Client 3": 0.32952793008839754
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "perf_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "perf_only has the lowest aggregate_val_mape (0.462394) among all candidates",
+          "perf_only has the smallest client_mape_gap (0.113536) indicating better fairness",
+          "perf_only has been consistently improving MAPE for the last 8 rounds with large relative improvements",
+          "Last round (18) with perf_only achieved best_val_mape (0.516087) and reduced client gap by -0.053734"
+        ],
+        "risk": "perf_only may continue to increase client gap if over-weighted, but current preview shows it actually reduces gap",
+        "reasoning": "perf_only shows the best aggregate validation MAPE (0.462394) and the smallest client MAPE gap (0.113536) in the candidate preview. Historical evidence shows perf_only has driven consistent and large improvements over the last 8 rounds, with the last round achieving the best global MAPE and reducing client disparity. Given only 2 rounds remain, continuing with the best-performing strategy is optimal.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.29980272856171086,
+          "Client 2": 0.37066934134989155,
+          "Client 3": 0.32952793008839754
+        },
+        "hybrid": {
+          "Client 1": 0.31885113597035314,
+          "Client 2": 0.35656754738727453,
+          "Client 3": 0.3245813166423723
+        },
+        "fairness_clip": {
+          "Client 1": 0.3264704989338101,
+          "Client 2": 0.3509268298022277,
+          "Client 3": 0.3226026712639622
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.46809671074151993,
+          "aggregate_val_rmse": 2096009.0625,
+          "aggregate_val_mae": 1546985.6651785714,
+          "aggregate_val_mpe": -0.3796385979013784,
+          "client_mape_gap": 0.12487339973449707,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.4054151773452759,
+              "val_rmse": 2062241.25,
+              "val_mae": 1447377.25,
+              "val_mpe": -0.33877021074295044
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.4718596339225769,
+              "val_rmse": 2869058.25,
+              "val_mae": 2100315.5,
+              "val_mpe": -0.432779461145401
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.530288577079773,
+              "val_rmse": 1315656.5,
+              "val_mae": 1068057.5,
+              "val_mpe": -0.36668431758880615
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.29980272856171086,
+            "Client 2": 0.37066934134989155,
+            "Client 3": 0.32952793008839754
+          },
+          "aggregate_val_mape": 0.46239401187215534,
+          "aggregate_val_rmse": 2083499.1361607143,
+          "aggregate_val_mae": 1533053.8839285714,
+          "aggregate_val_mpe": -0.37266627113733974,
+          "client_mape_gap": 0.11353594064712524,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.4069981575012207,
+              "val_rmse": 2061698.625,
+              "val_mae": 1452078.75,
+              "val_mpe": -0.33196142315864563
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.46270978450775146,
+              "val_rmse": 2855263.5,
+              "val_mae": 2075767.75,
+              "val_mpe": -0.42690402269363403
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.520534098148346,
+              "val_rmse": 1291870.625,
+              "val_mae": 1045663.0,
+              "val_mpe": -0.3583815395832062
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.31885113597035314,
+            "Client 2": 0.35656754738727453,
+            "Client 3": 0.3245813166423723
+          },
+          "aggregate_val_mape": 0.46510338836482595,
+          "aggregate_val_rmse": 2089724.075892857,
+          "aggregate_val_mae": 1539732.5892857143,
+          "aggregate_val_mpe": -0.37619438022375107,
+          "client_mape_gap": 0.11980047821998596,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.4056571424007416,
+              "val_rmse": 2061849.0,
+              "val_mae": 1448570.125,
+              "val_mpe": -0.33542075753211975
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.46737194061279297,
+              "val_rmse": 2862308.25,
+              "val_mae": 2088277.625,
+              "val_mpe": -0.42989692091941833
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.5254576206207275,
+              "val_rmse": 1303642.25,
+              "val_mae": 1056939.875,
+              "val_mpe": -0.3625471889972687
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.3264704989338101,
+            "Client 2": 0.3509268298022277,
+            "Client 3": 0.3226026712639622
+          },
+          "aggregate_val_mape": 0.46616257035306524,
+          "aggregate_val_rmse": 2092233.982142857,
+          "aggregate_val_mae": 1542344.3995535714,
+          "aggregate_val_mpe": -0.37758245478783337,
+          "client_mape_gap": 0.12228173017501831,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.40512025356292725,
+              "val_rmse": 2061979.5,
+              "val_mae": 1447160.125,
+              "val_mpe": -0.33677366375923157
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.4691886007785797,
+              "val_rmse": 2865041.5,
+              "val_mae": 2093150.5,
+              "val_mpe": -0.43106329441070557
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.5274019837379456,
+              "val_rmse": 1308428.0,
+              "val_mae": 1061410.25,
+              "val_mpe": -0.3642064034938812
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 70.62460250854492,
+          "val_mape": 0.5005587935447693,
+          "val_rmse": 2213445.25,
+          "val_mae": 1637929.5,
+          "val_mpe": -0.4625427722930908
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 59.77465744018555,
+          "val_mape": 0.4048590064048767,
+          "val_rmse": 2549145.5,
+          "val_mae": 1788273.625,
+          "val_mpe": -0.3717948794364929
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 54.08535232543945,
+          "val_mape": 0.455405592918396,
+          "val_rmse": 1091219.625,
+          "val_mae": 862253.0625,
+          "val_mpe": -0.18951144814491272
+        }
+      },
+      "global_val": {
+        "mape": "0.4262271",
+        "mae": "1459763.4",
+        "rmse": "2303735.2",
+        "mpe": "-0.33718368",
+        "nrmse": "0.20711136",
+        "r2": 0.1660313606262207
+      }
+    },
+    {
+      "round": 19,
+      "strategy_name": "perf_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3392501050183027,
+        "Client 2": 0.35233760191710667,
+        "Client 3": 0.3084122930645905
+      },
+      "strategy_params_override": {
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      },
+      "llm_decision": {
+        "chosen_strategy_name": "perf_only",
+        "lr_scale": 1.0,
+        "epoch_delta": 0,
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6,
+        "evidence": [
+          "perf_only has consistently delivered the best improvements in recent rounds, with delta_val_mape of -0.08986 in round 19 and -0.112318 in round 18",
+          "The candidate validation preview shows perf_only achieves the lowest aggregate_val_mape (0.423104) among all strategies",
+          "perf_only has been the primary driver of MAPE reduction from 0.971426 (round 10) to 0.426227 (round 19), with relative improvements exceeding 10% in recent rounds",
+          "The client_mape_gap for perf_only (0.084558) is comparable to other strategies, indicating no significant fairness degradation"
+        ],
+        "risk": "Client 3 has higher val_mape (0.479) than others, and perf_only may further reduce its weight, potentially increasing client gap. However, the gap is manageable and the global MAPE improvement is substantial.",
+        "reasoning": "perf_only has proven to be the most effective strategy over the last 9 rounds, consistently achieving the largest MAPE reductions. The candidate preview confirms it yields the lowest aggregate MAPE. With only 1 round remaining, continuing with the best-performing strategy is optimal. No learning rate or epoch adjustment is needed as convergence is stable and improving.",
+        "is_reused": false,
+        "training_lr_used_this_round": 0.0005,
+        "training_epochs_used_this_round": 20,
+        "hyperparameter_effect": "lr_scale and epoch_delta apply to the next local-training round"
+      },
+      "candidate_weight_preview": {
+        "size_only": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "perf_only": {
+          "Client 1": 0.3392501050183027,
+          "Client 2": 0.35233760191710667,
+          "Client 3": 0.3084122930645905
+        },
+        "hybrid": {
+          "Client 1": 0.33857482419864904,
+          "Client 2": 0.3474016776708821,
+          "Client 3": 0.31402349813046876
+        },
+        "fairness_clip": {
+          "Client 1": 0.33830471187078764,
+          "Client 2": 0.3454273079723923,
+          "Client 3": 0.31626798015682006
+        }
+      },
+      "candidate_validation_preview": {
+        "size_only": {
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "aggregate_val_mape": 0.423226891883782,
+          "aggregate_val_rmse": 1832672.703125,
+          "aggregate_val_mae": 1315273.03125,
+          "aggregate_val_mpe": -0.19726703688502312,
+          "client_mape_gap": 0.08452466130256653,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.3943725824356079,
+              "val_rmse": 1748332.375,
+              "val_mae": 1238891.0,
+              "val_mpe": -0.12869122624397278
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.3993408679962158,
+              "val_rmse": 2617665.0,
+              "val_mae": 1825671.625,
+              "val_mpe": -0.2990896999835968
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.47889724373817444,
+              "val_rmse": 1093095.625,
+              "val_mae": 857144.4375,
+              "val_mpe": -0.16217313706874847
+            }
+          }
+        },
+        "perf_only": {
+          "weights": {
+            "Client 1": 0.3392501050183027,
+            "Client 2": 0.35233760191710667,
+            "Client 3": 0.3084122930645905
+          },
+          "aggregate_val_mape": 0.4231042116880417,
+          "aggregate_val_rmse": 1831472.5,
+          "aggregate_val_mae": 1314522.783482143,
+          "aggregate_val_mpe": -0.1988397211368595,
+          "client_mape_gap": 0.08455812931060791,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.3945060074329376,
+              "val_rmse": 1746118.25,
+              "val_mae": 1238837.5,
+              "val_mpe": -0.1311444193124771
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.3986877501010895,
+              "val_rmse": 2612497.5,
+              "val_mae": 1822052.375,
+              "val_mpe": -0.2992481589317322
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.47906413674354553,
+              "val_rmse": 1097153.375,
+              "val_mae": 858687.125,
+              "val_mpe": -0.16430918872356415
+            }
+          }
+        },
+        "hybrid": {
+          "weights": {
+            "Client 1": 0.33857482419864904,
+            "Client 2": 0.3474016776708821,
+            "Client 3": 0.31402349813046876
+          },
+          "aggregate_val_mape": 0.42316901311278343,
+          "aggregate_val_rmse": 1832067.482142857,
+          "aggregate_val_mae": 1314904.1830357143,
+          "aggregate_val_mpe": -0.1980531984674079,
+          "client_mape_gap": 0.08453729748725891,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.3944460451602936,
+              "val_rmse": 1747215.5,
+              "val_mae": 1238873.25,
+              "val_mpe": -0.12991847097873688
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.39901524782180786,
+              "val_rmse": 2615080.0,
+              "val_mae": 1823866.375,
+              "val_mpe": -0.2991706430912018
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.4789833426475525,
+              "val_rmse": 1095120.25,
+              "val_mae": 857921.1875,
+              "val_mpe": -0.16323810815811157
+            }
+          }
+        },
+        "fairness_clip": {
+          "weights": {
+            "Client 1": 0.33830471187078764,
+            "Client 2": 0.3454273079723923,
+            "Client 3": 0.31626798015682006
+          },
+          "aggregate_val_mape": 0.4231930247374943,
+          "aggregate_val_rmse": 1832308.6026785714,
+          "aggregate_val_mae": 1315053.3080357143,
+          "aggregate_val_mpe": -0.1977388451674155,
+          "client_mape_gap": 0.08453124761581421,
+          "client_metrics": {
+            "Client 1": {
+              "n_val_samples": 38,
+              "val_mape": 0.39441829919815063,
+              "val_rmse": 1747660.25,
+              "val_mae": 1238882.625,
+              "val_mpe": -0.12942783534526825
+            },
+            "Client 2": {
+              "n_val_samples": 38,
+              "val_mape": 0.39914578199386597,
+              "val_rmse": 2616114.0,
+              "val_mae": 1824589.5,
+              "val_mpe": -0.2991388738155365
+            },
+            "Client 3": {
+              "n_val_samples": 36,
+              "val_mape": 0.47894954681396484,
+              "val_rmse": 1094309.5,
+              "val_mae": 857611.9375,
+              "val_mpe": -0.1628115475177765
+            }
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 44.42831687927246,
+          "val_mape": 0.3906818926334381,
+          "val_rmse": 1842021.0,
+          "val_mae": 1278293.625,
+          "val_mpe": -0.2843133509159088
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 42.6627140045166,
+          "val_mape": 0.3761700689792633,
+          "val_rmse": 2306494.25,
+          "val_mae": 1633865.375,
+          "val_mpe": -0.22491726279258728
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 33.37688102722168,
+          "val_mape": 0.4297458529472351,
+          "val_rmse": 803057.25,
+          "val_mae": 636926.75,
+          "val_mpe": 0.04142075031995773
+        }
+      },
+      "global_val": {
+        "mape": "0.38908306",
+        "mae": "1256323.4",
+        "rmse": "2064248.2",
+        "mpe": "-0.16891901",
+        "nrmse": "0.1855809",
+        "r2": 0.33041077852249146
+      }
+    }
+  ]
+}

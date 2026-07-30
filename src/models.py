@@ -14,6 +14,14 @@ from pathlib import Path
 from src.utils import get_device, setup_logger
 
 
+def snapshot_model_state(model: nn.Module) -> Dict[str, torch.Tensor]:
+    """Return a detached checkpoint copy that will not mutate during training."""
+    return {
+        key: value.detach().clone()
+        for key, value in model.state_dict().items()
+    }
+
+
 class CostEstimationMLP(nn.Module):
     """
     改进版成本估算多层感知机模型
@@ -208,7 +216,7 @@ def train_model(
                 history["best_val_loss"] = val_loss
                 history["best_epoch"] = epoch
                 patience_counter = 0
-                best_model_state = model.state_dict().copy()
+                best_model_state = snapshot_model_state(model)
             else:
                 patience_counter += 1
             
@@ -269,26 +277,28 @@ def evaluate_model(
     model.eval()
     
     criterion = nn.MSELoss()
-    all_losses = []
+    total_loss = 0.0
+    total_samples = 0
     all_predictions = []
     all_targets = []
-    
+
     with torch.no_grad():
         for batch_X, batch_y in data_loader:
             batch_X = batch_X.to(device)
             batch_y = batch_y.to(device)
-            
-            # 前向传播
+
             outputs = model(batch_X)
             loss = criterion(outputs, batch_y)
-            
-            all_losses.append(loss.item())
-            
+
+            batch_n = batch_X.size(0)
+            total_loss += loss.item() * batch_n
+            total_samples += batch_n
+
             if return_predictions:
                 all_predictions.append(outputs.cpu().numpy())
                 all_targets.append(batch_y.cpu().numpy())
-    
-    avg_loss = np.mean(all_losses)
+
+    avg_loss = total_loss / total_samples if total_samples > 0 else 0.0
     
     if return_predictions:
         predictions = np.concatenate(all_predictions, axis=0)

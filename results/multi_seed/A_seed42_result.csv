@@ -1,0 +1,2 @@
+scenario,model_type,training_samples,training_scope,local_validation_samples_withheld,validation_samples,test_samples,n_estimators,learning_rate,max_depth,val_mape,val_rmse,val_mae,val_mpe,val_nrmse,test_mape,test_rmse,test_mae,test_mpe,test_nrmse
+GBR传统机器学习,GradientBoostingRegressor,438,federated_local_train_union,112,68,70,200,0.1,5,0.4521292616336299,1828687.9600936763,1177272.082066007,0.1784058777370366,0.1644034356491184,0.5505476287404255,1390877.4542825555,1049122.082876664,0.222071546173852,0.1560257938995189

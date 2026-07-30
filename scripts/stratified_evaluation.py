@@ -23,6 +23,7 @@ from src.utils import (
     load_config, compute_mape, compute_rmse, compute_mae,
     compute_mpe, compute_r2
 )
+from src.experiment_names import experiment_display_name
 
 
 def load_predictions(results_dir: str = "results") -> dict:
@@ -33,17 +34,29 @@ def load_predictions(results_dir: str = "results") -> dict:
     # 场景A
     pred_a_path = base / "centralized_predictions.csv"
     if pred_a_path.exists():
-        predictions["A (GBR)"] = pd.read_csv(pred_a_path)
+        predictions[experiment_display_name("A")] = pd.read_csv(pred_a_path)
 
     # 场景A'
     pred_a_prime_path = base / "centralized_nn_predictions.csv"
     if pred_a_prime_path.exists():
-        predictions["A' (NN)"] = pd.read_csv(pred_a_prime_path)
+        predictions[experiment_display_name("A_prime")] = pd.read_csv(pred_a_prime_path)
+    pred_a_prime_corrected_path = base / "centralized_nn_predictions_bias_corrected.csv"
+    if pred_a_prime_corrected_path.exists():
+        predictions[f"{experiment_display_name('A_prime')}（偏差校正）"] = pd.read_csv(pred_a_prime_corrected_path)
 
-    # 对于B和C场景，需要从训练历史推导或从保存的预测文件中加载
-    # 如果没有单独的预测文件，我们需要重新运行模型推理
-    for name, filename in [("B (FedAvg)", "fedavg_predictions.csv"),
-                           ("C (MAS-FL-LLM)", "scenario_c_predictions.csv")]:
+    for name, filename in [
+        (experiment_display_name("B"), "fedavg_predictions.csv"),
+        (experiment_display_name("FEDYOGI"), "fedyogi_predictions.csv"),
+        (experiment_display_name("VG_FEDYOGI_TR"), "vg_fedyogi_tr_predictions.csv"),
+        (experiment_display_name("MAS_VG_FEDYOGI_TR"), "mas_vg_fedyogi_tr_predictions.csv"),
+        (experiment_display_name("COHERENCE_FEDYOGI_TR"), "coherence_fedyogi_tr_predictions.csv"),
+        (experiment_display_name("LLM_GCA_FEDYOGI_TR"), "llm_gca_fedyogi_tr_predictions.csv"),
+        (experiment_display_name("FEDYOGI_bias_corrected"), "fedyogi_predictions_bias_corrected.csv"),
+        (experiment_display_name("VG_FEDYOGI_TR_bias_corrected"), "vg_fedyogi_tr_predictions_bias_corrected.csv"),
+        (experiment_display_name("MAS_VG_FEDYOGI_TR_bias_corrected"), "mas_vg_fedyogi_tr_predictions_bias_corrected.csv"),
+        (experiment_display_name("COHERENCE_FEDYOGI_TR_bias_corrected"), "coherence_fedyogi_tr_predictions_bias_corrected.csv"),
+        (experiment_display_name("LLM_GCA_FEDYOGI_TR_bias_corrected"), "llm_gca_fedyogi_tr_predictions_bias_corrected.csv"),
+    ]:
         path = base / filename
         if path.exists():
             predictions[name] = pd.read_csv(path)

@@ -1,0 +1,508 @@
+{
+  "training_config": {
+    "default_strategy": "size_only",
+    "default_lr": 0.0005,
+    "default_local_epochs": 20,
+    "strategies_config": {
+      "size_only": {
+        "description": "权重与客户端样本数成正比",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "perf_only": {
+        "description": "权重与1/val_mape成正比，表现好的客户端权重更大",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "hybrid": {
+        "description": "结合样本数和性能的加权",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "fairness_clip": {
+        "description": "限制大客户端权重上限，保护小客户端贡献",
+        "lambda_hybrid": 0.3,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      }
+    },
+    "server_optimizer": "fedyogi",
+    "max_coordinate_step_ratio": 1.0
+  },
+  "training_summary": {
+    "total_rounds": 2,
+    "best_round": 1,
+    "best_val_mape": "1.0"
+  },
+  "round_history": [
+    {
+      "round": 0,
+      "strategy_name": "llm_generative_coherence",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378996621003379,
+        "Client 2": 0.3424656575343425,
+        "Client 3": 0.31963468036531967
+      },
+      "strategy_params_override": {
+        "decision_type": "balanced",
+        "fallback_used": false
+      },
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.01,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.01,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 13.036936015573835,
+        "update_norm": 0.6118857255797099,
+        "update_clipped": false,
+        "coordinate_step_clipped": false,
+        "coordinate_direction_rejected": false
+      },
+      "llm_decision": {
+        "aggregation_weights": {
+          "Client 1": 0.3378996621003379,
+          "Client 2": 0.3424656575343425,
+          "Client 3": 0.31963468036531967
+        },
+        "server_lr_scale": 1.0,
+        "decision_type": "balanced",
+        "reasoning": "All clients show strong coherence and similar update norms, with underestimation bias. Weights are set to sample size proportions to maintain stability and avoid over-weighting any client, given the early round and lack of prior validation trend.",
+        "risk": "Low risk due to high coherence and stable updates; main risk is potential bias accumulation from underestimation, mitigated by balanced weighting and early round.",
+        "fallback_used": false,
+        "fallback_source": null,
+        "generated_weights_raw": {
+          "Client 1": 0.3378996621003379,
+          "Client 2": 0.3424656575343425,
+          "Client 3": 0.31963468036531967
+        },
+        "projected_weights": {
+          "Client 1": 0.3378996621003379,
+          "Client 2": 0.3424656575343425,
+          "Client 3": 0.31963468036531967
+        },
+        "constraint_status": {
+          "normalized": true,
+          "l1_projected": false,
+          "negative_coherence_limited": [],
+          "high_norm_limited": [],
+          "fallback_used": false,
+          "l1_from_previous": 0.0
+        },
+        "round": 1,
+        "selected_weights": {
+          "Client 1": 0.3378996621003379,
+          "Client 2": 0.3424656575343425,
+          "Client 3": 0.31963468036531967
+        },
+        "note": "LLM generated continuous aggregation weights; constraint layer enforced legality and stability."
+      },
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1566.158251953125,
+          "val_mape": 0.9999087452888489,
+          "val_rmse": 3987421.5,
+          "val_mae": 3241735.25,
+          "val_mpe": -0.9999087452888489,
+          "update_norm": 13.202980828336942,
+          "update_delta_norm": 13.202980828336942,
+          "validation_gap": 1.9998174905776978
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1602.8050048828125,
+          "val_mape": 0.9999753832817078,
+          "val_rmse": 4608825.5,
+          "val_mae": 3894989.5,
+          "val_mpe": -0.9999753832817078,
+          "update_norm": 12.958765266907944,
+          "update_delta_norm": 12.958765266907944,
+          "validation_gap": 1.9999507665634155
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1353.9193359375,
+          "val_mape": 0.9999959468841553,
+          "val_rmse": 2321843.5,
+          "val_mae": 1997765.75,
+          "val_mpe": -0.9999959468841553,
+          "update_norm": 13.438986621784245,
+          "update_delta_norm": 13.438986621784245,
+          "validation_gap": 1.9999918937683105
+        }
+      },
+      "global_val": {
+        "mape": "1.0",
+        "mae": "2983945.0",
+        "rmse": "3907391.8",
+        "mpe": "-1.0",
+        "nrmse": "0.35128394",
+        "r2": -1.399156093597412
+      },
+      "coherence_diagnostics": {
+        "Client 1": {
+          "update_norm": 13.202974319458008,
+          "cosine_to_mean_update": 0.9868943095207214,
+          "pairwise_mean_cosine": 0.9625999331474304,
+          "cosine_to_previous_global_update": 0.0,
+          "drift_from_mean_update": 2.1306862831115723,
+          "sample_size_weight": 0.3378995433789954,
+          "val_mape": 0.9999087452888489,
+          "val_mpe": -0.9999087452888489
+        },
+        "Client 2": {
+          "update_norm": 12.958754539489746,
+          "cosine_to_mean_update": 0.9864285588264465,
+          "pairwise_mean_cosine": 0.9623156487941742,
+          "cosine_to_previous_global_update": 0.0,
+          "drift_from_mean_update": 2.143709421157837,
+          "sample_size_weight": 0.3424657534246575,
+          "val_mape": 0.9999753832817078,
+          "val_mpe": -0.9999753832817078
+        },
+        "Client 3": {
+          "update_norm": 13.438980102539062,
+          "cosine_to_mean_update": 0.9908783435821533,
+          "pairwise_mean_cosine": 0.9683286249637604,
+          "cosine_to_previous_global_update": 0.0,
+          "drift_from_mean_update": 1.8316882848739624,
+          "sample_size_weight": 0.319634703196347,
+          "val_mape": 0.9999959468841553,
+          "val_mpe": -0.9999959468841553
+        }
+      },
+      "client_summaries": {
+        "Client 1": {
+          "sample_share_level": "medium",
+          "validation_error_level": "low",
+          "bias_direction": "underestimation",
+          "coherence_level": "strong",
+          "update_norm_level": "normal",
+          "recent_weight_trend": "stable",
+          "summary_text": "Client 1: medium client share, low validation MAPE, strong update coherence, underestimation bias, normal update norm, stable recent weight trend."
+        },
+        "Client 2": {
+          "sample_share_level": "high",
+          "validation_error_level": "medium",
+          "bias_direction": "underestimation",
+          "coherence_level": "strong",
+          "update_norm_level": "normal",
+          "recent_weight_trend": "stable",
+          "summary_text": "Client 2: high client share, medium validation MAPE, strong update coherence, underestimation bias, normal update norm, stable recent weight trend."
+        },
+        "Client 3": {
+          "sample_share_level": "low",
+          "validation_error_level": "high",
+          "bias_direction": "underestimation",
+          "coherence_level": "strong",
+          "update_norm_level": "normal",
+          "recent_weight_trend": "stable",
+          "summary_text": "Client 3: low client share, high validation MAPE, strong update coherence, underestimation bias, normal update norm, stable recent weight trend."
+        }
+      },
+      "generated_weights_raw": {
+        "Client 1": 0.3378996621003379,
+        "Client 2": 0.3424656575343425,
+        "Client 3": 0.31963468036531967
+      },
+      "generated_weights_projected": {
+        "Client 1": 0.3378996621003379,
+        "Client 2": 0.3424656575343425,
+        "Client 3": 0.31963468036531967
+      },
+      "constraint_status": {
+        "normalized": true,
+        "l1_projected": false,
+        "negative_coherence_limited": [],
+        "high_norm_limited": [],
+        "fallback_used": false,
+        "l1_from_previous": 0.0
+      },
+      "llm_reasoning": "All clients show strong coherence and similar update norms, with underestimation bias. Weights are set to sample size proportions to maintain stability and avoid over-weighting any client, given the early round and lack of prior validation trend.",
+      "llm_risk": "Low risk due to high coherence and stable updates; main risk is potential bias accumulation from underestimation, mitigated by balanced weighting and early round.",
+      "llm_generative_decision": {
+        "aggregation_weights": {
+          "Client 1": 0.3378996621003379,
+          "Client 2": 0.3424656575343425,
+          "Client 3": 0.31963468036531967
+        },
+        "server_lr_scale": 1.0,
+        "decision_type": "balanced",
+        "reasoning": "All clients show strong coherence and similar update norms, with underestimation bias. Weights are set to sample size proportions to maintain stability and avoid over-weighting any client, given the early round and lack of prior validation trend.",
+        "risk": "Low risk due to high coherence and stable updates; main risk is potential bias accumulation from underestimation, mitigated by balanced weighting and early round.",
+        "fallback_used": false,
+        "fallback_source": null,
+        "generated_weights_raw": {
+          "Client 1": 0.3378996621003379,
+          "Client 2": 0.3424656575343425,
+          "Client 3": 0.31963468036531967
+        },
+        "projected_weights": {
+          "Client 1": 0.3378996621003379,
+          "Client 2": 0.3424656575343425,
+          "Client 3": 0.31963468036531967
+        },
+        "constraint_status": {
+          "normalized": true,
+          "l1_projected": false,
+          "negative_coherence_limited": [],
+          "high_norm_limited": [],
+          "fallback_used": false,
+          "l1_from_previous": 0.0
+        },
+        "round": 1,
+        "selected_weights": {
+          "Client 1": 0.3378996621003379,
+          "Client 2": 0.3424656575343425,
+          "Client 3": 0.31963468036531967
+        },
+        "note": "LLM generated continuous aggregation weights; constraint layer enforced legality and stability."
+      }
+    },
+    {
+      "round": 1,
+      "strategy_name": "llm_generative_coherence",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3333333333333333,
+        "Client 2": 0.3333333333333333,
+        "Client 3": 0.3333333333333333
+      },
+      "strategy_params_override": {
+        "decision_type": "balanced",
+        "fallback_used": false
+      },
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.01,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.01,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 12.748141540909426,
+        "update_norm": 0.832311370364161,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": {
+        "aggregation_weights": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "server_lr_scale": 1.0,
+        "decision_type": "balanced",
+        "reasoning": "All clients show strong coherence and similar update norms, with no significant drift or bias divergence. Equal weights maintain stability and avoid over-reliance on any single client, given the uniform coherence and the need to preserve generalization in the final round.",
+        "risk": "Equal weighting may dilute the influence of the high-sample client, but strong coherence across all clients mitigates this risk. No bias correction needed as all share underestimation bias.",
+        "fallback_used": false,
+        "fallback_source": null,
+        "generated_weights_raw": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "projected_weights": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "constraint_status": {
+          "normalized": true,
+          "l1_projected": false,
+          "negative_coherence_limited": [],
+          "high_norm_limited": [],
+          "fallback_used": false,
+          "l1_from_previous": 0.027397305936027405
+        },
+        "round": 2,
+        "selected_weights": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "note": "LLM generated continuous aggregation weights; constraint layer enforced legality and stability."
+      },
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1538.1791259765625,
+          "val_mape": 0.9998815655708313,
+          "val_rmse": 3987337.5,
+          "val_mae": 3241652.25,
+          "val_mpe": -0.9998815655708313,
+          "update_norm": 12.846235412033716,
+          "update_delta_norm": 12.846235412033716,
+          "validation_gap": 1.9997631311416626
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1567.2518310546875,
+          "val_mape": 0.9999384880065918,
+          "val_rmse": 4608439.0,
+          "val_mae": 3894747.75,
+          "val_mpe": -0.9999384880065918,
+          "update_norm": 12.65903837234019,
+          "update_delta_norm": 12.65903837234019,
+          "validation_gap": 1.9998769760131836
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1345.051220703125,
+          "val_mape": 0.9999896287918091,
+          "val_rmse": 2321810.75,
+          "val_mae": 1997744.5,
+          "val_mpe": -0.9999896287918091,
+          "update_norm": 13.273316461386184,
+          "update_delta_norm": 13.273316461386184,
+          "validation_gap": 1.9999792575836182
+        }
+      },
+      "global_val": {
+        "mape": "1.0",
+        "mae": "2983945.0",
+        "rmse": "3907391.8",
+        "mpe": "-1.0",
+        "nrmse": "0.35128394",
+        "r2": -1.399156093597412
+      },
+      "coherence_diagnostics": {
+        "Client 1": {
+          "update_norm": 12.846221923828125,
+          "cosine_to_mean_update": 0.9853673577308655,
+          "pairwise_mean_cosine": 0.9577429890632629,
+          "cosine_to_previous_global_update": 0.369828999042511,
+          "drift_from_mean_update": 2.191547155380249,
+          "sample_size_weight": 0.3378995433789954,
+          "val_mape": 0.9998815655708313,
+          "val_mpe": -0.9998815655708313
+        },
+        "Client 2": {
+          "update_norm": 12.659029006958008,
+          "cosine_to_mean_update": 0.9852070808410645,
+          "pairwise_mean_cosine": 0.9578334391117096,
+          "cosine_to_previous_global_update": 0.3780945837497711,
+          "drift_from_mean_update": 2.1870052814483643,
+          "sample_size_weight": 0.3424657534246575,
+          "val_mape": 0.9999384880065918,
+          "val_mpe": -0.9999384880065918
+        },
+        "Client 3": {
+          "update_norm": 13.273309707641602,
+          "cosine_to_mean_update": 0.988031268119812,
+          "pairwise_mean_cosine": 0.961109846830368,
+          "cosine_to_previous_global_update": 0.36384284496307373,
+          "drift_from_mean_update": 2.080082654953003,
+          "sample_size_weight": 0.319634703196347,
+          "val_mape": 0.9999896287918091,
+          "val_mpe": -0.9999896287918091
+        }
+      },
+      "client_summaries": {
+        "Client 1": {
+          "sample_share_level": "medium",
+          "validation_error_level": "low",
+          "bias_direction": "underestimation",
+          "coherence_level": "strong",
+          "update_norm_level": "normal",
+          "recent_weight_trend": "stable",
+          "summary_text": "Client 1: medium client share, low validation MAPE, strong update coherence, underestimation bias, normal update norm, stable recent weight trend."
+        },
+        "Client 2": {
+          "sample_share_level": "high",
+          "validation_error_level": "medium",
+          "bias_direction": "underestimation",
+          "coherence_level": "strong",
+          "update_norm_level": "normal",
+          "recent_weight_trend": "stable",
+          "summary_text": "Client 2: high client share, medium validation MAPE, strong update coherence, underestimation bias, normal update norm, stable recent weight trend."
+        },
+        "Client 3": {
+          "sample_share_level": "low",
+          "validation_error_level": "high",
+          "bias_direction": "underestimation",
+          "coherence_level": "strong",
+          "update_norm_level": "normal",
+          "recent_weight_trend": "stable",
+          "summary_text": "Client 3: low client share, high validation MAPE, strong update coherence, underestimation bias, normal update norm, stable recent weight trend."
+        }
+      },
+      "generated_weights_raw": {
+        "Client 1": 0.3333333333333333,
+        "Client 2": 0.3333333333333333,
+        "Client 3": 0.3333333333333333
+      },
+      "generated_weights_projected": {
+        "Client 1": 0.3333333333333333,
+        "Client 2": 0.3333333333333333,
+        "Client 3": 0.3333333333333333
+      },
+      "constraint_status": {
+        "normalized": true,
+        "l1_projected": false,
+        "negative_coherence_limited": [],
+        "high_norm_limited": [],
+        "fallback_used": false,
+        "l1_from_previous": 0.027397305936027405
+      },
+      "llm_reasoning": "All clients show strong coherence and similar update norms, with no significant drift or bias divergence. Equal weights maintain stability and avoid over-reliance on any single client, given the uniform coherence and the need to preserve generalization in the final round.",
+      "llm_risk": "Equal weighting may dilute the influence of the high-sample client, but strong coherence across all clients mitigates this risk. No bias correction needed as all share underestimation bias.",
+      "llm_generative_decision": {
+        "aggregation_weights": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "server_lr_scale": 1.0,
+        "decision_type": "balanced",
+        "reasoning": "All clients show strong coherence and similar update norms, with no significant drift or bias divergence. Equal weights maintain stability and avoid over-reliance on any single client, given the uniform coherence and the need to preserve generalization in the final round.",
+        "risk": "Equal weighting may dilute the influence of the high-sample client, but strong coherence across all clients mitigates this risk. No bias correction needed as all share underestimation bias.",
+        "fallback_used": false,
+        "fallback_source": null,
+        "generated_weights_raw": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "projected_weights": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "constraint_status": {
+          "normalized": true,
+          "l1_projected": false,
+          "negative_coherence_limited": [],
+          "high_norm_limited": [],
+          "fallback_used": false,
+          "l1_from_previous": 0.027397305936027405
+        },
+        "round": 2,
+        "selected_weights": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "note": "LLM generated continuous aggregation weights; constraint layer enforced legality and stability."
+      }
+    }
+  ]
+}

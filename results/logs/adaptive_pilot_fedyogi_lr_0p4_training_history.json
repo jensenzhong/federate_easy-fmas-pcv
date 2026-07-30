@@ -1,0 +1,1522 @@
+{
+  "training_config": {
+    "default_strategy": "size_only",
+    "default_lr": 0.0005,
+    "default_local_epochs": 20,
+    "strategies_config": {
+      "size_only": {
+        "description": "权重与客户端样本数成正比",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "perf_only": {
+        "description": "权重与1/val_mape成正比，表现好的客户端权重更大",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "hybrid": {
+        "description": "结合样本数和性能的加权",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "fairness_clip": {
+        "description": "限制大客户端权重上限，保护小客户端贡献",
+        "lambda_hybrid": 0.3,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      }
+    },
+    "server_optimizer": "fedyogi",
+    "max_coordinate_step_ratio": 1.0
+  },
+  "training_summary": {
+    "total_rounds": 20,
+    "best_round": 20,
+    "best_val_mape": "0.40206498"
+  },
+  "round_history": [
+    {
+      "round": 0,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 12.915946570628485,
+        "update_norm": 7.974730931035119,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": false
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1590.8580078125,
+          "val_mape": 0.9999827146530151,
+          "val_rmse": 3987786.75,
+          "val_mae": 3242020.75,
+          "val_mpe": -0.9999827146530151,
+          "update_norm": 13.033866944639296,
+          "update_delta_norm": 13.033866944639296,
+          "validation_gap": 1.9999654293060303
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1616.7021728515624,
+          "val_mape": 0.9999911785125732,
+          "val_rmse": 4608966.5,
+          "val_mae": 3895077.5,
+          "val_mpe": -0.9999911785125732,
+          "update_norm": 12.964246313896492,
+          "update_delta_norm": 12.964246313896492,
+          "validation_gap": 1.9999823570251465
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1377.5969970703125,
+          "val_mape": 0.9999985098838806,
+          "val_rmse": 2321857.25,
+          "val_mae": 1997774.0,
+          "val_mpe": -0.9999985098838806,
+          "update_norm": 13.256413958385922,
+          "update_delta_norm": 13.256413958385922,
+          "validation_gap": 1.9999970197677612
+        }
+      },
+      "global_val": {
+        "mape": "0.9999999",
+        "mae": "2983944.5",
+        "rmse": "3907391.0",
+        "mpe": "-0.9999999",
+        "nrmse": "0.35128388",
+        "r2": -1.3991551399230957
+      }
+    },
+    {
+      "round": 1,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 6.264072489189495,
+        "update_norm": 5.937503561597339,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1520.958935546875,
+          "val_mape": 0.9999374747276306,
+          "val_rmse": 3987442.75,
+          "val_mae": 3241786.5,
+          "val_mpe": -0.9999374747276306,
+          "update_norm": 6.7655271707926925,
+          "update_delta_norm": 6.7655271707926925,
+          "validation_gap": 1.9998749494552612
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1540.4052978515624,
+          "val_mape": 0.9999322295188904,
+          "val_rmse": 4608553.5,
+          "val_mae": 3894769.75,
+          "val_mpe": -0.9999322295188904,
+          "update_norm": 6.574673519525407,
+          "update_delta_norm": 6.574673519525407,
+          "validation_gap": 1.9998644590377808
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1296.549462890625,
+          "val_mape": 0.9999854564666748,
+          "val_rmse": 2321772.5,
+          "val_mae": 1997726.0,
+          "val_mpe": -0.9999854564666748,
+          "update_norm": 6.575761232948027,
+          "update_delta_norm": 6.575761232948027,
+          "validation_gap": 1.9999709129333496
+        }
+      },
+      "global_val": {
+        "mape": "0.999932",
+        "mae": "2983541.0",
+        "rmse": "3906591.5",
+        "mpe": "-0.999932",
+        "nrmse": "0.351212",
+        "r2": -1.3981733322143555
+      }
+    },
+    {
+      "round": 2,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 4.093884744271933,
+        "update_norm": 2.4485486871583975,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1434.084423828125,
+          "val_mape": 0.999825656414032,
+          "val_rmse": 3986606.5,
+          "val_mae": 3241217.25,
+          "val_mpe": -0.999825656414032,
+          "update_norm": 4.886618820477604,
+          "update_delta_norm": 4.886618820477604,
+          "validation_gap": 1.999651312828064
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1459.9849853515625,
+          "val_mape": 0.9998088479042053,
+          "val_rmse": 4607816.5,
+          "val_mae": 3894183.25,
+          "val_mpe": -0.9998088479042053,
+          "update_norm": 5.555792261122424,
+          "update_delta_norm": 5.555792261122424,
+          "validation_gap": 1.9996176958084106
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1239.0548583984375,
+          "val_mape": 0.9999029636383057,
+          "val_rmse": 2321350.0,
+          "val_mae": 1997449.125,
+          "val_mpe": -0.9999029636383057,
+          "update_norm": 3.584904343473986,
+          "update_delta_norm": 3.584904343473986,
+          "validation_gap": 1.9998059272766113
+        }
+      },
+      "global_val": {
+        "mape": "0.9996732",
+        "mae": "2982123.2",
+        "rmse": "3904011.8",
+        "mpe": "-0.9996732",
+        "nrmse": "0.35098007",
+        "r2": -1.3950071334838867
+      }
+    },
+    {
+      "round": 3,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 4.967782034522671,
+        "update_norm": 3.250571862615342,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1362.0599365234375,
+          "val_mape": 0.9995523691177368,
+          "val_rmse": 3984725.5,
+          "val_mae": 3239872.5,
+          "val_mpe": -0.9995523691177368,
+          "update_norm": 6.281823235099895,
+          "update_delta_norm": 6.281823235099895,
+          "validation_gap": 1.9991047382354736
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1374.1452392578126,
+          "val_mape": 0.9994444847106934,
+          "val_rmse": 4605961.5,
+          "val_mae": 3892573.5,
+          "val_mpe": -0.9994444847106934,
+          "update_norm": 6.328670817840233,
+          "update_delta_norm": 6.328670817840233,
+          "validation_gap": 1.9988889694213867
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1153.5968017578125,
+          "val_mape": 0.9996833801269531,
+          "val_rmse": 2320223.5,
+          "val_mae": 1996712.25,
+          "val_mpe": -0.9996833801269531,
+          "update_norm": 3.744792153760817,
+          "update_delta_norm": 3.744792153760817,
+          "validation_gap": 1.9993667602539062
+        }
+      },
+      "global_val": {
+        "mape": "0.99932986",
+        "mae": "2980748.5",
+        "rmse": "3902151.0",
+        "mpe": "-0.99932986",
+        "nrmse": "0.3508128",
+        "r2": -1.3927247524261475
+      }
+    },
+    {
+      "round": 4,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 5.118973480315771,
+        "update_norm": 3.4996359012984133,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1269.8288818359374,
+          "val_mape": 0.9990259408950806,
+          "val_rmse": 3981430.5,
+          "val_mae": 3237459.25,
+          "val_mpe": -0.9990259408950806,
+          "update_norm": 6.045216502723163,
+          "update_delta_norm": 6.045216502723163,
+          "validation_gap": 1.9980518817901611
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1296.4669189453125,
+          "val_mape": 0.9982702136039734,
+          "val_rmse": 4600952.0,
+          "val_mae": 3887854.0,
+          "val_mpe": -0.9982702136039734,
+          "update_norm": 6.885289179178529,
+          "update_delta_norm": 6.885289179178529,
+          "validation_gap": 1.9965404272079468
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1092.0035522460937,
+          "val_mape": 0.9990114569664001,
+          "val_rmse": 2317113.25,
+          "val_mae": 1994591.375,
+          "val_mpe": -0.9990114569664001,
+          "update_norm": 4.6046948605024145,
+          "update_delta_norm": 4.6046948605024145,
+          "validation_gap": 1.9980229139328003
+        }
+      },
+      "global_val": {
+        "mape": "0.9987769",
+        "mae": "2978811.5",
+        "rmse": "3899968.5",
+        "mpe": "-0.9987769",
+        "nrmse": "0.35061657",
+        "r2": -1.3900489807128906
+      }
+    },
+    {
+      "round": 5,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 5.867423882754688,
+        "update_norm": 3.7923512018359764,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1189.338720703125,
+          "val_mape": 0.9982078075408936,
+          "val_rmse": 3976263.0,
+          "val_mae": 3233734.0,
+          "val_mpe": -0.9982078075408936,
+          "update_norm": 6.341871882050382,
+          "update_delta_norm": 6.341871882050382,
+          "validation_gap": 1.996415615081787
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1188.544140625,
+          "val_mape": 0.9965469241142273,
+          "val_rmse": 4594006.0,
+          "val_mae": 3881122.5,
+          "val_mpe": -0.9965469241142273,
+          "update_norm": 8.482466384695893,
+          "update_delta_norm": 8.482466384695893,
+          "validation_gap": 1.9930938482284546
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 998.0873168945312,
+          "val_mape": 0.9979024529457092,
+          "val_rmse": 2313122.75,
+          "val_mae": 1991570.25,
+          "val_mpe": -0.9979024529457092,
+          "update_norm": 4.726209582031694,
+          "update_delta_norm": 4.726209582031694,
+          "validation_gap": 1.9958049058914185
+        }
+      },
+      "global_val": {
+        "mape": "0.99761236",
+        "mae": "2974770.5",
+        "rmse": "3895219.0",
+        "mpe": "-0.99761236",
+        "nrmse": "0.3501896",
+        "r2": -1.3842310905456543
+      }
+    },
+    {
+      "round": 6,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 6.669094696276622,
+        "update_norm": 3.8358231726170895,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1091.550537109375,
+          "val_mape": 0.9967061281204224,
+          "val_rmse": 3966964.5,
+          "val_mae": 3226979.0,
+          "val_mpe": -0.9967061281204224,
+          "update_norm": 7.134770999077103,
+          "update_delta_norm": 7.134770999077103,
+          "validation_gap": 1.9934122562408447
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1107.7186645507813,
+          "val_mape": 0.9941558837890625,
+          "val_rmse": 4582722.5,
+          "val_mae": 3871010.5,
+          "val_mpe": -0.9941558837890625,
+          "update_norm": 8.915761100373102,
+          "update_delta_norm": 8.915761100373102,
+          "validation_gap": 1.988311767578125
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 937.8941040039062,
+          "val_mape": 0.9960463047027588,
+          "val_rmse": 2306356.25,
+          "val_mae": 1986506.625,
+          "val_mpe": -0.9960463047027588,
+          "update_norm": 5.681838869822167,
+          "update_delta_norm": 5.681838869822167,
+          "validation_gap": 1.9920926094055176
+        }
+      },
+      "global_val": {
+        "mape": "0.99537325",
+        "mae": "2966611.0",
+        "rmse": "3884980.2",
+        "mpe": "-0.99537325",
+        "nrmse": "0.3492691",
+        "r2": -1.371713399887085
+      }
+    },
+    {
+      "round": 7,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 8.031978964832655,
+        "update_norm": 3.939943508545019,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 977.5010864257813,
+          "val_mape": 0.9943467378616333,
+          "val_rmse": 3953657.5,
+          "val_mae": 3216893.25,
+          "val_mpe": -0.9943467378616333,
+          "update_norm": 8.918005460216554,
+          "update_delta_norm": 8.918005460216554,
+          "validation_gap": 1.9886934757232666
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1010.3256469726563,
+          "val_mape": 0.9895601868629456,
+          "val_rmse": 4562376.0,
+          "val_mae": 3852399.5,
+          "val_mpe": -0.9895601868629456,
+          "update_norm": 10.646705860907344,
+          "update_delta_norm": 10.646705860907344,
+          "validation_gap": 1.9791203737258911
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 822.2246704101562,
+          "val_mape": 0.992656946182251,
+          "val_rmse": 2295836.25,
+          "val_mae": 1978153.375,
+          "val_mpe": -0.992656946182251,
+          "update_norm": 6.312708584710245,
+          "update_delta_norm": 6.312708584710245,
+          "validation_gap": 1.985313892364502
+        }
+      },
+      "global_val": {
+        "mape": "0.9911114",
+        "mae": "2950957.2",
+        "rmse": "3865223.5",
+        "mpe": "-0.9911114",
+        "nrmse": "0.34749293",
+        "r2": -1.3476526737213135
+      }
+    },
+    {
+      "round": 8,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 9.380315684536688,
+        "update_norm": 4.051233466868678,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 886.1048950195312,
+          "val_mape": 0.9894989132881165,
+          "val_rmse": 3926038.75,
+          "val_mae": 3196094.25,
+          "val_mpe": -0.9894989132881165,
+          "update_norm": 8.869809368042276,
+          "update_delta_norm": 8.869809368042276,
+          "validation_gap": 1.978997826576233
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 901.7089111328125,
+          "val_mape": 0.9852995872497559,
+          "val_rmse": 4541670.0,
+          "val_mae": 3834301.0,
+          "val_mpe": -0.9852995872497559,
+          "update_norm": 12.447223296218558,
+          "update_delta_norm": 12.447223296218558,
+          "validation_gap": 1.9705991744995117
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 772.6612060546875,
+          "val_mape": 0.9887918829917908,
+          "val_rmse": 2283546.5,
+          "val_mae": 1968564.25,
+          "val_mpe": -0.9887918829917908,
+          "update_norm": 8.348036828199218,
+          "update_delta_norm": 8.348036828199218,
+          "validation_gap": 1.9775837659835815
+        }
+      },
+      "global_val": {
+        "mape": "0.9844312",
+        "mae": "2926588.8",
+        "rmse": "3834172.0",
+        "mpe": "-0.9844312",
+        "nrmse": "0.34470132",
+        "r2": -1.3100841045379639
+      }
+    },
+    {
+      "round": 9,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 9.971515840053616,
+        "update_norm": 3.841618024252133,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 796.7469482421875,
+          "val_mape": 0.9850064516067505,
+          "val_rmse": 3899881.75,
+          "val_mae": 3176128.75,
+          "val_mpe": -0.9850064516067505,
+          "update_norm": 9.051092726015355,
+          "update_delta_norm": 9.051092726015355,
+          "validation_gap": 1.970012903213501
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 785.7672485351562,
+          "val_mape": 0.9768438935279846,
+          "val_rmse": 4502091.5,
+          "val_mae": 3799017.75,
+          "val_mpe": -0.9768438935279846,
+          "update_norm": 12.93159172815686,
+          "update_delta_norm": 12.93159172815686,
+          "validation_gap": 1.9536877870559692
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 684.5638549804687,
+          "val_mape": 0.9826075434684753,
+          "val_rmse": 2262107.5,
+          "val_mae": 1952314.25,
+          "val_mpe": -0.9826075434684753,
+          "update_norm": 9.470048772932943,
+          "update_delta_norm": 9.470048772932943,
+          "validation_gap": 1.9652150869369507
+        }
+      },
+      "global_val": {
+        "mape": "0.9740107",
+        "mae": "2890640.2",
+        "rmse": "3791565.5",
+        "mpe": "-0.9740107",
+        "nrmse": "0.3408709",
+        "r2": -1.259028434753418
+      }
+    },
+    {
+      "round": 10,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 11.21684554178671,
+        "update_norm": 3.91414700815556,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 692.4328979492187,
+          "val_mape": 0.9757939577102661,
+          "val_rmse": 3845005.75,
+          "val_mae": 3135303.0,
+          "val_mpe": -0.9757939577102661,
+          "update_norm": 10.463786577495572,
+          "update_delta_norm": 10.463786577495572,
+          "validation_gap": 1.9515879154205322
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 696.2856323242188,
+          "val_mape": 0.9614253044128418,
+          "val_rmse": 4437951.0,
+          "val_mae": 3738300.75,
+          "val_mpe": -0.9614253044128418,
+          "update_norm": 13.226207945187788,
+          "update_delta_norm": 13.226207945187788,
+          "validation_gap": 1.9228506088256836
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 575.7601867675781,
+          "val_mape": 0.9700515270233154,
+          "val_rmse": 2230847.75,
+          "val_mae": 1925472.625,
+          "val_mpe": -0.9700515270233154,
+          "update_norm": 11.19355869682618,
+          "update_delta_norm": 11.19355869682618,
+          "validation_gap": 1.9401030540466309
+        }
+      },
+      "global_val": {
+        "mape": "0.9572306",
+        "mae": "2835045.2",
+        "rmse": "3728461.5",
+        "mpe": "-0.9572306",
+        "nrmse": "0.3351977",
+        "r2": -1.1844592094421387
+      }
+    },
+    {
+      "round": 11,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 12.196297996469369,
+        "update_norm": 3.7864638972465454,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 583.4222290039063,
+          "val_mape": 0.9635421633720398,
+          "val_rmse": 3787831.25,
+          "val_mae": 3087265.5,
+          "val_mpe": -0.9635421633720398,
+          "update_norm": 10.619502125464876,
+          "update_delta_norm": 10.619502125464876,
+          "validation_gap": 1.9270843267440796
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 587.2792236328125,
+          "val_mape": 0.939649760723114,
+          "val_rmse": 4357214.0,
+          "val_mae": 3656517.0,
+          "val_mpe": -0.939649760723114,
+          "update_norm": 15.644453686571154,
+          "update_delta_norm": 15.644453686571154,
+          "validation_gap": 1.879299521446228
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 470.3241333007812,
+          "val_mape": 0.9507675170898438,
+          "val_rmse": 2181702.25,
+          "val_mae": 1885462.875,
+          "val_mpe": -0.9507675170898438,
+          "update_norm": 11.761633143279134,
+          "update_delta_norm": 11.761633143279134,
+          "validation_gap": 1.9015350341796875
+        }
+      },
+      "global_val": {
+        "mape": "0.9351701",
+        "mae": "2768816.0",
+        "rmse": "3659823.5",
+        "mpe": "-0.9351701",
+        "nrmse": "0.32902697",
+        "r2": -1.1047711372375488
+      }
+    },
+    {
+      "round": 12,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 11.070579578145894,
+        "update_norm": 3.682165400940725,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 490.79771728515624,
+          "val_mape": 0.9407473206520081,
+          "val_rmse": 3672778.75,
+          "val_mae": 2995271.0,
+          "val_mpe": -0.9407473206520081,
+          "update_norm": 10.035853246352563,
+          "update_delta_norm": 10.035853246352563,
+          "validation_gap": 1.8814946413040161
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 501.44776611328126,
+          "val_mape": 0.907733142375946,
+          "val_rmse": 4241121.5,
+          "val_mae": 3538927.5,
+          "val_mpe": -0.907733142375946,
+          "update_norm": 12.210672342776666,
+          "update_delta_norm": 12.210672342776666,
+          "validation_gap": 1.815466284751892
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 409.2626220703125,
+          "val_mape": 0.9270095825195312,
+          "val_rmse": 2110984.75,
+          "val_mae": 1827480.5,
+          "val_mpe": -0.9270095825195312,
+          "update_norm": 12.455854606734036,
+          "update_delta_norm": 12.455854606734036,
+          "validation_gap": 1.8540191650390625
+        }
+      },
+      "global_val": {
+        "mape": "0.90800244",
+        "mae": "2686167.0",
+        "rmse": "3570503.0",
+        "mpe": "-0.90800244",
+        "nrmse": "0.32099682",
+        "r2": -1.0032880306243896
+      }
+    },
+    {
+      "round": 13,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 10.436121479842217,
+        "update_norm": 3.5732524236604015,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 378.41114501953126,
+          "val_mape": 0.9110233187675476,
+          "val_rmse": 3527116.75,
+          "val_mae": 2876883.0,
+          "val_mpe": -0.9110233187675476,
+          "update_norm": 8.714301593044066,
+          "update_delta_norm": 8.714301593044066,
+          "validation_gap": 1.8220466375350952
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 403.2132141113281,
+          "val_mape": 0.875950038433075,
+          "val_rmse": 4106814.0,
+          "val_mae": 3411687.25,
+          "val_mpe": -0.875950038433075,
+          "update_norm": 13.114921475848769,
+          "update_delta_norm": 13.114921475848769,
+          "validation_gap": 1.75190007686615
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 312.5155334472656,
+          "val_mape": 0.8860967755317688,
+          "val_rmse": 2037848.625,
+          "val_mae": 1755710.75,
+          "val_mpe": -0.8860967755317688,
+          "update_norm": 11.32243312259465,
+          "update_delta_norm": 11.32243312259465,
+          "validation_gap": 1.7721935510635376
+        }
+      },
+      "global_val": {
+        "mape": "0.87116665",
+        "mae": "2573970.8",
+        "rmse": "3452411.8",
+        "mpe": "-0.87116665",
+        "nrmse": "0.31038016",
+        "r2": -0.8729654550552368
+      }
+    },
+    {
+      "round": 14,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 9.51266074623246,
+        "update_norm": 3.418818933179441,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 313.2630920410156,
+          "val_mape": 0.8786748647689819,
+          "val_rmse": 3402397.5,
+          "val_mae": 2764703.75,
+          "val_mpe": -0.8786748647689819,
+          "update_norm": 8.834135355344987,
+          "update_delta_norm": 8.834135355344987,
+          "validation_gap": 1.7573497295379639
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 309.72698974609375,
+          "val_mape": 0.8047884106636047,
+          "val_rmse": 3920384.0,
+          "val_mae": 3200880.25,
+          "val_mpe": -0.8047884106636047,
+          "update_norm": 11.216261675668935,
+          "update_delta_norm": 11.216261675668935,
+          "validation_gap": 1.6095768213272095
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 245.9757049560547,
+          "val_mape": 0.8388962149620056,
+          "val_rmse": 1935338.625,
+          "val_mae": 1661357.375,
+          "val_mpe": -0.8377615809440613,
+          "update_norm": 10.386377667249116,
+          "update_delta_norm": 10.386377667249116,
+          "validation_gap": 1.676657795906067
+        }
+      },
+      "global_val": {
+        "mape": "0.8256319",
+        "mae": "2432994.2",
+        "rmse": "3298461.8",
+        "mpe": "-0.8256319",
+        "nrmse": "0.29653966",
+        "r2": -0.7096513509750366
+      }
+    },
+    {
+      "round": 15,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 9.840838809481196,
+        "update_norm": 3.531940536323887,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 250.3660919189453,
+          "val_mape": 0.8016498684883118,
+          "val_rmse": 3123470.0,
+          "val_mae": 2513012.0,
+          "val_mpe": -0.8016498684883118,
+          "update_norm": 8.898152459430849,
+          "update_delta_norm": 8.898152459430849,
+          "validation_gap": 1.6032997369766235
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 230.0487518310547,
+          "val_mape": 0.7289696931838989,
+          "val_rmse": 3664441.5,
+          "val_mae": 2927909.75,
+          "val_mpe": -0.7289696931838989,
+          "update_norm": 10.670630962674565,
+          "update_delta_norm": 10.670630962674565,
+          "validation_gap": 1.4579393863677979
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 172.82498779296876,
+          "val_mape": 0.7788696885108948,
+          "val_rmse": 1808108.875,
+          "val_mae": 1538992.0,
+          "val_mpe": -0.7636301517486572,
+          "update_norm": 12.011131049624105,
+          "update_delta_norm": 12.011131049624105,
+          "validation_gap": 1.5424997806549072
+        }
+      },
+      "global_val": {
+        "mape": "0.7591115",
+        "mae": "2248688.0",
+        "rmse": "3116135.2",
+        "mpe": "-0.7591115",
+        "nrmse": "0.2801481",
+        "r2": -0.5258688926696777
+      }
+    },
+    {
+      "round": 16,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 8.478780261023003,
+        "update_norm": 2.7285455020581133,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 155.90179443359375,
+          "val_mape": 0.732093095779419,
+          "val_rmse": 2871750.25,
+          "val_mae": 2274274.75,
+          "val_mpe": -0.732093095779419,
+          "update_norm": 8.202156832572868,
+          "update_delta_norm": 8.202156832572868,
+          "validation_gap": 1.464186191558838
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 168.17987365722655,
+          "val_mape": 0.6498689651489258,
+          "val_rmse": 3419549.5,
+          "val_mae": 2651026.25,
+          "val_mpe": -0.6498689651489258,
+          "update_norm": 8.880807669193164,
+          "update_delta_norm": 8.880807669193164,
+          "validation_gap": 1.2997379302978516
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 112.48160247802734,
+          "val_mape": 0.7020037174224854,
+          "val_rmse": 1613500.375,
+          "val_mae": 1365139.625,
+          "val_mpe": -0.6762284636497498,
+          "update_norm": 10.516002788101591,
+          "update_delta_norm": 10.516002788101591,
+          "validation_gap": 1.3782322406768799
+        }
+      },
+      "global_val": {
+        "mape": "0.68466824",
+        "mae": "2060819.5",
+        "rmse": "2924038.2",
+        "mpe": "-0.68466824",
+        "nrmse": "0.2628781",
+        "r2": -0.3435403108596802
+      }
+    },
+    {
+      "round": 17,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 8.70805034765003,
+        "update_norm": 2.736296088718841,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 107.49907684326172,
+          "val_mape": 0.6540284156799316,
+          "val_rmse": 2600365.25,
+          "val_mae": 2040790.125,
+          "val_mpe": -0.6143991351127625,
+          "update_norm": 8.561903180058792,
+          "update_delta_norm": 8.561903180058792,
+          "validation_gap": 1.2684276103973389
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 113.16869201660157,
+          "val_mape": 0.5646337270736694,
+          "val_rmse": 3066033.25,
+          "val_mae": 2274745.75,
+          "val_mpe": -0.512938916683197,
+          "update_norm": 8.72185577036547,
+          "update_delta_norm": 8.72185577036547,
+          "validation_gap": 1.0775725841522217
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 74.66768188476563,
+          "val_mape": 0.5806411504745483,
+          "val_rmse": 1365920.0,
+          "val_mae": 1121734.5,
+          "val_mpe": -0.5020016431808472,
+          "update_norm": 10.909462663478154,
+          "update_delta_norm": 10.909462663478154,
+          "validation_gap": 1.0826427936553955
+        }
+      },
+      "global_val": {
+        "mape": "0.5837013",
+        "mae": "1811313.0",
+        "rmse": "2664411.2",
+        "mpe": "-0.57408285",
+        "nrmse": "0.239537",
+        "r2": -0.11554503440856934
+      }
+    },
+    {
+      "round": 18,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 8.488696275734462,
+        "update_norm": 2.8911116551908433,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 58.9505615234375,
+          "val_mape": 0.5458818078041077,
+          "val_rmse": 2288256.25,
+          "val_mae": 1699942.125,
+          "val_mpe": -0.4937051832675934,
+          "update_norm": 8.75778378911997,
+          "update_delta_norm": 8.75778378911997,
+          "validation_gap": 1.0395870208740234
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 76.81478347778321,
+          "val_mape": 0.48837852478027344,
+          "val_rmse": 2611512.0,
+          "val_mae": 1880115.375,
+          "val_mpe": -0.3516908884048462,
+          "update_norm": 8.638236206559249,
+          "update_delta_norm": 8.638236206559249,
+          "validation_gap": 0.8400694131851196
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 45.81079254150391,
+          "val_mape": 0.4780823290348053,
+          "val_rmse": 1219555.375,
+          "val_mae": 969495.0,
+          "val_mpe": -0.3376351594924927,
+          "update_norm": 10.261488263038528,
+          "update_delta_norm": 10.261488263038528,
+          "validation_gap": 0.8157174587249756
+        }
+      },
+      "global_val": {
+        "mape": "0.49460647",
+        "mae": "1561150.4",
+        "rmse": "2412432.5",
+        "mpe": "-0.43795368",
+        "nrmse": "0.2168835",
+        "r2": 0.08547639846801758
+      }
+    },
+    {
+      "round": 19,
+      "strategy_name": "size_only",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {},
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 1.0,
+        "effective_server_lr": 0.4,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 7.486346548439722,
+        "update_norm": 2.65664655902037,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": null,
+      "candidate_weight_preview": {},
+      "candidate_validation_preview": {},
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 39.83138236999512,
+          "val_mape": 0.4462360143661499,
+          "val_rmse": 1961051.875,
+          "val_mae": 1423095.625,
+          "val_mpe": -0.29778042435646057,
+          "update_norm": 7.5483701195503246,
+          "update_delta_norm": 7.5483701195503246,
+          "validation_gap": 0.7440164089202881
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 48.20885543823242,
+          "val_mape": 0.4730677306652069,
+          "val_rmse": 2411898.25,
+          "val_mae": 1779331.625,
+          "val_mpe": -0.16637122631072998,
+          "update_norm": 6.989591150629074,
+          "update_delta_norm": 6.989591150629074,
+          "validation_gap": 0.6394389867782593
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 29.628659057617188,
+          "val_mape": 0.37749889492988586,
+          "val_rmse": 894924.5,
+          "val_mae": 676405.0,
+          "val_mpe": -0.09514886140823364,
+          "update_norm": 10.599877751004412,
+          "update_delta_norm": 10.599877751004412,
+          "validation_gap": 0.4726477563381195
+        }
+      },
+      "global_val": {
+        "mape": "0.40206498",
+        "mae": "1307544.1",
+        "rmse": "2141755.2",
+        "mpe": "-0.2619523",
+        "nrmse": "0.19254896",
+        "r2": 0.27918416261672974
+      }
+    }
+  ]
+}

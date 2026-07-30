@@ -1,0 +1,804 @@
+{
+  "training_config": {
+    "default_strategy": "size_only",
+    "default_lr": 0.0005,
+    "default_local_epochs": 20,
+    "strategies_config": {
+      "size_only": {
+        "description": "权重与客户端样本数成正比",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "perf_only": {
+        "description": "权重与1/val_mape成正比，表现好的客户端权重更大",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "hybrid": {
+        "description": "结合样本数和性能的加权",
+        "lambda_hybrid": 0.5,
+        "alpha_min": 0.0,
+        "alpha_max": 1.0
+      },
+      "fairness_clip": {
+        "description": "限制大客户端权重上限，保护小客户端贡献",
+        "lambda_hybrid": 0.3,
+        "alpha_min": 0.1,
+        "alpha_max": 0.6
+      }
+    },
+    "server_optimizer": "fedyogi",
+    "max_coordinate_step_ratio": 1.0
+  },
+  "training_summary": {
+    "total_rounds": 2,
+    "best_round": 2,
+    "best_val_mape": "0.99997306"
+  },
+  "round_history": [
+    {
+      "round": 0,
+      "strategy_name": "mas_validation_guided_candidate",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {
+        "candidate_id": "size_anchor_lr0p5_ep+0",
+        "candidate_source": "size_anchor",
+        "score_profile": "mape_primary"
+      },
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 0.5,
+        "effective_server_lr": 0.2,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 13.036936016538236,
+        "update_norm": 4.460779446874762,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": false
+      },
+      "llm_decision": {
+        "selected_candidate_id": "size_anchor_lr0p5_ep+0",
+        "objective_profile": {
+          "primary": "mape",
+          "secondary": [
+            "rmse",
+            "client_gap",
+            "mpe_bias"
+          ],
+          "risk_tolerance": "conservative"
+        },
+        "reasoning": "size_anchor_lr0p5_ep+0 has the lowest validation MAPE (1.0) among all candidates, tied with uniform_anchor_lr0p5_ep+0 and candidate_002_lr0p5_ep+0. It also has the lowest RMSE (3907390.75) among the tied candidates, and a client_gap of 0.0, indicating no validation gap. The update_norm (4.460779) is the smallest among all candidates, suggesting a stable update. Given the tie in primary metric, the secondary metrics and conservative preference favor this candidate.",
+        "risk": "The validation MAPE is 1.0, which is relatively high, but all candidates show similar performance. The main risk is that the model may not improve significantly in the remaining rounds.",
+        "fallback_used": false,
+        "fallback_candidate_id": null,
+        "round": 1,
+        "requested_candidate_id": "size_anchor_lr0p5_ep+0",
+        "gate_status": "accepted",
+        "candidate_score": 1.024460666794096,
+        "candidate_source": "size_anchor",
+        "note": "LLM requests a validation-preview candidate; deterministic gate selects the executed candidate."
+      },
+      "candidate_weight_preview": {
+        "size_anchor_lr0p5_ep+0": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "size_anchor": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "size_anchor_lr1p5_ep+0": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "uniform_anchor_lr0p5_ep+0": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "uniform_anchor": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "uniform_anchor_lr1p5_ep+0": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "candidate_002_lr0p5_ep+0": {
+          "Client 1": 0.33331623936243054,
+          "Client 2": 0.3333384529147002,
+          "Client 3": 0.3333453077228693
+        },
+        "candidate_002": {
+          "Client 1": 0.33331623936243054,
+          "Client 2": 0.3333384529147002,
+          "Client 3": 0.3333453077228693
+        }
+      },
+      "candidate_validation_preview": {
+        "size_anchor_lr0p5_ep+0": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.024460666794096,
+          "client_gap": 1.7881393432617188e-07,
+          "update_norm": 4.460779446874762,
+          "validation_metrics": {
+            "mape": 0.9999998807907104,
+            "rmse": 3907390.75,
+            "mae": 2983944.5,
+            "mpe": -0.9999998807907104,
+            "nrmse": 0.35128384828567505,
+            "r2": -1.3991549015045166
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.036936016538236,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "size_anchor": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.0279286079651293,
+          "client_gap": 7.152557373046875e-07,
+          "update_norm": 7.929119372981602,
+          "validation_metrics": {
+            "mape": 0.999999463558197,
+            "rmse": 3907386.25,
+            "mae": 2983942.25,
+            "mpe": -0.999999463558197,
+            "nrmse": 0.351283460855484,
+            "r2": -1.3991494178771973
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.036936016538236,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "size_anchor_lr1p5_ep+0": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0306260553171882,
+          "client_gap": 4.112720489501953e-06,
+          "update_norm": 10.628707127834309,
+          "validation_metrics": {
+            "mape": 0.9999971985816956,
+            "rmse": 3907355.75,
+            "mae": 2983929.0,
+            "mpe": -0.9999971985816956,
+            "nrmse": 0.35128071904182434,
+            "r2": -1.3991117477416992
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.036936016538236,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "uniform_anchor_lr0p5_ep+0": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.024734436520346,
+          "client_gap": 1.7881393432617188e-07,
+          "update_norm": 4.460576570384882,
+          "validation_metrics": {
+            "mape": 0.9999998807907104,
+            "rmse": 3907390.75,
+            "mae": 2983944.5,
+            "mpe": -0.9999998807907104,
+            "nrmse": 0.35128384828567505,
+            "r2": -1.3991549015045166
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.043060048138736,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "uniform_anchor": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.0282041871593013,
+          "client_gap": 7.152557373046875e-07,
+          "update_norm": 7.930725964413813,
+          "validation_metrics": {
+            "mape": 0.999999463558197,
+            "rmse": 3907386.25,
+            "mae": 2983942.25,
+            "mpe": -0.999999463558197,
+            "nrmse": 0.351283460855484,
+            "r2": -1.3991494178771973
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.043060048138736,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "uniform_anchor_lr1p5_ep+0": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0309030521363993,
+          "client_gap": 4.231929779052734e-06,
+          "update_norm": 10.631725383841335,
+          "validation_metrics": {
+            "mape": 0.9999971985816956,
+            "rmse": 3907355.75,
+            "mae": 2983929.0,
+            "mpe": -0.9999971985816956,
+            "nrmse": 0.35128071904182434,
+            "r2": -1.3991119861602783
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.043060048138736,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "candidate_002_lr0p5_ep+0": {
+          "source": "error_compensation",
+          "weights": {
+            "Client 1": 0.33331623936243054,
+            "Client 2": 0.3333384529147002,
+            "Client 3": 0.3333453077228693
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.024734676439966,
+          "client_gap": 1.7881393432617188e-07,
+          "update_norm": 4.460577002214265,
+          "validation_metrics": {
+            "mape": 0.9999998807907104,
+            "rmse": 3907390.75,
+            "mae": 2983944.5,
+            "mpe": -0.9999998807907104,
+            "nrmse": 0.35128384828567505,
+            "r2": -1.3991549015045166
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.04306230936836,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        },
+        "candidate_002": {
+          "source": "error_compensation",
+          "weights": {
+            "Client 1": 0.33331623936243054,
+            "Client 2": 0.3333384529147002,
+            "Client 3": 0.3333453077228693
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.0282044277655455,
+          "client_gap": 7.152557373046875e-07,
+          "update_norm": 7.930727082867363,
+          "validation_metrics": {
+            "mape": 0.999999463558197,
+            "rmse": 3907386.25,
+            "mae": 2983942.25,
+            "mpe": -0.999999463558197,
+            "nrmse": 0.351283460855484,
+            "r2": -1.3991494178771973
+          },
+          "metadata": {
+            "aggregation_delta_norm": 13.04306230936836,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": false
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1566.158251953125,
+          "val_mape": 0.9999087452888489,
+          "val_rmse": 3987421.5,
+          "val_mae": 3241735.25,
+          "val_mpe": -0.9999087452888489,
+          "update_norm": 13.202980828336942,
+          "update_delta_norm": 13.202980828336942,
+          "validation_gap": 1.9998174905776978
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1602.8050048828125,
+          "val_mape": 0.9999753832817078,
+          "val_rmse": 4608825.5,
+          "val_mae": 3894989.5,
+          "val_mpe": -0.9999753832817078,
+          "update_norm": 12.958765266907944,
+          "update_delta_norm": 12.958765266907944,
+          "validation_gap": 1.9999507665634155
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1353.9193359375,
+          "val_mape": 0.9999959468841553,
+          "val_rmse": 2321843.5,
+          "val_mae": 1997765.75,
+          "val_mpe": -0.9999959468841553,
+          "update_norm": 13.438986621784245,
+          "update_delta_norm": 13.438986621784245,
+          "validation_gap": 1.9999918937683105
+        }
+      },
+      "global_val": {
+        "mape": "0.9999999",
+        "mae": "2983944.5",
+        "rmse": "3907390.8",
+        "mpe": "-0.9999999",
+        "nrmse": "0.35128385",
+        "r2": -1.3991549015045166
+      },
+      "selected_candidate_id": "size_anchor_lr0p5_ep+0",
+      "requested_candidate_id": "size_anchor_lr0p5_ep+0",
+      "gate_status": "accepted",
+      "candidate_score": 1.024460666794096,
+      "candidate_source": "size_anchor",
+      "candidate_budget": 8,
+      "weight_l1_from_previous": 0.0,
+      "selection_epsilon": 0.002,
+      "llm_score_tolerance": 0.002,
+      "weight_l1_change_limit": 0.4,
+      "llm_candidate_decision": {
+        "selected_candidate_id": "size_anchor_lr0p5_ep+0",
+        "objective_profile": {
+          "primary": "mape",
+          "secondary": [
+            "rmse",
+            "client_gap",
+            "mpe_bias"
+          ],
+          "risk_tolerance": "conservative"
+        },
+        "reasoning": "size_anchor_lr0p5_ep+0 has the lowest validation MAPE (1.0) among all candidates, tied with uniform_anchor_lr0p5_ep+0 and candidate_002_lr0p5_ep+0. It also has the lowest RMSE (3907390.75) among the tied candidates, and a client_gap of 0.0, indicating no validation gap. The update_norm (4.460779) is the smallest among all candidates, suggesting a stable update. Given the tie in primary metric, the secondary metrics and conservative preference favor this candidate.",
+        "risk": "The validation MAPE is 1.0, which is relatively high, but all candidates show similar performance. The main risk is that the model may not improve significantly in the remaining rounds.",
+        "fallback_used": false,
+        "fallback_candidate_id": null,
+        "round": 1,
+        "requested_candidate_id": "size_anchor_lr0p5_ep+0",
+        "gate_status": "accepted",
+        "candidate_score": 1.024460666794096,
+        "candidate_source": "size_anchor",
+        "note": "LLM requests a validation-preview candidate; deterministic gate selects the executed candidate."
+      }
+    },
+    {
+      "round": 1,
+      "strategy_name": "mas_validation_guided_candidate",
+      "lr": 0.0005,
+      "local_epochs": 20,
+      "aggregation_weights": {
+        "Client 1": 0.3378995433789954,
+        "Client 2": 0.3424657534246575,
+        "Client 3": 0.319634703196347
+      },
+      "strategy_params_override": {
+        "candidate_id": "size_anchor_lr0p5_ep+0",
+        "candidate_source": "size_anchor",
+        "score_profile": "mape_primary"
+      },
+      "server_optimizer": "fedyogi",
+      "server_update": {
+        "server_optimizer": "fedyogi",
+        "server_lr": 0.4,
+        "server_lr_scale": 0.5,
+        "effective_server_lr": 0.2,
+        "server_beta1": 0.9,
+        "server_beta2": 0.99,
+        "server_tau": 0.001,
+        "max_coordinate_step_ratio": 1.0,
+        "aggregation_delta_norm": 9.532237192967582,
+        "update_norm": 4.8045680671174535,
+        "update_clipped": false,
+        "coordinate_step_clipped": true,
+        "coordinate_direction_rejected": true
+      },
+      "llm_decision": {
+        "selected_candidate_id": "size_anchor_lr0p5_ep+0",
+        "objective_profile": {
+          "primary": "mape",
+          "secondary": [
+            "rmse",
+            "client_gap",
+            "mpe_bias"
+          ],
+          "risk_tolerance": "conservative"
+        },
+        "reasoning": "size_anchor_lr0p5_ep+0 has the lowest validation MAPE (0.999973) among all candidates, tied with uniform_anchor_lr0p5_ep+0 and candidate_002_lr0p5_ep+0. It also has the smallest client_gap (5.4e-05) and a lower update_norm (4.804568) compared to higher learning rate variants, indicating stable convergence. As the best_validation_score_candidate and a conservative choice, it is preferred.",
+        "risk": "Validation MAPE is near 1.0, indicating poor predictive accuracy; however, all candidates show similar high MAPE, so this is a systemic issue rather than a candidate-specific risk.",
+        "fallback_used": false,
+        "fallback_candidate_id": null,
+        "round": 2,
+        "requested_candidate_id": "size_anchor_lr0p5_ep+0",
+        "gate_status": "accepted",
+        "candidate_score": 1.0247797731309374,
+        "candidate_source": "size_anchor",
+        "note": "LLM requests a validation-preview candidate; deterministic gate selects the executed candidate."
+      },
+      "candidate_weight_preview": {
+        "size_anchor_lr0p5_ep+0": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "size_anchor": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "size_anchor_lr1p5_ep+0": {
+          "Client 1": 0.3378995433789954,
+          "Client 2": 0.3424657534246575,
+          "Client 3": 0.319634703196347
+        },
+        "uniform_anchor_lr0p5_ep+0": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "uniform_anchor": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "uniform_anchor_lr1p5_ep+0": {
+          "Client 1": 0.3333333333333333,
+          "Client 2": 0.3333333333333333,
+          "Client 3": 0.3333333333333333
+        },
+        "candidate_002_lr0p5_ep+0": {
+          "Client 1": 0.33329992330929015,
+          "Client 2": 0.33333587021660227,
+          "Client 3": 0.3333642064741076
+        },
+        "candidate_002": {
+          "Client 1": 0.33329992330929015,
+          "Client 2": 0.33333587021660227,
+          "Client 3": 0.3333642064741076
+        }
+      },
+      "candidate_validation_preview": {
+        "size_anchor_lr0p5_ep+0": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.0247797731309374,
+          "client_gap": 5.370378494262695e-05,
+          "update_norm": 4.8045680671174535,
+          "validation_metrics": {
+            "mape": 0.9999730587005615,
+            "rmse": 3906988.25,
+            "mae": 2983762.0,
+            "mpe": -0.9999730587005615,
+            "nrmse": 0.3512476682662964,
+            "r2": -1.398660659790039
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.532237192967582,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "size_anchor": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.0278161374341679,
+          "client_gap": 0.0001494288444519043,
+          "update_norm": 7.89542293660183,
+          "validation_metrics": {
+            "mape": 0.9999149441719055,
+            "rmse": 3906157.25,
+            "mae": 2983377.0,
+            "mpe": -0.9999149441719055,
+            "nrmse": 0.35117295384407043,
+            "r2": -1.3976404666900635
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.532237192967582,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "size_anchor_lr1p5_ep+0": {
+          "source": "size_anchor",
+          "weights": {
+            "Client 1": 0.3378995433789954,
+            "Client 2": 0.3424657534246575,
+            "Client 3": 0.319634703196347
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0291704201347183,
+          "client_gap": 0.00036704540252685547,
+          "update_norm": 9.285820687468059,
+          "validation_metrics": {
+            "mape": 0.9998688697814941,
+            "rmse": 3905574.75,
+            "mae": 2983095.75,
+            "mpe": -0.9998688697814941,
+            "nrmse": 0.35112059116363525,
+            "r2": -1.3969252109527588
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.532237192967582,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "uniform_anchor_lr0p5_ep+0": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.025054712626298,
+          "client_gap": 5.322694778442383e-05,
+          "update_norm": 4.805194021170395,
+          "validation_metrics": {
+            "mape": 0.9999734163284302,
+            "rmse": 3906993.5,
+            "mae": 2983764.0,
+            "mpe": -0.9999734163284302,
+            "nrmse": 0.3512481451034546,
+            "r2": -1.3986670970916748
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.539644003852318,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "uniform_anchor": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.0280923930436183,
+          "client_gap": 0.0001494884490966797,
+          "update_norm": 7.897216589178924,
+          "validation_metrics": {
+            "mape": 0.9999154210090637,
+            "rmse": 3906169.0,
+            "mae": 2983381.75,
+            "mpe": -0.9999154210090637,
+            "nrmse": 0.3511740267276764,
+            "r2": -1.3976547718048096
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.539644003852318,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "uniform_anchor_lr1p5_ep+0": {
+          "source": "uniform_anchor",
+          "weights": {
+            "Client 1": 0.3333333333333333,
+            "Client 2": 0.3333333333333333,
+            "Client 3": 0.3333333333333333
+          },
+          "server_lr_scale": 1.5,
+          "epoch_delta": 0,
+          "score": 1.0294491755330895,
+          "client_gap": 0.0003726482391357422,
+          "update_norm": 9.290809715170495,
+          "validation_metrics": {
+            "mape": 0.9998683929443359,
+            "rmse": 3905578.75,
+            "mae": 2983095.75,
+            "mpe": -0.9998683929443359,
+            "nrmse": 0.3511209487915039,
+            "r2": -1.39693021774292
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.539644003852318,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "candidate_002_lr0p5_ep+0": {
+          "source": "error_compensation",
+          "weights": {
+            "Client 1": 0.33329992330929015,
+            "Client 2": 0.33333587021660227,
+            "Client 3": 0.3333642064741076
+          },
+          "server_lr_scale": 0.5,
+          "epoch_delta": 0,
+          "score": 1.0250553319410112,
+          "client_gap": 5.322694778442383e-05,
+          "update_norm": 4.805195873067912,
+          "validation_metrics": {
+            "mape": 0.9999734163284302,
+            "rmse": 3906993.5,
+            "mae": 2983764.25,
+            "mpe": -0.9999734163284302,
+            "nrmse": 0.3512481451034546,
+            "r2": -1.3986670970916748
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.539652957887307,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        },
+        "candidate_002": {
+          "source": "error_compensation",
+          "weights": {
+            "Client 1": 0.33329992330929015,
+            "Client 2": 0.33333587021660227,
+            "Client 3": 0.3333642064741076
+          },
+          "server_lr_scale": 1.0,
+          "epoch_delta": 0,
+          "score": 1.028093014013037,
+          "client_gap": 0.0001494884490966797,
+          "update_norm": 7.8972200957821785,
+          "validation_metrics": {
+            "mape": 0.9999154210090637,
+            "rmse": 3906169.0,
+            "mae": 2983381.5,
+            "mpe": -0.9999154210090637,
+            "nrmse": 0.3511740267276764,
+            "r2": -1.3976547718048096
+          },
+          "metadata": {
+            "aggregation_delta_norm": 9.539652957887307,
+            "coordinate_step_clipped": true,
+            "coordinate_direction_rejected": true
+          }
+        }
+      },
+      "client_metrics": {
+        "Client 1": {
+          "n_samples": 148,
+          "train_loss": 1471.701416015625,
+          "val_mape": 0.9997521638870239,
+          "val_rmse": 3986386.75,
+          "val_mae": 3240985.0,
+          "val_mpe": -0.9997521638870239,
+          "update_norm": 9.766332224754313,
+          "update_delta_norm": 9.766332224754313,
+          "validation_gap": 1.9995043277740479
+        },
+        "Client 2": {
+          "n_samples": 150,
+          "train_loss": 1487.016650390625,
+          "val_mape": 0.9998599886894226,
+          "val_rmse": 4607932.5,
+          "val_mae": 3894355.0,
+          "val_mpe": -0.9998599886894226,
+          "update_norm": 9.457987456199982,
+          "update_delta_norm": 9.457987456199982,
+          "validation_gap": 1.9997199773788452
+        },
+        "Client 3": {
+          "n_samples": 140,
+          "train_loss": 1291.9384521484376,
+          "val_mape": 0.9999449849128723,
+          "val_rmse": 2321597.0,
+          "val_mae": 1997599.5,
+          "val_mpe": -0.9999449849128723,
+          "update_norm": 10.101506524875859,
+          "update_delta_norm": 10.101506524875859,
+          "validation_gap": 1.9998899698257446
+        }
+      },
+      "global_val": {
+        "mape": "0.99997306",
+        "mae": "2983762.0",
+        "rmse": "3906988.2",
+        "mpe": "-0.99997306",
+        "nrmse": "0.35124767",
+        "r2": -1.398660659790039
+      },
+      "selected_candidate_id": "size_anchor_lr0p5_ep+0",
+      "requested_candidate_id": "size_anchor_lr0p5_ep+0",
+      "gate_status": "accepted",
+      "candidate_score": 1.0247797731309374,
+      "candidate_source": "size_anchor",
+      "candidate_budget": 8,
+      "weight_l1_from_previous": 0.0,
+      "selection_epsilon": 0.002,
+      "llm_score_tolerance": 0.002,
+      "weight_l1_change_limit": 0.4,
+      "llm_candidate_decision": {
+        "selected_candidate_id": "size_anchor_lr0p5_ep+0",
+        "objective_profile": {
+          "primary": "mape",
+          "secondary": [
+            "rmse",
+            "client_gap",
+            "mpe_bias"
+          ],
+          "risk_tolerance": "conservative"
+        },
+        "reasoning": "size_anchor_lr0p5_ep+0 has the lowest validation MAPE (0.999973) among all candidates, tied with uniform_anchor_lr0p5_ep+0 and candidate_002_lr0p5_ep+0. It also has the smallest client_gap (5.4e-05) and a lower update_norm (4.804568) compared to higher learning rate variants, indicating stable convergence. As the best_validation_score_candidate and a conservative choice, it is preferred.",
+        "risk": "Validation MAPE is near 1.0, indicating poor predictive accuracy; however, all candidates show similar high MAPE, so this is a systemic issue rather than a candidate-specific risk.",
+        "fallback_used": false,
+        "fallback_candidate_id": null,
+        "round": 2,
+        "requested_candidate_id": "size_anchor_lr0p5_ep+0",
+        "gate_status": "accepted",
+        "candidate_score": 1.0247797731309374,
+        "candidate_source": "size_anchor",
+        "note": "LLM requests a validation-preview candidate; deterministic gate selects the executed candidate."
+      }
+    }
+  ]
+}

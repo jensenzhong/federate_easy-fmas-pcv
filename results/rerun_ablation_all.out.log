@@ -1,0 +1,287 @@
+======================================================================
+ABLATION STUDY RUNNER (Multi-Seed)
+======================================================================
+Seeds: [42, 123, 456, 789, 2024]
+Running all 6 experiments
+Derived experiments: ['ab-6'] will be computed from source runs.
+Total runs: 25 (5 runnable configs x 5 seeds)
+
+>>> Run 1/25
+
+============================================================
+Running ab-1: 传统联邦学习（FedAvg） (seed=42)
+  Description: Pure FedAvg baseline (no FedProx)
+  Command: D:\Python\python.exe experiments/scenario_B_fedavg.py --num_rounds 20 --fedprox_mu 0.0 --strategy size_only --output_prefix ablation_ab1 --seed 42
+============================================================
+  [OK] ab-1 seed=42 completed in 47.1s
+
+>>> Run 2/25
+
+============================================================
+Running ab-1: 传统联邦学习（FedAvg） (seed=123)
+  Description: Pure FedAvg baseline (no FedProx)
+  Command: D:\Python\python.exe experiments/scenario_B_fedavg.py --num_rounds 20 --fedprox_mu 0.0 --strategy size_only --output_prefix ablation_ab1 --seed 123
+============================================================
+  [OK] ab-1 seed=123 completed in 36.3s
+
+>>> Run 3/25
+
+============================================================
+Running ab-1: 传统联邦学习（FedAvg） (seed=456)
+  Description: Pure FedAvg baseline (no FedProx)
+  Command: D:\Python\python.exe experiments/scenario_B_fedavg.py --num_rounds 20 --fedprox_mu 0.0 --strategy size_only --output_prefix ablation_ab1 --seed 456
+============================================================
+  [OK] ab-1 seed=456 completed in 33.5s
+
+>>> Run 4/25
+
+============================================================
+Running ab-1: 传统联邦学习（FedAvg） (seed=789)
+  Description: Pure FedAvg baseline (no FedProx)
+  Command: D:\Python\python.exe experiments/scenario_B_fedavg.py --num_rounds 20 --fedprox_mu 0.0 --strategy size_only --output_prefix ablation_ab1 --seed 789
+============================================================
+  [OK] ab-1 seed=789 completed in 34.3s
+
+>>> Run 5/25
+
+============================================================
+Running ab-1: 传统联邦学习（FedAvg） (seed=2024)
+  Description: Pure FedAvg baseline (no FedProx)
+  Command: D:\Python\python.exe experiments/scenario_B_fedavg.py --num_rounds 20 --fedprox_mu 0.0 --strategy size_only --output_prefix ablation_ab1 --seed 2024
+============================================================
+  [OK] ab-1 seed=2024 completed in 32.9s
+
+>>> Run 6/25
+
+============================================================
+Running ab-2: 传统联邦学习（FedAvg+FedProx） (seed=42)
+  Description: FedAvg + FedProx regularization
+  Command: D:\Python\python.exe experiments/scenario_B_fedavg.py --num_rounds 20 --fedprox_mu 0.01 --strategy size_only --output_prefix ablation_ab2 --seed 42
+============================================================
+  [OK] ab-2 seed=42 completed in 43.7s
+
+>>> Run 7/25
+
+============================================================
+Running ab-2: 传统联邦学习（FedAvg+FedProx） (seed=123)
+  Description: FedAvg + FedProx regularization
+  Command: D:\Python\python.exe experiments/scenario_B_fedavg.py --num_rounds 20 --fedprox_mu 0.01 --strategy size_only --output_prefix ablation_ab2 --seed 123
+============================================================
+  [OK] ab-2 seed=123 completed in 43.1s
+
+>>> Run 8/25
+
+============================================================
+Running ab-2: 传统联邦学习（FedAvg+FedProx） (seed=456)
+  Description: FedAvg + FedProx regularization
+  Command: D:\Python\python.exe experiments/scenario_B_fedavg.py --num_rounds 20 --fedprox_mu 0.01 --strategy size_only --output_prefix ablation_ab2 --seed 456
+============================================================
+  [OK] ab-2 seed=456 completed in 44.9s
+
+>>> Run 9/25
+
+============================================================
+Running ab-2: 传统联邦学习（FedAvg+FedProx） (seed=789)
+  Description: FedAvg + FedProx regularization
+  Command: D:\Python\python.exe experiments/scenario_B_fedavg.py --num_rounds 20 --fedprox_mu 0.01 --strategy size_only --output_prefix ablation_ab2 --seed 789
+============================================================
+  [OK] ab-2 seed=789 completed in 44.1s
+
+>>> Run 10/25
+
+============================================================
+Running ab-2: 传统联邦学习（FedAvg+FedProx） (seed=2024)
+  Description: FedAvg + FedProx regularization
+  Command: D:\Python\python.exe experiments/scenario_B_fedavg.py --num_rounds 20 --fedprox_mu 0.01 --strategy size_only --output_prefix ablation_ab2 --seed 2024
+============================================================
+  [OK] ab-2 seed=2024 completed in 42.8s
+
+>>> Run 11/25
+
+============================================================
+Running ab-3: 多智能体协同联邦学习（固定性能加权） (seed=42)
+  Description: Fixed perf_only strategy + FedProx
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --strategy perf_only --seed 42
+============================================================
+  [OK] ab-3 seed=42 completed in 40.9s
+
+>>> Run 12/25
+
+============================================================
+Running ab-3: 多智能体协同联邦学习（固定性能加权） (seed=123)
+  Description: Fixed perf_only strategy + FedProx
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --strategy perf_only --seed 123
+============================================================
+  [OK] ab-3 seed=123 completed in 46.9s
+
+>>> Run 13/25
+
+============================================================
+Running ab-3: 多智能体协同联邦学习（固定性能加权） (seed=456)
+  Description: Fixed perf_only strategy + FedProx
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --strategy perf_only --seed 456
+============================================================
+  [OK] ab-3 seed=456 completed in 43.3s
+
+>>> Run 14/25
+
+============================================================
+Running ab-3: 多智能体协同联邦学习（固定性能加权） (seed=789)
+  Description: Fixed perf_only strategy + FedProx
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --strategy perf_only --seed 789
+============================================================
+  [OK] ab-3 seed=789 completed in 41.1s
+
+>>> Run 15/25
+
+============================================================
+Running ab-3: 多智能体协同联邦学习（固定性能加权） (seed=2024)
+  Description: Fixed perf_only strategy + FedProx
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --strategy perf_only --seed 2024
+============================================================
+  [OK] ab-3 seed=2024 completed in 39.3s
+
+>>> Run 16/25
+
+============================================================
+Running ab-4: 多智能体协同联邦学习（固定混合加权） (seed=42)
+  Description: Fixed hybrid strategy + FedProx
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --strategy hybrid --seed 42
+============================================================
+  [OK] ab-4 seed=42 completed in 40.6s
+
+>>> Run 17/25
+
+============================================================
+Running ab-4: 多智能体协同联邦学习（固定混合加权） (seed=123)
+  Description: Fixed hybrid strategy + FedProx
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --strategy hybrid --seed 123
+============================================================
+  [OK] ab-4 seed=123 completed in 41.5s
+
+>>> Run 18/25
+
+============================================================
+Running ab-4: 多智能体协同联邦学习（固定混合加权） (seed=456)
+  Description: Fixed hybrid strategy + FedProx
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --strategy hybrid --seed 456
+============================================================
+  [OK] ab-4 seed=456 completed in 39.0s
+
+>>> Run 19/25
+
+============================================================
+Running ab-4: 多智能体协同联邦学习（固定混合加权） (seed=789)
+  Description: Fixed hybrid strategy + FedProx
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --strategy hybrid --seed 789
+============================================================
+  [OK] ab-4 seed=789 completed in 39.3s
+
+>>> Run 20/25
+
+============================================================
+Running ab-4: 多智能体协同联邦学习（固定混合加权） (seed=2024)
+  Description: Fixed hybrid strategy + FedProx
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --strategy hybrid --seed 2024
+============================================================
+  [OK] ab-4 seed=2024 completed in 40.4s
+
+>>> Run 21/25
+
+============================================================
+Running ab-5: 多智能体协同联邦学习（LLM动态决策） (seed=42)
+  Description: Full MAS-FL-LLM (dynamic strategy selection, 20 rounds)
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --use_llm --seed 42
+============================================================
+  [OK] ab-5 seed=42 completed in 150.9s
+
+>>> Run 22/25
+
+============================================================
+Running ab-5: 多智能体协同联邦学习（LLM动态决策） (seed=123)
+  Description: Full MAS-FL-LLM (dynamic strategy selection, 20 rounds)
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --use_llm --seed 123
+============================================================
+  [OK] ab-5 seed=123 completed in 153.6s
+
+>>> Run 23/25
+
+============================================================
+Running ab-5: 多智能体协同联邦学习（LLM动态决策） (seed=456)
+  Description: Full MAS-FL-LLM (dynamic strategy selection, 20 rounds)
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --use_llm --seed 456
+============================================================
+  [OK] ab-5 seed=456 completed in 157.0s
+
+>>> Run 24/25
+
+============================================================
+Running ab-5: 多智能体协同联邦学习（LLM动态决策） (seed=789)
+  Description: Full MAS-FL-LLM (dynamic strategy selection, 20 rounds)
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --use_llm --seed 789
+============================================================
+  [OK] ab-5 seed=789 completed in 157.2s
+
+>>> Run 25/25
+
+============================================================
+Running ab-5: 多智能体协同联邦学习（LLM动态决策） (seed=2024)
+  Description: Full MAS-FL-LLM (dynamic strategy selection, 20 rounds)
+  Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --use_llm --seed 2024
+============================================================
+  [OK] ab-5 seed=2024 completed in 150.6s
+
+======================================================================
+ABLATION STUDY RUN STATUS
+======================================================================
+  [OK] ab-1: 传统联邦学习（FedAvg）
+  [OK] ab-2: 传统联邦学习（FedAvg+FedProx）
+  [OK] ab-3: 多智能体协同联邦学习（固定性能加权）
+  [OK] ab-4: 多智能体协同联邦学习（固定混合加权）
+  [OK] ab-5: 多智能体协同联邦学习（LLM动态决策）
+  [DERIVED] ab-6: 多智能体协同联邦学习（LLM动态决策+偏差校正） from ab-5
+
+  Raw results saved to results\ablation_logs\ablation_all_results.csv
+  Statistical summary saved to results\ablation_summary.csv
+
+==========================================================================================
+ABLATION STATISTICAL SUMMARY (mean +/- std)
+==========================================================================================
+
+  ab-1 (传统联邦学习（FedAvg）): n=5 seeds=[42,123,456,789,2024]
+    MAPE: 51.63% +/- 5.73%
+    RMSE: $1,716,607 +/- $122,275
+    R2:   0.3038 +/- 0.1027
+
+  ab-2 (传统联邦学习（FedAvg+FedProx）): n=5 seeds=[42,123,456,789,2024]
+    MAPE: 51.62% +/- 5.73%
+    RMSE: $1,716,555 +/- $122,272
+    R2:   0.3038 +/- 0.1027
+
+  ab-3 (多智能体协同联邦学习（固定性能加权）): n=5 seeds=[42,123,456,789,2024]
+    MAPE: 51.54% +/- 5.96%
+    RMSE: $1,716,277 +/- $117,709
+    R2:   0.3042 +/- 0.0987
+
+  ab-4 (多智能体协同联邦学习（固定混合加权）): n=5 seeds=[42,123,456,789,2024]
+    MAPE: 51.69% +/- 5.80%
+    RMSE: $1,717,945 +/- $119,250
+    R2:   0.3028 +/- 0.1001
+
+  ab-5 (多智能体协同联邦学习（LLM动态决策）): n=5 seeds=[42,123,456,789,2024]
+    MAPE: 51.02% +/- 4.58%
+    RMSE: $1,727,135 +/- $139,444
+    R2:   0.2944 +/- 0.1137
+    MAPE (corrected): 51.45% +/- 5.09%
+    R2   (corrected): 0.4448 +/- 0.0354
+
+  ab-6 (多智能体协同联邦学习（LLM动态决策+偏差校正）): n=5 seeds=[42,123,456,789,2024]
+    MAPE: 51.02% +/- 4.58%
+    RMSE: $1,727,135 +/- $139,444
+    R2:   0.2944 +/- 0.1137
+    MAPE (corrected): 51.45% +/- 5.09%
+    R2   (corrected): 0.4448 +/- 0.0354
+
+  All 25 runs completed successfully!
+
+  Next step: python scripts/ablation_analysis.py

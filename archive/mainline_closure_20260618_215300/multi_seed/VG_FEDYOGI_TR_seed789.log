@@ -1,0 +1,268 @@
+Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --strategy size_only --server_optimizer fedyogi --adaptive_mode validation_guided --output_prefix vg_fedyogi_tr --method_key VG_FEDYOGI_TR --server_lr 0.4 --max_coordinate_step_ratio 1 --seed 789
+Return code: 0
+Elapsed: 75.8s
+
+================================================================================
+多智能体协同联邦学习
+================================================================================
+
+[Config] Seed: 789, Device: cpu
+[Config] Use LLM: False
+
+[Data] Loading datasets...
+[Data] Train: 438, Val: 68, Test: 70
+
+============================================================
+Strategy: size_only
+Server optimizer: fedyogi
+============================================================
+[Model] Architecture: 10 -> [128, 128, 64, 32] -> 1
+[Model] Parameters: 28,993
+[Agent] Client 1: 148 train, 38 val
+[Agent] Client 2: 150 train, 38 val
+[Agent] Client 3: 140 train, 36 val
+============================================================
+Starting Validation-Guided FedYogi-TR Training
+============================================================
+  Rounds: 20
+  Candidate budget: 30
+  Weight step: 0.05
+  Client weight bounds: [0.05, 0.8]
+
+[Round 1] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=1586.828516, val_mape=100.00%
+    Client 2: 150 samples, train_loss=1609.169458, val_mape=100.00%
+    Client 3: 140 samples, train_loss=1345.263232, val_mape=100.00%
+    Selected candidate: size_anchor_lr0p5_ep+0, score=1.024472, gate=accepted
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=100.00%, RMSE=$3,907,391.25
+    >>> New best model! Val MAPE=100.00%
+
+[Round 2] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=1498.294409, val_mape=99.99%
+    Client 2: 150 samples, train_loss=1538.876489, val_mape=100.00%
+    Client 3: 140 samples, train_loss=1285.990186, val_mape=100.00%
+    Selected candidate: size_anchor_lr0p5_ep+0, score=1.024772, gate=accepted
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=100.00%, RMSE=$3,907,328.75
+    >>> New best model! Val MAPE=100.00%
+
+[Round 3] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=1431.555078, val_mape=99.99%
+    Client 2: 150 samples, train_loss=1459.931250, val_mape=99.98%
+    Client 3: 140 samples, train_loss=1228.359351, val_mape=99.99%
+    Selected candidate: size_anchor, score=1.025461, gate=fallback_conservative_epsilon
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.98%, RMSE=$3,906,089.50
+    >>> New best model! Val MAPE=99.98%
+
+[Round 4] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=1366.068872, val_mape=99.96%
+    Client 2: 150 samples, train_loss=1370.375562, val_mape=99.95%
+    Client 3: 140 samples, train_loss=1190.553638, val_mape=99.98%
+    Selected candidate: size_anchor, score=1.022402, gate=fallback_conservative_epsilon
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.94%, RMSE=$3,903,637.75
+    >>> New best model! Val MAPE=99.94%
+
+[Round 5] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=1275.224829, val_mape=99.92%
+    Client 2: 150 samples, train_loss=1292.186401, val_mape=99.87%
+    Client 3: 140 samples, train_loss=1096.185266, val_mape=99.92%
+    Selected candidate: size_anchor, score=1.022084, gate=fallback_conservative_epsilon
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.85%, RMSE=$3,899,083.25
+    >>> New best model! Val MAPE=99.85%
+
+[Round 6] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=1182.100562, val_mape=99.86%
+    Client 2: 150 samples, train_loss=1192.958081, val_mape=99.71%
+    Client 3: 140 samples, train_loss=1008.236743, val_mape=99.83%
+    Selected candidate: size_anchor_lr0p5_ep+0, score=1.018390, gate=accepted
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.55%, RMSE=$3,885,615.75
+    >>> New best model! Val MAPE=99.55%
+
+[Round 7] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=1105.520654, val_mape=99.76%
+    Client 2: 150 samples, train_loss=1122.867444, val_mape=99.52%
+    Client 3: 140 samples, train_loss=943.051221, val_mape=99.67%
+    Selected candidate: size_anchor_lr0p5_ep+0, score=1.013266, gate=accepted
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.02%, RMSE=$3,859,288.00
+    >>> New best model! Val MAPE=99.02%
+
+[Round 8] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=986.795581, val_mape=99.53%
+    Client 2: 150 samples, train_loss=1019.221851, val_mape=99.12%
+    Client 3: 140 samples, train_loss=855.262720, val_mape=99.43%
+    Selected candidate: candidate_009_lr0p5_ep+0, score=1.002640, gate=accepted
+    Weights: Client 1=0.283, Client 2=0.333, Client 3=0.383
+    Global Val: MAPE=97.80%, RMSE=$3,808,989.50
+    >>> New best model! Val MAPE=97.80%
+
+[Round 9] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=895.692310, val_mape=99.20%
+    Client 2: 150 samples, train_loss=900.121106, val_mape=98.45%
+    Client 3: 140 samples, train_loss=756.670093, val_mape=98.85%
+    Selected candidate: previous_accepted_lr0p5_ep+0, score=0.981648, gate=accepted
+    Weights: Client 1=0.283, Client 2=0.333, Client 3=0.383
+    Global Val: MAPE=95.83%, RMSE=$3,725,643.25
+    >>> New best model! Val MAPE=95.83%
+
+[Round 10] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=786.053320, val_mape=98.55%
+    Client 2: 150 samples, train_loss=797.752551, val_mape=97.53%
+    Client 3: 140 samples, train_loss=654.298633, val_mape=98.52%
+    Selected candidate: previous_accepted_lr0p5_ep+0, score=0.954366, gate=accepted
+    Weights: Client 1=0.283, Client 2=0.333, Client 3=0.383
+    Global Val: MAPE=93.06%, RMSE=$3,616,204.25
+    >>> New best model! Val MAPE=93.06%
+
+[Round 11] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=673.855103, val_mape=97.66%
+    Client 2: 150 samples, train_loss=686.299878, val_mape=96.30%
+    Client 3: 140 samples, train_loss=548.454517, val_mape=97.31%
+    Selected candidate: previous_accepted_lr0p5_ep+0, score=0.916938, gate=accepted
+    Weights: Client 1=0.283, Client 2=0.333, Client 3=0.383
+    Global Val: MAPE=89.34%, RMSE=$3,492,032.25
+    >>> New best model! Val MAPE=89.34%
+
+[Round 12] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=562.246967, val_mape=96.52%
+    Client 2: 150 samples, train_loss=584.191693, val_mape=94.00%
+    Client 3: 140 samples, train_loss=480.990668, val_mape=95.27%
+    Selected candidate: previous_accepted_lr0p5_ep+0, score=0.851541, gate=accepted
+    Weights: Client 1=0.283, Client 2=0.333, Client 3=0.383
+    Global Val: MAPE=82.83%, RMSE=$3,295,288.75
+    >>> New best model! Val MAPE=82.83%
+
+[Round 13] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=488.824493, val_mape=94.60%
+    Client 2: 150 samples, train_loss=481.951978, val_mape=91.36%
+    Client 3: 140 samples, train_loss=376.585449, val_mape=93.36%
+    Selected candidate: previous_accepted_lr0p5_ep+0, score=0.785401, gate=accepted
+    Weights: Client 1=0.283, Client 2=0.333, Client 3=0.383
+    Global Val: MAPE=76.23%, RMSE=$3,045,462.00
+    >>> New best model! Val MAPE=76.23%
+
+[Round 14] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=385.745868, val_mape=91.02%
+    Client 2: 150 samples, train_loss=381.178802, val_mape=87.52%
+    Client 3: 140 samples, train_loss=289.675168, val_mape=89.10%
+    Selected candidate: previous_accepted_lr0p5_ep+0, score=0.686777, gate=accepted
+    Weights: Client 1=0.283, Client 2=0.333, Client 3=0.383
+    Global Val: MAPE=66.40%, RMSE=$2,769,221.00
+    >>> New best model! Val MAPE=66.40%
+
+[Round 15] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=295.683459, val_mape=86.88%
+    Client 2: 150 samples, train_loss=296.559317, val_mape=81.14%
+    Client 3: 140 samples, train_loss=220.870886, val_mape=84.41%
+    Selected candidate: previous_accepted_lr0p5_ep+0, score=0.625873, gate=accepted
+    Weights: Client 1=0.283, Client 2=0.333, Client 3=0.383
+    Global Val: MAPE=60.62%, RMSE=$2,455,889.50
+    >>> New best model! Val MAPE=60.62%
+
+[Round 16] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=216.712149, val_mape=80.57%
+    Client 2: 150 samples, train_loss=214.036520, val_mape=75.34%
+    Client 3: 140 samples, train_loss=180.043069, val_mape=79.35%
+    Selected candidate: candidate_009_lr0p5_ep+0, score=0.606851, gate=accepted
+    Weights: Client 1=0.388, Client 2=0.342, Client 3=0.270
+    Global Val: MAPE=58.63%, RMSE=$2,173,327.75
+    >>> New best model! Val MAPE=58.63%
+
+[Round 17] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=147.731491, val_mape=72.09%
+    Client 2: 150 samples, train_loss=154.205783, val_mape=64.49%
+    Client 3: 140 samples, train_loss=110.622357, val_mape=68.20%
+    Selected candidate: previous_accepted_lr1p5_ep+0, score=0.601763, gate=accepted
+    Weights: Client 1=0.388, Client 2=0.342, Client 3=0.270
+    Global Val: MAPE=58.20%, RMSE=$2,050,515.62
+    >>> New best model! Val MAPE=58.20%
+
+[Round 18] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=89.205214, val_mape=61.20%
+    Client 2: 150 samples, train_loss=105.386702, val_mape=55.27%
+    Client 3: 140 samples, train_loss=56.050733, val_mape=56.82%
+    Selected candidate: previous_accepted_lr1p5_ep+0, score=0.588258, gate=accepted
+    Weights: Client 1=0.388, Client 2=0.342, Client 3=0.270
+    Global Val: MAPE=57.24%, RMSE=$1,932,813.00
+    >>> New best model! Val MAPE=57.24%
+
+[Round 19] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=68.053234, val_mape=49.07%
+    Client 2: 150 samples, train_loss=62.959524, val_mape=44.35%
+    Client 3: 140 samples, train_loss=51.919610, val_mape=46.14%
+    Selected candidate: previous_accepted_lr1p5_ep+0, score=0.612158, gate=accepted
+    Weights: Client 1=0.388, Client 2=0.342, Client 3=0.270
+    Global Val: MAPE=59.69%, RMSE=$1,939,181.75
+
+[Round 20] Validation-guided candidate search
+    Client 1: 148 samples, train_loss=29.097462, val_mape=41.80%
+    Client 2: 150 samples, train_loss=42.931514, val_mape=41.04%
+    Client 3: 140 samples, train_loss=46.049504, val_mape=42.89%
+    Selected candidate: previous_accepted_lr1p5_ep+0, score=0.590746, gate=accepted
+    Weights: Client 1=0.388, Client 2=0.342, Client 3=0.270
+    Global Val: MAPE=57.42%, RMSE=$1,924,985.12
+
+------------------------------------------------------------
+Restoring Best Checkpoint...
+------------------------------------------------------------
+  Last round (Round 20) Val MAPE: 57.42%
+  Best round (Round 18) Val MAPE: 57.24%
+  >>> Model restored to Round 18 (best checkpoint)
+
+  Evaluating best checkpoint on test set...
+
+============================================================
+validation_guided Training Completed!
+============================================================
+  Best Round: 18
+  Best Val MAPE: 57.24%
+
+Test Set Results (using best checkpoint):
+  MAPE:  60.82%
+  RMSE:  $1,754,755.12
+  MAE:   $1,319,121.00
+  MPE:   -22.98%
+  NRMSE: 19.68%
+  R2:    0.2754
+
+[Bias Correction] Calibrating on validation set...
+  [Bias Correction] Validation MPE = -19.79%
+  [Bias Correction] Correction factor: 1 / (1 + -0.1979) = 1.2467
+  [Bias Correction] Validation MPE after correction: -0.00%
+  [Bias Correction] Validation MAPE after correction: 66.12%
+
+[Bias Correction] Test Results (after correction):
+  MAPE:  67.30%
+  RMSE:  $1,999,986.00
+  MAE:   $1,484,204.12
+  MPE:   -3.98%
+  R2:    0.0588
+
+[Saving] Results...
+  Saving best checkpoint (Round 18, Val MAPE: 57.24%)
+  Model saved: results\models\vg_fedyogi_tr_model.pt
+  Saved: results\logs\vg_fedyogi_tr_round_metrics.csv
+  Saved: results\logs\vg_fedyogi_tr_client_metrics.csv
+  Saved: results\logs\vg_fedyogi_tr_training_history.json
+  Results saved: results\vg_fedyogi_tr_results.csv
+  Predictions saved: results\vg_fedyogi_tr_predictions.csv
+  Predictions saved: results\vg_fedyogi_tr_predictions_bias_corrected.csv
+
+================================================================================
+COMPLETED!
+================================================================================
+
+Test Results:
+  MAPE:  60.82%
+  RMSE:  $1,754,755.12
+  MAE:   $1,319,121.00
+  R2:    0.2754
+================================================================================
+
+--- STDERR ---
+2026-06-09 17:51:18 - MAS-FL - INFO - 验证引导自适应联邦学习（VG-FedYogi-TR） completed. Test MAPE: 60.82%

@@ -1,0 +1,366 @@
+Command: D:\Python\python.exe experiments/scenario_C_llm.py --num_rounds 20 --use_llm --seed 456
+Return code: 0
+Elapsed: 156.5s
+
+================================================================================
+��������Эͬ����ѧϰ
+================================================================================
+
+[Config] Seed: 456, Device: cpu
+[Config] Use LLM: True
+
+[Data] Loading datasets...
+[Data] Train: 438, Val: 68, Test: 70
+
+================================================================================
+��������Эͬ����ѧϰ��LLM��̬���ߣ�
+================================================================================
+
+LLM will analyze training history and choose optimal strategy each round.
+
+[Model] Architecture: 10 -> [128, 128, 64, 32] -> 1
+[Model] Parameters: 28,993
+[Agent] Client 1: 148 train, 38 val
+[Agent] Client 2: 150 train, 38 val
+[Agent] Client 3: 140 train, 36 val
+
+[LLM] Initializing LLM Planner...
+[LLM] Provider: deepseek
+
+[Training] Base LR: 0.0005, Base Epochs: 20
+[Training] Rounds: 20
+============================================================
+Starting MAS-FL Training (Phase 3: LLM-Guided)
+============================================================
+  Rounds: 20
+  Clients: ['Client 1', 'Client 2', 'Client 3']
+  Base Learning Rate: 0.0005
+  Base Local Epochs: 20
+  LLM call interval: every 1 round(s)
+
+[Round 1] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=1561.787207, val_mape=99.99%
+    Client 2: 150 samples, train_loss=1582.182080, val_mape=100.00%
+    Client 3: 140 samples, train_loss=1365.695630, val_mape=100.00%
+  [LLM] Requesting strategy decision for round 1...
+  [LLM] Decision: strategy=size_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: Given all four strategies produce virtually the same aggregate validation MAPE, size_only is chosen as the simplest and most interpretable baseline. The extremely high MAPE values (close to 1.0) indicate the model has not learned meaningful patterns yet��likely requiring increased training effort (epochs or learning rate) rather than a different aggregation strategy. Since underfitting is the dominant issue, I keep lr_scale=1.0 and epoch_delta=0 for now, but future rounds may need adjustments to address the high MAPE.
+
+  [LLM Decision] Round 1: strategy=size_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=100.00%, RMSE=$3,907,379.00
+    >>> New best model! Val MAPE=100.00%
+
+[Round 2] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=1488.118750, val_mape=99.98%
+    Client 2: 150 samples, train_loss=1513.481519, val_mape=100.00%
+    Client 3: 140 samples, train_loss=1309.142383, val_mape=100.00%
+  [LLM] Requesting strategy decision for round 2...
+  [LLM] Decision: strategy=size_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: With only 1 round of history and nearly identical candidate performance, size_only is a safe baseline. The improvement from round 1 is negligible (MAPE ~0.999995), suggesting model is near plateau. Keeping lr and epochs constant avoids unnecessary changes while monitoring for future divergence.
+
+  [LLM Decision] Round 2: strategy=size_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=100.00%, RMSE=$3,907,223.75
+    >>> New best model! Val MAPE=100.00%
+
+[Round 3] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=1409.697534, val_mape=99.97%
+    Client 2: 150 samples, train_loss=1446.062402, val_mape=99.98%
+    Client 3: 140 samples, train_loss=1217.099829, val_mape=99.99%
+  [LLM] Requesting strategy decision for round 3...
+  [LLM] Decision: strategy=size_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: size_only has delivered consistent improvement and currently shows the best candidate MAPE. Other strategies show nearly identical performance, so there is no strong validation evidence to switch. I will continue with size_only to exploit the current trend, monitoring for stagnation.
+
+  [LLM Decision] Round 3: strategy=size_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.99%, RMSE=$3,906,554.75
+    >>> New best model! Val MAPE=99.99%
+
+[Round 4] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=1328.720215, val_mape=99.94%
+    Client 2: 150 samples, train_loss=1336.159644, val_mape=99.94%
+    Client 3: 140 samples, train_loss=1141.218848, val_mape=99.97%
+  [LLM] Requesting strategy decision for round 4...
+  [LLM] Decision: strategy=size_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: The validation previews show all four strategies produce nearly identical aggregate MAPE (~0.99964), with size_only slightly best. Historical evidence confirms size_only has delivered consistent MAPE improvements over 3 rounds (from 0.999995 to 0.999909). Since there is no clear performance advantage to switching strategies, and size_only has proven effective, I continue with it. Learning rate and epochs are kept unchanged as MAPE is still decreasing steadily (last 3 rounds delta: -8.6e-5), indicating no need for larger steps or more local training.
+
+  [LLM Decision] Round 4: strategy=size_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.338, Client 2=0.342, Client 3=0.320
+    Global Val: MAPE=99.97%, RMSE=$3,905,082.00
+    >>> New best model! Val MAPE=99.97%
+
+[Round 5] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=1252.597559, val_mape=99.89%
+    Client 2: 150 samples, train_loss=1265.962061, val_mape=99.84%
+    Client 3: 140 samples, train_loss=1065.884485, val_mape=99.93%
+  [LLM] Requesting strategy decision for round 5...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: All candidate strategies show nearly identical validation performance based on candidate previews, with perf_only having a marginal edge. Switching from the consistently used size_only to perf_only is a low-risk exploration that may provide diversity. No adjustment to learning rate or epochs is warranted as MAPE is steadily decreasing and convergence appears stable. Keeping lr_scale=1.0 and epoch_delta=0 maintains current trajectory.
+
+  [LLM Decision] Round 5: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.333, Client 2=0.333, Client 3=0.333
+    Global Val: MAPE=99.93%, RMSE=$3,902,425.50
+    >>> New best model! Val MAPE=99.93%
+
+[Round 6] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=1151.318127, val_mape=99.76%
+    Client 2: 150 samples, train_loss=1169.518115, val_mape=99.69%
+    Client 3: 140 samples, train_loss=983.524316, val_mape=99.83%
+  [LLM] Requesting strategy decision for round 6...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: perf_only produced the best historical improvement in round 5 and has the best candidate preview MAPE. It balances clients more fairly than size_only and avoids the slight degradation of hybrid/fairness_clip. Keeping lr and epochs stable avoids overfitting or oscillation.
+
+  [LLM Decision] Round 6: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.333, Client 2=0.334, Client 3=0.333
+    Global Val: MAPE=99.83%, RMSE=$3,897,495.75
+    >>> New best model! Val MAPE=99.83%
+
+[Round 7] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=1052.094653, val_mape=99.63%
+    Client 2: 150 samples, train_loss=1054.491162, val_mape=99.35%
+    Client 3: 140 samples, train_loss=861.608472, val_mape=99.65%
+  [LLM] Requesting strategy decision for round 7...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: perf_only consistently delivers larger MAPE reductions than size_only, and its validation preview shows the best aggregate metrics. The client gap increase is a concern but acceptable given the strong improvement trend. No need to adjust learning rate or epochs as convergence is steady.
+
+  [LLM Decision] Round 7: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.333, Client 2=0.334, Client 3=0.333
+    Global Val: MAPE=99.63%, RMSE=$3,888,607.50
+    >>> New best model! Val MAPE=99.63%
+
+[Round 8] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=927.934009, val_mape=99.33%
+    Client 2: 150 samples, train_loss=951.041382, val_mape=98.87%
+    Client 3: 140 samples, train_loss=778.292590, val_mape=99.35%
+  [LLM] Requesting strategy decision for round 8...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: Historical data shows perf_only consistently outperformed size_only in reducing MAPE (rounds 5-7). Current preview confirms perf_only gives best aggregate validation metrics. The client gap is increasing but remains acceptable, and perf_only already provides the fairest weighting based on actual performance. No learning rate adjustment needed as MAPE is decreasing steadily.
+
+  [LLM Decision] Round 8: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.333, Client 2=0.334, Client 3=0.333
+    Global Val: MAPE=99.33%, RMSE=$3,875,479.25
+    >>> New best model! Val MAPE=99.33%
+
+[Round 9] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=845.646704, val_mape=98.90%
+    Client 2: 150 samples, train_loss=827.903992, val_mape=98.09%
+    Client 3: 140 samples, train_loss=704.381372, val_mape=98.96%
+  [LLM] Requesting strategy decision for round 9...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: Perf_only achieves the best validation MAPE in the candidate preview, and historically it has delivered the fastest MAPE reduction (delta -0.003042 in round 8). Continuing this strategy leverages the current model's performance differentiation without changing learning rate or epochs, as convergence is steady.
+
+  [LLM Decision] Round 9: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.332, Client 2=0.335, Client 3=0.332
+    Global Val: MAPE=98.81%, RMSE=$3,855,062.00
+    >>> New best model! Val MAPE=98.81%
+
+[Round 10] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=726.832007, val_mape=98.29%
+    Client 2: 150 samples, train_loss=770.354004, val_mape=96.98%
+    Client 3: 140 samples, train_loss=591.915002, val_mape=97.95%
+  [LLM] Requesting strategy decision for round 10...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: Based on the current validation preview, perf_only yields the best aggregate MAPE and smallest client gap. Historical data confirms perf_only accelerated convergence after size_only plateaued. No hyperparameter tuning needed as convergence is steady and remaining rounds suffice.
+
+  [LLM Decision] Round 10: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.331, Client 2=0.336, Client 3=0.333
+    Global Val: MAPE=98.02%, RMSE=$3,821,743.00
+    >>> New best model! Val MAPE=98.02%
+
+[Round 11] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=623.764526, val_mape=96.90%
+    Client 2: 150 samples, train_loss=630.843994, val_mape=95.09%
+    Client 3: 140 samples, train_loss=500.677191, val_mape=96.68%
+  [LLM] Requesting strategy decision for round 11...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: perf_only has consistently outperformed size_only and other strategies in validation MAPE reduction over recent rounds. Candidate preview confirms it produces the lowest aggregate MAPE. Given the steady improvement trend and 10 remaining rounds, continuing with perf_only at current learning rate and epochs is the most validated path to minimize MAPE further.
+
+  [LLM Decision] Round 11: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.331, Client 2=0.337, Client 3=0.332
+    Global Val: MAPE=96.42%, RMSE=$3,762,000.50
+    >>> New best model! Val MAPE=96.42%
+
+[Round 12] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=524.376709, val_mape=95.29%
+    Client 2: 150 samples, train_loss=518.168652, val_mape=92.84%
+    Client 3: 140 samples, train_loss=411.842816, val_mape=94.55%
+  [LLM] Requesting strategy decision for round 12...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: Based on validation evidence, perf_only has delivered the strongest and most consistent MAPE reductions in recent rounds. The candidate preview confirms it achieves the lowest aggregate MAPE among all strategies. While client gap is growing, all strategies show similar gap levels now, so perf_only remains the best choice for continued optimization.
+
+  [LLM Decision] Round 12: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.330, Client 2=0.338, Client 3=0.332
+    Global Val: MAPE=94.53%, RMSE=$3,690,873.50
+    >>> New best model! Val MAPE=94.53%
+
+[Round 13] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=411.828192, val_mape=92.89%
+    Client 2: 150 samples, train_loss=422.355927, val_mape=90.04%
+    Client 3: 140 samples, train_loss=319.626379, val_mape=91.42%
+  [LLM] Requesting strategy decision for round 13...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: Perf_only continues to produce the best aggregate validation MAPE and has a proven track record of consistent improvement over the last 8 rounds. The candidate preview confirms it outperforms size_only, hybrid, and fairness_clip on the current round's validation data. Keeping lr and epochs unchanged maintains the effective training pace without risking instability.
+
+  [LLM Decision] Round 13: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.328, Client 2=0.339, Client 3=0.333
+    Global Val: MAPE=91.51%, RMSE=$3,581,378.25
+    >>> New best model! Val MAPE=91.51%
+
+[Round 14] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=326.281580, val_mape=88.52%
+    Client 2: 150 samples, train_loss=323.885175, val_mape=84.86%
+    Client 3: 140 samples, train_loss=241.147501, val_mape=86.16%
+  [LLM] Requesting strategy decision for round 14...
+  [LLM] Decision: strategy=perf_only, lr_scale=0.80, epoch_delta=0
+  [LLM] Reasoning: perf_only has the best historical performance and the lowest validation preview MAPE. I slightly reduce learning rate (lr_scale=0.8) to stabilize training as we approach the final rounds and the model is converging well. Epochs unchanged as there is no sign of overfitting or underfitting.
+
+  [LLM Decision] Round 14: strategy=perf_only, mode=new, next_lr_scale=0.80, next_epoch_delta=0
+    Weights: Client 1=0.326, Client 2=0.340, Client 3=0.335
+    Global Val: MAPE=86.07%, RMSE=$3,406,099.50
+    >>> New best model! Val MAPE=86.07%
+
+[Round 15] LLM-preview flow, LR=0.000400, Epochs=20
+    Client 1: 148 samples, train_loss=260.680484, val_mape=84.86%
+    Client 2: 150 samples, train_loss=270.054367, val_mape=80.35%
+    Client 3: 140 samples, train_loss=211.649472, val_mape=82.04%
+  [LLM] Requesting strategy decision for round 15...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: perf_only previews the lowest aggregate validation MAPE (0.83268) and has produced the strongest marginal improvements in recent rounds. The client gap is manageable. Other strategies do not offer validation-based advantages.
+
+  [LLM Decision] Round 15: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.324, Client 2=0.342, Client 3=0.335
+    Global Val: MAPE=81.84%, RMSE=$3,291,585.25
+    >>> New best model! Val MAPE=81.84%
+
+[Round 16] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=192.224649, val_mape=78.08%
+    Client 2: 150 samples, train_loss=193.012137, val_mape=70.31%
+    Client 3: 140 samples, train_loss=121.853172, val_mape=69.84%
+  [LLM] Requesting strategy decision for round 16...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: perf_only has been the most effective strategy throughout the recent rounds, consistently achieving the best global MAPE and largest improvements. The validation preview confirms it still yields the lowest aggregate MAPE. Keeping lr and epochs unchanged maintains the current stable convergence trend with only 5 rounds remaining.
+
+  [LLM Decision] Round 16: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.310, Client 2=0.344, Client 3=0.346
+    Global Val: MAPE=71.51%, RMSE=$3,033,773.75
+    >>> New best model! Val MAPE=71.51%
+
+[Round 17] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=131.923296, val_mape=69.86%
+    Client 2: 150 samples, train_loss=127.611099, val_mape=61.55%
+    Client 3: 140 samples, train_loss=88.705971, val_mape=55.98%
+  [LLM] Requesting strategy decision for round 17...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: perf_only has demonstrated the best validation MAPE reduction over the last 10 rounds and maintains the lowest aggregate MAPE in the current round preview. The strategy is clearly converging well, and switching now would risk disrupting the momentum. With only 4 rounds left, continuing perf_only with current learning rate and epochs is the safest choice to maximize final performance.
+
+  [LLM Decision] Round 17: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.296, Client 2=0.335, Client 3=0.369
+    Global Val: MAPE=61.90%, RMSE=$2,797,294.75
+    >>> New best model! Val MAPE=61.90%
+
+[Round 18] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=77.754456, val_mape=57.96%
+    Client 2: 150 samples, train_loss=73.911538, val_mape=49.92%
+    Client 3: 140 samples, train_loss=59.988347, val_mape=42.80%
+  [LLM] Requesting strategy decision for round 18...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: perf_only outperforms all other strategies in validation preview by the largest margin (0.5302 vs 0.5388 for hybrid, 0.5421 for fairness_clip, 0.5467 for size_only). It also has the lowest client gap (0.1336), suggesting it balances performance across clients better. The strategy has a proven track record of rapid MAPE reduction in recent rounds (relative improvement of 13.4% in round 17 alone). Given only 3 rounds remaining, the aggressive but proven perf_only strategy is most likely to achieve the lowest final MAPE.
+
+  [LLM Decision] Round 18: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.284, Client 2=0.330, Client 3=0.385
+    Global Val: MAPE=50.21%, RMSE=$2,478,749.25
+    >>> New best model! Val MAPE=50.21%
+
+[Round 19] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=48.434847, val_mape=45.93%
+    Client 2: 150 samples, train_loss=57.123175, val_mape=43.84%
+    Client 3: 140 samples, train_loss=34.447444, val_mape=38.48%
+  [LLM] Requesting strategy decision for round 19...
+  [LLM] Decision: strategy=perf_only, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: With only 2 rounds remaining, perf_only is the safest choice as it provides the best validation MAPE in the candidate preview, consistent with its strong historical performance. The higher weight on Client 3 (best performer) helps drive down global MAPE. No need to change learning rate or epochs as convergence is steady and strong.
+
+  [LLM Decision] Round 19: strategy=perf_only, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.309, Client 2=0.323, Client 3=0.368
+    Global Val: MAPE=39.99%, RMSE=$2,268,640.50
+    >>> New best model! Val MAPE=39.99%
+
+[Round 20] LLM-preview flow, LR=0.000500, Epochs=20
+    Client 1: 148 samples, train_loss=47.366138, val_mape=40.01%
+    Client 2: 150 samples, train_loss=44.861962, val_mape=39.60%
+    Client 3: 140 samples, train_loss=26.842928, val_mape=39.00%
+  [LLM] Requesting strategy decision for round 20...
+  [LLM] Decision: strategy=fairness_clip, lr_scale=1.00, epoch_delta=0
+  [LLM] Reasoning: Since we are at the final round, stability and fairness are critical. fairness_clip with moderate alpha bounds (0.25-0.45) offers a balanced compromise between size and perf, yielding the best aggregate val_mape in the preview while maintaining client weight diversity. The recent narrowing of client_mape_gap from 0.1516 to 0.0745 suggests that a fair aggregation is now effective.
+
+  [LLM Decision] Round 20: strategy=fairness_clip, mode=new, next_lr_scale=1.00, next_epoch_delta=0
+    Weights: Client 1=0.334, Client 2=0.338, Client 3=0.329
+    Global Val: MAPE=39.75%, RMSE=$2,012,391.88
+    >>> New best model! Val MAPE=39.75%
+
+------------------------------------------------------------
+Restoring Best Checkpoint...
+------------------------------------------------------------
+  Last round (Round 20) Val MAPE: 39.75%
+  Best round (Round 20) Val MAPE: 39.75%
+  >>> Model restored to Round 20 (best checkpoint)
+
+  Evaluating best checkpoint on test set...
+
+============================================================
+LLM-Guided Training Completed!
+============================================================
+  Best Round: 20
+  Best Val MAPE: 39.75%
+
+Test Set Results (using best checkpoint):
+  MAPE:  50.71%
+  RMSE:  $1,554,766.38
+  MAE:   $1,095,856.62
+  MPE:   -0.23%
+  NRMSE: 17.44%
+  R2:    0.4312
+
+LLM Strategy Selection Summary:
+  size_only: 4 rounds (20.0%)
+  perf_only: 15 rounds (75.0%)
+  fairness_clip: 1 rounds (5.0%)
+
+[Bias Correction] Calibrating on validation set...
+  [Bias Correction] Validation MPE = -6.75%
+  [Bias Correction] Correction factor: 1 / (1 + -0.0675) = 1.0724
+  [Bias Correction] Validation MPE after correction: 0.00%
+  [Bias Correction] Validation MAPE after correction: 40.96%
+
+[Bias Correction] Test Results (after correction):
+  MAPE:  50.99%
+  RMSE:  $1,481,630.75
+  MAE:   $1,029,838.62
+  MPE:   7.00%
+  R2:    0.4834
+
+[Saving] Results...
+  Saving best checkpoint (Round 20, Val MAPE: 39.75%)
+  Model saved: results\models\scenario_C_llm_model.pt
+  Saved: results\logs\scene_C_round_metrics.csv
+  Saved: results\logs\scene_C_client_metrics.csv
+  Saved: results\logs\scene_C_training_history.json
+  Logs: results/logs/
+  Results saved: results\scenario_c_results.csv
+  Predictions saved: results\scenario_c_predictions.csv
+  Predictions saved: results\scenario_c_predictions_bias_corrected.csv
+
+================================================================================
+COMPLETED!
+================================================================================
+
+Test Results:
+  MAPE:  50.71%
+  RMSE:  $1,554,766.38
+  MAE:   $1,095,856.62
+  R2:    0.4312
+================================================================================
+
+--- STDERR ---
+2026-06-08 17:14:26 - MAS-FL - INFO - Starting LLM-guided training: 20 rounds
+2026-06-08 17:16:56 - MAS-FL - INFO - LLM-guided training completed. Test MAPE: 50.71%

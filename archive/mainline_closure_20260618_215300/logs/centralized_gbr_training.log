@@ -1,0 +1,143 @@
+2026-05-24 19:35:58 - Centralized_GBR - INFO - Starting Scenario A: Centralized Training (GradientBoosting)
+2026-05-24 19:35:58 - Centralized_GBR - INFO - Loaded unified split: train=550, val=68, test=70
+2026-05-24 19:35:58 - Centralized_GBR - INFO - Data preprocessing completed
+2026-05-24 19:35:58 - Centralized_GBR - INFO - GBR model trained with 200 trees
+2026-05-24 19:35:58 - Centralized_GBR - INFO - Validation Results: MAPE: 43.37% | RMSE: $1,777,596.69 | MAE: $1,112,421.85 | MPE: 14.90% | NRMSE: 15.98%
+2026-05-24 19:35:58 - Centralized_GBR - INFO - Final Test Results: MAPE: 64.33% | RMSE: $1,639,790.76 | MAE: $1,189,341.47 | MPE: 29.67% | NRMSE: 18.39%
+2026-05-24 19:35:58 - Centralized_GBR - INFO - Model saved to results\models\centralized_gbr_model.pkl
+2026-05-24 19:35:58 - Centralized_GBR - INFO - Results saved to results\centralized_results.csv
+2026-05-24 19:35:58 - Centralized_GBR - INFO - ==================================================
+2026-05-24 19:35:58 - Centralized_GBR - INFO - Scenario A completed successfully
+2026-05-24 19:35:58 - Centralized_GBR - INFO - Test MAPE: 64.33%, RMSE: $1,639,790.76
+2026-05-24 19:35:58 - Centralized_GBR - INFO - ==================================================
+2026-06-08 16:44:09 - Centralized_GBR - INFO - Starting GBR传统机器学习
+2026-06-08 16:44:10 - Centralized_GBR - INFO - Loaded unified split: train=438, val=68, test=70
+2026-06-08 16:44:10 - Centralized_GBR - INFO - Data preprocessing completed
+2026-06-08 16:44:10 - Centralized_GBR - INFO - GBR model trained with 200 trees
+2026-06-08 16:44:10 - Centralized_GBR - INFO - Validation Results: MAPE: 45.21% | RMSE: $1,828,687.96 | MAE: $1,177,272.08 | MPE: 17.84% | NRMSE: 16.44%
+2026-06-08 16:44:10 - Centralized_GBR - INFO - Final Test Results: MAPE: 55.05% | RMSE: $1,390,877.45 | MAE: $1,049,122.08 | MPE: 22.21% | NRMSE: 15.60%
+2026-06-08 16:44:10 - Centralized_GBR - INFO - Model saved to results\models\centralized_gbr_model.pkl
+2026-06-08 16:44:10 - Centralized_GBR - INFO - Results saved to results\centralized_results.csv
+2026-06-08 16:44:10 - Centralized_GBR - INFO - ==================================================
+2026-06-08 16:44:10 - Centralized_GBR - INFO - GBR传统机器学习 completed successfully
+2026-06-08 16:44:10 - Centralized_GBR - INFO - Test MAPE: 55.05%, RMSE: $1,390,877.45
+2026-06-08 16:44:10 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:30 - Centralized_GBR - INFO - Starting GBR传统机器学习
+2026-06-08 17:01:30 - Centralized_GBR - INFO - Loaded unified split: train=438, val=68, test=70
+2026-06-08 17:01:30 - Centralized_GBR - INFO - Data preprocessing completed
+2026-06-08 17:01:30 - Centralized_GBR - INFO - Loaded unified split: train=438, val=68, test=70
+2026-06-08 17:01:30 - Centralized_GBR - INFO - Data preprocessing completed
+2026-06-08 17:01:31 - Centralized_GBR - INFO - GBR model trained with 200 trees
+2026-06-08 17:01:31 - Centralized_GBR - INFO - Validation Results: MAPE: 45.21% | RMSE: $1,828,687.96 | MAE: $1,177,272.08 | MPE: 17.84% | NRMSE: 16.44%
+2026-06-08 17:01:31 - Centralized_GBR - INFO - Final Test Results: MAPE: 55.05% | RMSE: $1,390,877.45 | MAE: $1,049,122.08 | MPE: 22.21% | NRMSE: 15.60%
+2026-06-08 17:01:31 - Centralized_GBR - INFO - GBR model trained with 200 trees
+2026-06-08 17:01:31 - Centralized_GBR - INFO - Validation Results: MAPE: 46.36% | RMSE: $1,804,209.46 | MAE: $1,188,399.66 | MPE: 17.99% | NRMSE: 16.22%
+2026-06-08 17:01:31 - Centralized_GBR - INFO - Final Test Results: MAPE: 57.68% | RMSE: $1,460,138.69 | MAE: $1,125,654.45 | MPE: 23.24% | NRMSE: 16.38%
+2026-06-08 17:01:31 - Centralized_GBR - INFO - Model saved to results\models\centralized_gbr_model.pkl
+2026-06-08 17:01:31 - Centralized_GBR - INFO - Model saved to results\models\centralized_gbr_model.pkl
+2026-06-08 17:01:31 - Centralized_GBR - INFO - Results saved to results\centralized_results.csv
+2026-06-08 17:01:31 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:31 - Centralized_GBR - INFO - GBR传统机器学习 completed successfully
+2026-06-08 17:01:31 - Centralized_GBR - INFO - Test MAPE: 55.05%, RMSE: $1,390,877.45
+2026-06-08 17:01:31 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:31 - Centralized_GBR - INFO - Results saved to results\centralized_results.csv
+2026-06-08 17:01:31 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:31 - Centralized_GBR - INFO - GBR传统机器学习 completed successfully
+2026-06-08 17:01:31 - Centralized_GBR - INFO - Test MAPE: 57.68%, RMSE: $1,460,138.69
+2026-06-08 17:01:31 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:37 - Centralized_GBR - INFO - Starting GBR传统机器学习
+2026-06-08 17:01:37 - Centralized_GBR - INFO - Loaded unified split: train=438, val=68, test=70
+2026-06-08 17:01:37 - Centralized_GBR - INFO - Data preprocessing completed
+2026-06-08 17:01:37 - Centralized_GBR - INFO - GBR model trained with 200 trees
+2026-06-08 17:01:37 - Centralized_GBR - INFO - Validation Results: MAPE: 45.21% | RMSE: $1,828,687.96 | MAE: $1,177,272.08 | MPE: 17.84% | NRMSE: 16.44%
+2026-06-08 17:01:37 - Centralized_GBR - INFO - Final Test Results: MAPE: 55.05% | RMSE: $1,390,877.45 | MAE: $1,049,122.08 | MPE: 22.21% | NRMSE: 15.60%
+2026-06-08 17:01:37 - Centralized_GBR - INFO - Model saved to results\models\centralized_gbr_model.pkl
+2026-06-08 17:01:37 - Centralized_GBR - INFO - Results saved to results\centralized_results.csv
+2026-06-08 17:01:37 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:37 - Centralized_GBR - INFO - GBR传统机器学习 completed successfully
+2026-06-08 17:01:37 - Centralized_GBR - INFO - Test MAPE: 55.05%, RMSE: $1,390,877.45
+2026-06-08 17:01:37 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:41 - Centralized_GBR - INFO - Starting GBR传统机器学习
+2026-06-08 17:01:41 - Centralized_GBR - INFO - Loaded unified split: train=438, val=68, test=70
+2026-06-08 17:01:41 - Centralized_GBR - INFO - Data preprocessing completed
+2026-06-08 17:01:42 - Centralized_GBR - INFO - GBR model trained with 200 trees
+2026-06-08 17:01:42 - Centralized_GBR - INFO - Validation Results: MAPE: 44.45% | RMSE: $1,787,097.33 | MAE: $1,163,420.76 | MPE: 17.15% | NRMSE: 16.07%
+2026-06-08 17:01:42 - Centralized_GBR - INFO - Final Test Results: MAPE: 56.00% | RMSE: $1,500,143.71 | MAE: $1,098,676.21 | MPE: 23.06% | NRMSE: 16.83%
+2026-06-08 17:01:42 - Centralized_GBR - INFO - Model saved to results\models\centralized_gbr_model.pkl
+2026-06-08 17:01:42 - Centralized_GBR - INFO - Results saved to results\centralized_results.csv
+2026-06-08 17:01:42 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:42 - Centralized_GBR - INFO - GBR传统机器学习 completed successfully
+2026-06-08 17:01:42 - Centralized_GBR - INFO - Test MAPE: 56.00%, RMSE: $1,500,143.71
+2026-06-08 17:01:42 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:46 - Centralized_GBR - INFO - Starting GBR传统机器学习
+2026-06-08 17:01:46 - Centralized_GBR - INFO - Loaded unified split: train=438, val=68, test=70
+2026-06-08 17:01:46 - Centralized_GBR - INFO - Data preprocessing completed
+2026-06-08 17:01:46 - Centralized_GBR - INFO - GBR model trained with 200 trees
+2026-06-08 17:01:46 - Centralized_GBR - INFO - Validation Results: MAPE: 46.36% | RMSE: $1,804,209.46 | MAE: $1,188,399.66 | MPE: 17.99% | NRMSE: 16.22%
+2026-06-08 17:01:46 - Centralized_GBR - INFO - Final Test Results: MAPE: 57.68% | RMSE: $1,460,138.69 | MAE: $1,125,654.45 | MPE: 23.24% | NRMSE: 16.38%
+2026-06-08 17:01:46 - Centralized_GBR - INFO - Model saved to results\models\centralized_gbr_model.pkl
+2026-06-08 17:01:46 - Centralized_GBR - INFO - Results saved to results\centralized_results.csv
+2026-06-08 17:01:46 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:46 - Centralized_GBR - INFO - GBR传统机器学习 completed successfully
+2026-06-08 17:01:46 - Centralized_GBR - INFO - Test MAPE: 57.68%, RMSE: $1,460,138.69
+2026-06-08 17:01:46 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:50 - Centralized_GBR - INFO - Starting GBR传统机器学习
+2026-06-08 17:01:50 - Centralized_GBR - INFO - Loaded unified split: train=438, val=68, test=70
+2026-06-08 17:01:50 - Centralized_GBR - INFO - Data preprocessing completed
+2026-06-08 17:01:51 - Centralized_GBR - INFO - GBR model trained with 200 trees
+2026-06-08 17:01:51 - Centralized_GBR - INFO - Validation Results: MAPE: 43.66% | RMSE: $1,658,363.16 | MAE: $1,091,737.62 | MPE: 16.29% | NRMSE: 14.91%
+2026-06-08 17:01:51 - Centralized_GBR - INFO - Final Test Results: MAPE: 55.33% | RMSE: $1,413,360.41 | MAE: $1,078,304.55 | MPE: 21.41% | NRMSE: 15.85%
+2026-06-08 17:01:51 - Centralized_GBR - INFO - Model saved to results\models\centralized_gbr_model.pkl
+2026-06-08 17:01:51 - Centralized_GBR - INFO - Results saved to results\centralized_results.csv
+2026-06-08 17:01:51 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:51 - Centralized_GBR - INFO - GBR传统机器学习 completed successfully
+2026-06-08 17:01:51 - Centralized_GBR - INFO - Test MAPE: 55.33%, RMSE: $1,413,360.41
+2026-06-08 17:01:51 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:55 - Centralized_GBR - INFO - Starting GBR传统机器学习
+2026-06-08 17:01:55 - Centralized_GBR - INFO - Loaded unified split: train=438, val=68, test=70
+2026-06-08 17:01:55 - Centralized_GBR - INFO - Data preprocessing completed
+2026-06-08 17:01:56 - Centralized_GBR - INFO - GBR model trained with 200 trees
+2026-06-08 17:01:56 - Centralized_GBR - INFO - Validation Results: MAPE: 44.45% | RMSE: $1,787,097.33 | MAE: $1,163,420.76 | MPE: 17.15% | NRMSE: 16.07%
+2026-06-08 17:01:56 - Centralized_GBR - INFO - Final Test Results: MAPE: 56.00% | RMSE: $1,500,143.71 | MAE: $1,098,676.21 | MPE: 23.06% | NRMSE: 16.83%
+2026-06-08 17:01:56 - Centralized_GBR - INFO - Model saved to results\models\centralized_gbr_model.pkl
+2026-06-08 17:01:56 - Centralized_GBR - INFO - Results saved to results\centralized_results.csv
+2026-06-08 17:01:56 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:56 - Centralized_GBR - INFO - GBR传统机器学习 completed successfully
+2026-06-08 17:01:56 - Centralized_GBR - INFO - Test MAPE: 56.00%, RMSE: $1,500,143.71
+2026-06-08 17:01:56 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:01:59 - Centralized_GBR - INFO - Starting GBR传统机器学习
+2026-06-08 17:01:59 - Centralized_GBR - INFO - Loaded unified split: train=438, val=68, test=70
+2026-06-08 17:01:59 - Centralized_GBR - INFO - Data preprocessing completed
+2026-06-08 17:02:00 - Centralized_GBR - INFO - GBR model trained with 200 trees
+2026-06-08 17:02:00 - Centralized_GBR - INFO - Validation Results: MAPE: 42.89% | RMSE: $1,786,419.88 | MAE: $1,157,436.02 | MPE: 18.23% | NRMSE: 16.06%
+2026-06-08 17:02:00 - Centralized_GBR - INFO - Final Test Results: MAPE: 54.81% | RMSE: $1,448,399.64 | MAE: $1,111,146.06 | MPE: 21.12% | NRMSE: 16.25%
+2026-06-08 17:02:00 - Centralized_GBR - INFO - Model saved to results\models\centralized_gbr_model.pkl
+2026-06-08 17:02:00 - Centralized_GBR - INFO - Results saved to results\centralized_results.csv
+2026-06-08 17:02:00 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:02:00 - Centralized_GBR - INFO - GBR传统机器学习 completed successfully
+2026-06-08 17:02:00 - Centralized_GBR - INFO - Test MAPE: 54.81%, RMSE: $1,448,399.64
+2026-06-08 17:02:00 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:02:04 - Centralized_GBR - INFO - Starting GBR传统机器学习
+2026-06-08 17:02:04 - Centralized_GBR - INFO - Loaded unified split: train=438, val=68, test=70
+2026-06-08 17:02:04 - Centralized_GBR - INFO - Data preprocessing completed
+2026-06-08 17:02:05 - Centralized_GBR - INFO - GBR model trained with 200 trees
+2026-06-08 17:02:05 - Centralized_GBR - INFO - Validation Results: MAPE: 43.66% | RMSE: $1,658,363.16 | MAE: $1,091,737.62 | MPE: 16.29% | NRMSE: 14.91%
+2026-06-08 17:02:05 - Centralized_GBR - INFO - Final Test Results: MAPE: 55.33% | RMSE: $1,413,360.41 | MAE: $1,078,304.55 | MPE: 21.41% | NRMSE: 15.85%
+2026-06-08 17:02:05 - Centralized_GBR - INFO - Model saved to results\models\centralized_gbr_model.pkl
+2026-06-08 17:02:05 - Centralized_GBR - INFO - Results saved to results\centralized_results.csv
+2026-06-08 17:02:05 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:02:05 - Centralized_GBR - INFO - GBR传统机器学习 completed successfully
+2026-06-08 17:02:05 - Centralized_GBR - INFO - Test MAPE: 55.33%, RMSE: $1,413,360.41
+2026-06-08 17:02:05 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:02:13 - Centralized_GBR - INFO - Starting GBR传统机器学习
+2026-06-08 17:02:13 - Centralized_GBR - INFO - Loaded unified split: train=438, val=68, test=70
+2026-06-08 17:02:13 - Centralized_GBR - INFO - Data preprocessing completed
+2026-06-08 17:02:13 - Centralized_GBR - INFO - GBR model trained with 200 trees
+2026-06-08 17:02:13 - Centralized_GBR - INFO - Validation Results: MAPE: 42.89% | RMSE: $1,786,419.88 | MAE: $1,157,436.02 | MPE: 18.23% | NRMSE: 16.06%
+2026-06-08 17:02:13 - Centralized_GBR - INFO - Final Test Results: MAPE: 54.81% | RMSE: $1,448,399.64 | MAE: $1,111,146.06 | MPE: 21.12% | NRMSE: 16.25%
+2026-06-08 17:02:13 - Centralized_GBR - INFO - Model saved to results\models\centralized_gbr_model.pkl
+2026-06-08 17:02:13 - Centralized_GBR - INFO - Results saved to results\centralized_results.csv
+2026-06-08 17:02:13 - Centralized_GBR - INFO - ==================================================
+2026-06-08 17:02:13 - Centralized_GBR - INFO - GBR传统机器学习 completed successfully
+2026-06-08 17:02:13 - Centralized_GBR - INFO - Test MAPE: 54.81%, RMSE: $1,448,399.64
+2026-06-08 17:02:13 - Centralized_GBR - INFO - ==================================================

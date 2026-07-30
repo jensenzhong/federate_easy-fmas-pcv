@@ -150,6 +150,7 @@ class DataPreprocessor:
         self.feature_scaler.scale_ = std
         self.feature_scaler.var_ = var
         self.feature_scaler.n_samples_seen_ = n_samples
+        self.feature_scaler.n_features_in_ = len(mean)
         
         if feature_columns is not None:
             self.feature_columns = feature_columns
@@ -441,6 +442,8 @@ def load_federated_datasets_for_scene_c(config: dict) -> Tuple[dict, dict, Tenso
     global_val_ratio = splits.get('global_val', 0.1)
     global_test_ratio = splits.get('global_test', 0.1)
     local_val_ratio = splits.get('local_val', 0.2)
+    local_val_ratio = splits.get('local_val', 0.2)
+    local_val_ratio = splits.get('local_val', 0.2)
 
     # Load raw data
     df_raw = pd.read_csv(raw_csv)
@@ -568,6 +571,9 @@ def load_federated_datasets_for_scene_c(config: dict) -> Tuple[dict, dict, Tenso
         torch.FloatTensor(X_global_test_scaled),
         torch.FloatTensor(y_global_test_transformed)
     )
+    global_test_set.prediction_metadata = test_df[[client_column]].rename(
+        columns={client_column: "Client"}
+    ).reset_index(drop=True)
 
     return client_train_sets, client_val_sets, global_val_set, global_test_set, preprocessor
 
@@ -602,6 +608,7 @@ def load_centralized_datasets(config: dict, config_key: str = 'scene_c') -> Dict
     global_train_ratio = splits.get('global_train', 0.8)
     global_val_ratio = splits.get('global_val', 0.1)
     global_test_ratio = splits.get('global_test', 0.1)
+    local_val_ratio = splits.get('local_val', 0.2)
 
     df_raw = pd.read_csv(raw_csv)
     if rename_map:
@@ -644,15 +651,55 @@ def load_centralized_datasets(config: dict, config_key: str = 'scene_c') -> Dict
         stratify=temp_df[client_column]
     )
 
+    client_stats_list = []
+    client_data_cache = {}
+    for client_id, df_client in train_df.groupby(client_column):
+        stats = compute_local_stats(df_client, feature_columns)
+        client_stats_list.append(stats)
+        client_data_cache[client_id] = df_client
+
+    global_stats = aggregate_federated_stats(client_stats_list)
+
     preprocessor = DataPreprocessor(
         feature_scaler=config['preprocessing']['scaler'],
         target_transform=config['preprocessing']['target_transform'],
         random_seed=seed
     )
+    preprocessor.set_global_stats(
+        mean=global_stats['mean'],
+        std=global_stats['std'],
+        var=global_stats['var'],
+        n_samples=global_stats['count'],
+        feature_columns=feature_columns
+    )
 
-    X_train = train_df[feature_columns].copy()
-    y_train = train_df[target_column].values
-    X_train_scaled, y_train_transformed = preprocessor.fit_transform(X_train, y_train)
+    local_train_frames = []
+    local_val_frames = []
+    for _, df_client in client_data_cache.items():
+        X_client = df_client[feature_columns].copy()
+        y_client = df_client[target_column].values
+        X_local_train, X_local_val, y_local_train, y_local_val = train_test_split(
+            X_client,
+            y_client,
+            test_size=local_val_ratio,
+            random_state=seed
+        )
+        local_train_df = X_local_train.copy()
+        local_train_df[target_column] = y_local_train
+        local_train_df[client_column] = df_client.loc[X_local_train.index, client_column].values
+        local_val_df = X_local_val.copy()
+        local_val_df[target_column] = y_local_val
+        local_val_df[client_column] = df_client.loc[X_local_val.index, client_column].values
+        local_train_frames.append(local_train_df)
+        local_val_frames.append(local_val_df)
+
+    train_df_model = pd.concat(local_train_frames).sort_index()
+    local_val_df = pd.concat(local_val_frames).sort_index()
+
+    X_train = train_df_model[feature_columns].copy()
+    y_train = train_df_model[target_column].values
+    X_train_scaled = preprocessor.transform_features(X_train)
+    y_train_transformed = preprocessor.transform_target(y_train)
 
     X_val = val_df[feature_columns].copy()
     y_val = val_df[target_column].values
@@ -667,9 +714,12 @@ def load_centralized_datasets(config: dict, config_key: str = 'scene_c') -> Dict
     return {
         "feature_columns": feature_columns,
         "target_column": target_column,
-        "train_df": train_df,
+        "global_train_df": train_df,
+        "train_df": train_df_model,
+        "local_val_df": local_val_df,
         "val_df": val_df,
         "test_df": test_df,
+        "training_scope": "federated_local_train_union",
         "X_train": X_train,
         "y_train": y_train,
         "X_val": X_val,

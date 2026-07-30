@@ -1,91 +1,88 @@
 # Federated Learning for Highway Cost Prediction
 
-This project studies highway construction cost prediction with centralized baselines, FedAvg, and MAS-FL-LLM.
+This project is now closed onto the new mainline experiment family:
+
+- `A`
+- `A_prime`
+- `B`
+- `FEDYOGI`
+- `VG_FEDYOGI_TR`
+- `MAS_VG_FEDYOGI_TR`
+
+Legacy `C` and `MAS_ADAPTIVE` remain runnable for historical reference, but they are no longer part of the default formal pipeline, default statistics, main tables, or main figures.
 
 ## Current Source of Truth
 
 - Canonical raw data: `Data/all_Data/Client_Data_Split_Cleaned.csv`
 - Canonical processed data: `Data/processed/Client_Data_Split_Cleaned_EN.csv`
-- Current outputs: `results/`
-- Data audit: `docs/data_audit_report.md`
-- Historical material: `archive/`
+- Formal experiment outputs: `results/`
+- Adaptive pilot freeze file: `results/adaptive_pilot/pilot_recommendation.csv`
+- Paper-facing summaries:
+  - `results/multi_seed/all_results.csv`
+  - `results/multi_seed/statistical_summary.csv`
+  - `results/multi_seed/significance_tests.csv`
+  - `results/ablation_summary.csv`
+  - `results/stratified_evaluation.csv`
+  - `results/paper_tables.md`
+  - `results/figures/`
 
-The old `Data/processed/Company_A_train.csv`, `Company_B_train.csv`, and `Company_C_train.csv` files are historical amount-stratified files. They are not the current client split used by the main experiments.
-
-## Data Status
-
-The current dataset has 688 records, no missing cells, no duplicate rows, and three client groups:
-
-| Client | Records |
-|---|---:|
-| Client 1 | 233 |
-| Client 2 | 235 |
-| Client 3 | 220 |
-
-Run the audit:
-
-```bash
-python scripts/audit_project_data.py
-```
-
-## Experiments
+## Formal Mainline
 
 | Scenario | Method |
 |---|---|
-| A | Centralized Gradient Boosting Regressor |
-| A' | Centralized MLP |
-| B | FedAvg baseline |
-| C | MAS-FL-LLM with dynamic strategy selection |
+| `A` | Centralized GBR |
+| `A_prime` | Centralized MLP |
+| `B` | FedAvg baseline |
+| `FEDYOGI` | FedYogi-TR |
+| `VG_FEDYOGI_TR` | Validation-guided FedYogi-TR |
+| `MAS_VG_FEDYOGI_TR` | Multi-agent validation-guided FedYogi-TR |
 
-## Current Main Results
+Formal multi-seed comparisons use seeds `42 123 456 789 2024`.
 
-Final claims should use the five-seed B/C results in `results/multi_seed/statistical_summary.csv`.
+## Recommended Workflow
 
-| Scenario | N | MAPE | RMSE | MAE | MPE | R2 |
-|---|---:|---:|---:|---:|---:|---:|
-| B FedAvg | 5 | 51.63% +/- 5.73% | 1,716,607 +/- 122,275 | 1,242,667 +/- 131,528 | -12.05% +/- 13.05% | 0.3038 +/- 0.1027 |
-| C MAS-FL-LLM | 5 | 50.14% +/- 4.66% | 1,699,480 +/- 181,203 | 1,223,061 +/- 162,467 | -11.31% +/- 14.07% | 0.3142 +/- 0.1476 |
-| C + bias correction | 5 | 50.20% +/- 4.48% | 1,534,372 +/- 61,640 | 1,091,372 +/- 53,981 | 3.25% +/- 5.56% | 0.4453 +/- 0.0448 |
-
-B vs C paired tests are not statistically significant on MAPE, RMSE, or MAE at `p < 0.05`. Use metric-specific wording instead of saying C comprehensively outperforms B.
-
-Single-seed reproduction:
+Run the baseline verification first:
 
 ```bash
-python experiments/scenario_A_centralized.py
-python experiments/scenario_A_prime.py
-python experiments/scenario_B_fedavg.py --seed 42 --num_rounds 20
-python experiments/scenario_C_llm.py --use_llm --seed 42 --num_rounds 20
+python -m pytest -q
 ```
 
-Paper-level runs:
+Freeze the adaptive pilot before formal adaptive runs:
 
 ```bash
-python scripts/run_multi_seed.py --scenarios B C --seeds 42 123 456 789 2024
+python scripts/run_adaptive_pilot.py --seeds 777 888 --server_lrs 0.2 0.3 0.4 0.5 --max_coordinate_step_ratios 0.75 1.0 --clip_norms none 2.0
+```
+
+Then run the formal six-scenario mainline:
+
+```bash
+python scripts/run_multi_seed.py --scenarios A A_prime B FEDYOGI VG_FEDYOGI_TR MAS_VG_FEDYOGI_TR --seeds 42 123 456 789 2024
+```
+
+Run the new four-line ablation:
+
+```bash
 python scripts/run_ablation.py --seeds 42 123 456 789 2024
+```
+
+Generate analysis outputs:
+
+```bash
 python scripts/statistical_analysis.py
+python scripts/stratified_evaluation.py
 python scripts/generate_paper_tables.py
 python scripts/generate_paper_figures.py
 ```
 
 ## Result Policy
 
-Single-seed results are fast checks. Final claims should use multi-seed summaries where available.
+- Final claims should use multi-seed summaries and matched-seed significance tests.
+- Adaptive formal runs must read frozen pilot parameters from `results/adaptive_pilot/pilot_recommendation.csv`.
+- If the pilot recommendation is missing required fields or does not complete the expected seeds, formal adaptive runs now fail fast instead of silently falling back.
+- Corrected metrics are supplementary for the adaptive trio and are reported alongside raw metrics when available.
 
-Do not claim that Scenario C fully outperforms Scenario B without metric-specific qualification. Report MAPE, RMSE, MAE, MPE, and R2 separately.
+## Notes
 
-## Project Layout
-
-```text
-configs/       Experiment configuration
-Data/          Canonical raw and processed datasets
-docs/          Data audit and paper-facing analysis
-experiments/   Scenario A, A', B, and C runners
-scripts/       Audit, multi-seed, ablation, table, and figure utilities
-src/           Data processing, models, utilities, and federated learning code
-tests/         Regression and audit tests
-archive/       Historical reports and previous rerun backups
-results/       Regenerated current outputs
-```
-
-See `QUICKSTART.md` for the short reproduction guide and `docs/code_review_report.md` for the code review and reliability fixes.
+- `MAS_VG_FEDYOGI_TR` is the formal LLM-enabled mainline method.
+- Fig.1 to Fig.9 are the current acceptance target for the paper package.
+- `fig10` and `fig11` are treated as extra analysis, not part of the mainline acceptance gate.

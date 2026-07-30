@@ -1,6 +1,6 @@
 """
 场景A: 集中式训练（Gradient Boosting Regressor）
-在统一全局训练切分上训练单一模型，获取性能上限基准
+在与联邦本地训练并集一致的样本上训练单一模型，获取传统机器学习基线
 使用sklearn GradientBoostingRegressor（经验证表现最佳）
 """
 
@@ -21,11 +21,12 @@ from src.utils import (
     evaluate_metrics, save_results, format_metrics
 )
 from src.data_preprocessing import load_centralized_datasets
+from src.experiment_names import experiment_display_name
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Scenario A: centralized Gradient Boosting baseline"
+        description="GBR传统机器学习"
     )
     parser.add_argument(
         "--seed",
@@ -41,10 +42,10 @@ def main():
     args = parse_args()
     
     print("=" * 80)
-    print("SCENARIO A: CENTRALIZED TRAINING (Gradient Boosting)")
+    print("GBR传统机器学习")
     print("=" * 80)
     print("\nTraining GradientBoostingRegressor on unified global training split")
-    print("This provides the performance upper bound (no privacy constraints)\n")
+    print("This provides the traditional machine-learning centralized baseline.\n")
     
     # ========== 1. 加载配置 ==========
     print("[Step 1/7] Loading configuration...")
@@ -61,7 +62,7 @@ def main():
         log_file="results/logs/centralized_gbr_training.log",
         console=True
     )
-    logger.info("Starting Scenario A: Centralized Training (GradientBoosting)")
+    logger.info("Starting GBR传统机器学习")
     print("          [DONE]\n")
     
     # ========== 2. 加载统一切分数据 ==========
@@ -74,6 +75,7 @@ def main():
     X_test = split_data["X_test"]
     y_test = split_data["y_test"]
     print(f"          Train/Val/Test: {len(X_train)}/{len(X_val)}/{len(X_test)}")
+    print(f"          Training scope: {split_data['training_scope']}")
     print(f"          Features: {X_train.shape[1]}")
     print(f"          Train target range: ${y_train.min():,.0f} - ${y_train.max():,.0f}")
     logger.info(f"Loaded unified split: train={len(X_train)}, val={len(X_val)}, test={len(X_test)}")
@@ -188,6 +190,7 @@ def main():
             'preprocessor': preprocessor,
             'model_params': gbr_params,
             'training_samples': len(X_train),
+            'training_scope': split_data['training_scope'],
             'test_metrics': metrics,
             'val_metrics': val_metrics
         }, f)
@@ -208,9 +211,11 @@ def main():
     
     # 保存指标
     results = {
-        'scenario': 'A_Centralized_GBR',
+        'scenario': experiment_display_name("A"),
         'model_type': 'GradientBoostingRegressor',
         'training_samples': len(X_train),
+        'training_scope': split_data['training_scope'],
+        'local_validation_samples_withheld': len(split_data['local_val_df']),
         'validation_samples': len(X_val),
         'test_samples': len(X_test),
         'n_estimators': gbr_params['n_estimators'],
@@ -236,7 +241,7 @@ def main():
     
     # ========== 总结 ==========
     print("=" * 80)
-    print("SCENARIO A COMPLETED!")
+    print("GBR传统机器学习 COMPLETED!")
     print("=" * 80)
     print(f"\nFinal Test Performance:")
     print(f"  MAPE:  {metrics['MAPE']*100:.2f}%")
@@ -247,12 +252,12 @@ def main():
     print(f"\nValidation Performance:")
     print(f"  MAPE: {val_metrics['MAPE']*100:.2f}%")
     print(f"  RMSE: ${val_metrics['RMSE']:,.2f}")
-    print(f"\nThis is the UPPER BOUND (performance with all data, no privacy)")
+    print(f"\nThis is the centralized GBR baseline trained on the same local-train sample union as FL")
     print("Model: GradientBoostingRegressor (sklearn)")
     print("=" * 80)
     
     logger.info("=" * 50)
-    logger.info("Scenario A completed successfully")
+    logger.info("GBR传统机器学习 completed successfully")
     logger.info(f"Test MAPE: {metrics['MAPE']*100:.2f}%, RMSE: ${metrics['RMSE']:,.2f}")
     logger.info("=" * 50)
 
@@ -261,7 +266,7 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(f"\n[ERROR] Scenario A failed: {e}")
+        print(f"\n[ERROR] GBR传统机器学习 failed: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)

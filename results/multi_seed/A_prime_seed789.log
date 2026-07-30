@@ -1,0 +1,104 @@
+Command: D:\Python\python.exe experiments/scenario_A_prime.py --seed 789
+Return code: 0
+Elapsed: 23.9s
+
+================================================================================
+ANN��ͳ������
+================================================================================
+
+Training PyTorch MLP on unified global training split
+Best config: [64,32], dropout=0.1, lr=0.001
+
+[Step 1/6] Loading configuration...
+          Random seed: 789
+          Device: cpu
+          [DONE]
+
+[Step 2/6] Loading and preprocessing data...
+          Train/Val/Test samples: 438/68/70
+          Training scope: federated_local_train_union
+          Transformed target range: 18.8539 - 57.8353
+          Transform method: power_0.25 (Y = ContAmnt^0.25)
+          [DONE]
+
+[Step 3/6] Creating DataLoaders...
+          Batch size: 32
+          Validation samples: 68
+          [DONE]
+
+[Step 4/6] Training model...
+          Architecture: 10 -> [128, 128, 64, 32] -> 1
+          Dropout: 0.1
+          Parameters: 28,993
+          Learning rate: 0.001
+          Max epochs: 800
+
+          Epoch [20/800] Train Loss: 1123.620854, Val MAPE: 99.72%
+          Epoch [40/800] Train Loss: 464.273390, Val MAPE: 91.11%
+          Epoch [60/800] Train Loss: 105.834118, Val MAPE: 54.09%
+          Epoch [80/800] Train Loss: 35.926872, Val MAPE: 33.16%
+          Epoch [100/800] Train Loss: 32.837091, Val MAPE: 45.64%
+          Epoch [120/800] Train Loss: 30.468593, Val MAPE: 41.26%
+          Epoch [140/800] Train Loss: 29.646112, Val MAPE: 39.80%
+
+          Early stopping at epoch 159
+
+          Training completed!
+          Best epoch: 79
+          Best val MAPE: 31.86%
+          [DONE]
+
+[Step 5/6] Evaluating on test set...
+          Test samples: 70
+          Predictions (transformed): 23.6970 - 51.5972
+          Below range: 0, Above range: 0
+
+          Test Results:
+          MAPE: 50.78% | RMSE: $1,431,269.38 | MAE: $993,218.50 | MPE: 17.11% | NRMSE: 16.06% | R2: 0.5180
+          [DONE]
+
+[Step 6/6] Saving results...
+          Model saved: results\models\centralized_nn_model.pth
+          Predictions saved: results\centralized_nn_predictions.csv
+          Bias-corrected predictions saved: results\centralized_nn_predictions_bias_corrected.csv
+          Results saved: results\centralized_nn_results.csv
+          [DONE]
+
+================================================================================
+ANN��ͳ������ COMPLETED!
+================================================================================
+
+Neural Network Configuration:
+  Architecture: 10 -> [128, 128, 64, 32] -> 1
+  Dropout: 0.1
+  Learning Rate: 0.001
+  Trained Epochs: 79
+
+Final Test Performance:
+  MAPE:  50.78%
+  RMSE:  $1,431,269.38
+  MAE:   $993,218.50
+  MPE:   17.11%
+  NRMSE: 16.06%
+
+Note:
+  Use regenerated paper tables for unified cross-experiment comparison.
+
+This is the centralized ANN baseline for federated learning comparison
+================================================================================
+
+--- STDERR ---
+2026-06-18 22:18:45 - Centralized_NN - INFO - Starting ANN��ͳ������
+2026-06-18 22:18:50 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1123.620854, Val MAPE: 99.72%
+2026-06-18 22:18:52 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 464.273390, Val MAPE: 91.11%
+2026-06-18 22:18:53 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 105.834118, Val MAPE: 54.09%
+2026-06-18 22:18:55 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 35.926872, Val MAPE: 33.16%
+2026-06-18 22:18:57 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 32.837091, Val MAPE: 45.64%
+2026-06-18 22:18:58 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 30.468593, Val MAPE: 41.26%
+2026-06-18 22:19:00 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 29.646112, Val MAPE: 39.80%
+2026-06-18 22:19:02 - Centralized_NN - INFO - Early stopping at epoch 159
+2026-06-18 22:19:02 - Centralized_NN - INFO - Final Test Results: MAPE: 50.78% | RMSE: $1,431,269.38 | MAE: $993,218.50 | MPE: 17.11% | NRMSE: 16.06% | R2: 0.5180
+2026-06-18 22:19:02 - Centralized_NN - INFO - ==================================================
+2026-06-18 22:19:02 - Centralized_NN - INFO - ANN��ͳ������ completed successfully
+2026-06-18 22:19:02 - Centralized_NN - INFO - Best NN Test MAPE: 50.78%
+2026-06-18 22:19:02 - Centralized_NN - INFO - ==================================================

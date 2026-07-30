@@ -1,13 +1,13 @@
 Command: D:\Python\python.exe experiments/scenario_B_fedavg.py --num_rounds 20 --seed 789
 Return code: 0
-Elapsed: 34.7s
+Elapsed: 43.7s
 
 ================================================================================
-SCENARIO B: FedAvg BASELINE
-Using same data pipeline as Scenario C for fair comparison
+��ͳ����ѧϰ
+Using same data pipeline as ��������Эͬ����ѧϰ for fair comparison
 ================================================================================
 
-[Step 1] Loading federated datasets (same split as Scenario C)...
+[Step 1] Loading federated datasets (same split as ��������Эͬ����ѧϰ)...
   Rounds: 20, LR: 0.0005, Local Epochs: 20
   FedProx mu: 0.0 (pure FedAvg)
   Strategy: size_only
@@ -220,9 +220,11 @@ Test Set Results (using best checkpoint):
   Saved: results\logs\scene_B_client_metrics.csv
   Saved: results\logs\scene_B_training_history.json
   Results saved: results\fedavg_results.csv
+  Predictions saved: results\fedavg_predictions.csv
+  Predictions saved: results\fedavg_predictions_bias_corrected.csv
 
 ================================================================================
-SCENARIO B COMPLETED!
+��ͳ����ѧϰ COMPLETED!
 ================================================================================
   Best Round: 20
   Best Val MAPE: 34.65%
@@ -233,4 +235,4 @@ SCENARIO B COMPLETED!
 ================================================================================
 
 --- STDERR ---
-2026-05-24 19:44:42 - FedAvg - INFO - Scenario B completed: Test MAPE=54.14%
+2026-06-18 22:23:44 - FedAvg - INFO - ��ͳ����ѧϰ completed: Test MAPE=54.14%

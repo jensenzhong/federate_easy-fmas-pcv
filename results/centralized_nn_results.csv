@@ -1,2 +1,2 @@
-scenario,model_type,training_samples,test_samples,hidden_dims,dropout,learning_rate,weight_decay,batch_size,best_epoch,best_val_loss,test_mape,test_rmse,test_mae,test_mpe,test_nrmse
-A_Prime_Neural_Network,PyTorch_MLP,550,70,"[128, 128, 64, 32]",0.1,0.001,0.0001,32,86,19.496867179870605,0.50576335,1406208.5,1018121.0,0.19836104,0.1577456
+scenario,model_type,training_samples,training_scope,local_validation_samples_withheld,test_samples,hidden_dims,dropout,learning_rate,weight_decay,batch_size,best_epoch,best_val_mape,test_mape,test_rmse,test_mae,test_mpe,test_nrmse,test_r2,test_mape_corrected,test_rmse_corrected,test_mae_corrected,test_mpe_corrected,test_r2_corrected,bias_correction_value
+ANN传统神经网络,PyTorch_MLP,438,federated_local_train_union,112,70,"[128, 128, 64, 32]",0.1,0.001,0.0001,32,84,0.32162312,0.43019307,1484185.0,1039525.0,-0.015124127,0.16649285,0.4816510081291199,0.4298853,1493582.2,1047087.44,-0.025161857,0.47506630420684814,0.010296832

@@ -1,0 +1,2 @@
+scenario,num_rounds,best_round,test_mape,test_rmse,test_mae,test_mpe,test_nrmse,test_r2,test_mape_corrected,test_rmse_corrected,test_mae_corrected,test_mpe_corrected,test_r2_corrected,bias_correction_value
+传统联邦学习,20,20,0.56156653,1678045.2,1203470.5,-0.02601535,0.1882397,0.3373968005180359,0.57439375,1561353.8,1107312.8,0.0914601,0.4263476133346557,-0.10763151

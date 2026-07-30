@@ -13,3 +13,230 @@
 2026-05-24 19:36:12 - Centralized_NN - INFO - Scenario A-Prime completed successfully
 2026-05-24 19:36:12 - Centralized_NN - INFO - Best NN Test MAPE: 50.58%
 2026-05-24 19:36:12 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:02:08 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-08 17:02:15 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1099.849265, Val MAPE: 99.64%
+2026-06-08 17:02:17 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 479.990402, Val MAPE: 91.03%
+2026-06-08 17:02:19 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 108.415010, Val MAPE: 55.72%
+2026-06-08 17:02:21 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-08 17:02:21 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 38.110072, Val MAPE: 35.68%
+2026-06-08 17:02:24 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 31.641551, Val MAPE: 46.08%
+2026-06-08 17:02:26 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 28.085373, Val MAPE: 43.10%
+2026-06-08 17:02:28 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1099.849265, Val MAPE: 99.64%
+2026-06-08 17:02:28 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 33.534086, Val MAPE: 44.56%
+2026-06-08 17:02:30 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 479.990402, Val MAPE: 91.03%
+2026-06-08 17:02:31 - Centralized_NN - INFO - Epoch [160/800] Train Loss: 27.825104, Val MAPE: 46.12%
+2026-06-08 17:02:32 - Centralized_NN - INFO - Early stopping at epoch 164
+2026-06-08 17:02:32 - Centralized_NN - INFO - Final Test Results: MAPE: 50.02% | RMSE: $1,459,400.38 | MAE: $1,004,333.38 | MPE: 17.63% | NRMSE: 16.37% | R2: 0.4988
+2026-06-08 17:02:32 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:02:32 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-08 17:02:32 - Centralized_NN - INFO - Best NN Test MAPE: 50.02%
+2026-06-08 17:02:32 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:02:33 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 108.415010, Val MAPE: 55.72%
+2026-06-08 17:02:35 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 38.110072, Val MAPE: 35.68%
+2026-06-08 17:02:38 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 31.641551, Val MAPE: 46.08%
+2026-06-08 17:02:40 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 28.085373, Val MAPE: 43.10%
+2026-06-08 17:02:41 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-08 17:02:42 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 33.534086, Val MAPE: 44.56%
+2026-06-08 17:02:44 - Centralized_NN - INFO - Epoch [160/800] Train Loss: 27.825104, Val MAPE: 46.12%
+2026-06-08 17:02:45 - Centralized_NN - INFO - Early stopping at epoch 164
+2026-06-08 17:02:45 - Centralized_NN - INFO - Final Test Results: MAPE: 50.02% | RMSE: $1,459,400.38 | MAE: $1,004,333.38 | MPE: 17.63% | NRMSE: 16.37% | R2: 0.4988
+2026-06-08 17:02:45 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:02:45 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-08 17:02:45 - Centralized_NN - INFO - Best NN Test MAPE: 50.02%
+2026-06-08 17:02:45 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:02:47 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1032.118988, Val MAPE: 99.59%
+2026-06-08 17:02:49 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 362.643123, Val MAPE: 87.34%
+2026-06-08 17:02:51 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 69.402863, Val MAPE: 46.56%
+2026-06-08 17:02:53 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-08 17:02:53 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 34.459160, Val MAPE: 37.14%
+2026-06-08 17:02:56 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 29.385762, Val MAPE: 43.25%
+2026-06-08 17:03:05 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 27.550605, Val MAPE: 43.26%
+2026-06-08 17:03:07 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1032.118988, Val MAPE: 99.59%
+2026-06-08 17:03:09 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 28.209786, Val MAPE: 42.69%
+2026-06-08 17:03:10 - Centralized_NN - INFO - Early stopping at epoch 150
+2026-06-08 17:03:10 - Centralized_NN - INFO - Final Test Results: MAPE: 55.78% | RMSE: $1,501,278.62 | MAE: $1,065,038.12 | MPE: 21.10% | NRMSE: 16.84% | R2: 0.4696
+2026-06-08 17:03:10 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:03:10 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-08 17:03:10 - Centralized_NN - INFO - Best NN Test MAPE: 55.78%
+2026-06-08 17:03:10 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:03:10 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 362.643123, Val MAPE: 87.34%
+2026-06-08 17:03:12 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 69.402863, Val MAPE: 46.56%
+2026-06-08 17:03:14 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 34.459160, Val MAPE: 37.14%
+2026-06-08 17:03:16 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 29.385762, Val MAPE: 43.25%
+2026-06-08 17:03:18 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 27.550605, Val MAPE: 43.26%
+2026-06-08 17:03:20 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-08 17:03:21 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 28.209786, Val MAPE: 42.69%
+2026-06-08 17:03:22 - Centralized_NN - INFO - Early stopping at epoch 150
+2026-06-08 17:03:22 - Centralized_NN - INFO - Final Test Results: MAPE: 55.78% | RMSE: $1,501,278.62 | MAE: $1,065,038.12 | MPE: 21.10% | NRMSE: 16.84% | R2: 0.4696
+2026-06-08 17:03:22 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:03:22 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-08 17:03:22 - Centralized_NN - INFO - Best NN Test MAPE: 55.78%
+2026-06-08 17:03:22 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:03:27 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1072.810242, Val MAPE: 99.75%
+2026-06-08 17:03:29 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 387.369725, Val MAPE: 90.45%
+2026-06-08 17:03:31 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 84.760138, Val MAPE: 47.45%
+2026-06-08 17:03:31 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-08 17:03:33 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 33.442894, Val MAPE: 39.84%
+2026-06-08 17:03:36 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 34.035503, Val MAPE: 43.75%
+2026-06-08 17:03:39 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 29.985054, Val MAPE: 45.53%
+2026-06-08 17:03:39 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1072.810242, Val MAPE: 99.75%
+2026-06-08 17:03:42 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 25.419247, Val MAPE: 44.95%
+2026-06-08 17:03:43 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 387.369725, Val MAPE: 90.45%
+2026-06-08 17:03:44 - Centralized_NN - INFO - Early stopping at epoch 154
+2026-06-08 17:03:44 - Centralized_NN - INFO - Final Test Results: MAPE: 56.78% | RMSE: $1,556,067.62 | MAE: $1,092,374.00 | MPE: 19.92% | NRMSE: 17.46% | R2: 0.4302
+2026-06-08 17:03:44 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:03:44 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-08 17:03:44 - Centralized_NN - INFO - Best NN Test MAPE: 56.78%
+2026-06-08 17:03:44 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:03:46 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 84.760138, Val MAPE: 47.45%
+2026-06-08 17:03:48 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 33.442894, Val MAPE: 39.84%
+2026-06-08 17:03:50 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 34.035503, Val MAPE: 43.75%
+2026-06-08 17:03:53 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 29.985054, Val MAPE: 45.53%
+2026-06-08 17:03:57 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 25.419247, Val MAPE: 44.95%
+2026-06-08 17:03:58 - Centralized_NN - INFO - Early stopping at epoch 154
+2026-06-08 17:03:58 - Centralized_NN - INFO - Final Test Results: MAPE: 56.78% | RMSE: $1,556,067.62 | MAE: $1,092,374.00 | MPE: 19.92% | NRMSE: 17.46% | R2: 0.4302
+2026-06-08 17:03:59 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:03:59 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-08 17:03:59 - Centralized_NN - INFO - Best NN Test MAPE: 56.78%
+2026-06-08 17:03:59 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:04:11 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-08 17:04:18 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1123.620854, Val MAPE: 99.72%
+2026-06-08 17:04:18 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1123.620854, Val MAPE: 99.72%
+2026-06-08 17:04:20 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 464.273390, Val MAPE: 91.11%
+2026-06-08 17:04:20 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 464.273390, Val MAPE: 91.11%
+2026-06-08 17:04:22 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 105.834118, Val MAPE: 54.09%
+2026-06-08 17:04:22 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 105.834118, Val MAPE: 54.09%
+2026-06-08 17:04:24 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 35.926872, Val MAPE: 33.16%
+2026-06-08 17:04:24 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 35.926872, Val MAPE: 33.16%
+2026-06-08 17:04:27 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 32.837091, Val MAPE: 45.64%
+2026-06-08 17:04:27 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 32.837091, Val MAPE: 45.64%
+2026-06-08 17:04:29 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 30.468593, Val MAPE: 41.26%
+2026-06-08 17:04:29 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 30.468593, Val MAPE: 41.26%
+2026-06-08 17:04:31 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 29.646112, Val MAPE: 39.80%
+2026-06-08 17:04:31 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 29.646112, Val MAPE: 39.80%
+2026-06-08 17:04:34 - Centralized_NN - INFO - Early stopping at epoch 159
+2026-06-08 17:04:34 - Centralized_NN - INFO - Final Test Results: MAPE: 50.78% | RMSE: $1,431,269.38 | MAE: $993,218.50 | MPE: 17.11% | NRMSE: 16.06% | R2: 0.5180
+2026-06-08 17:04:34 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:04:34 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-08 17:04:34 - Centralized_NN - INFO - Best NN Test MAPE: 50.78%
+2026-06-08 17:04:34 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:04:34 - Centralized_NN - INFO - Early stopping at epoch 159
+2026-06-08 17:04:34 - Centralized_NN - INFO - Final Test Results: MAPE: 50.78% | RMSE: $1,431,269.38 | MAE: $993,218.50 | MPE: 17.11% | NRMSE: 16.06% | R2: 0.5180
+2026-06-08 17:04:34 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:04:34 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-08 17:04:34 - Centralized_NN - INFO - Best NN Test MAPE: 50.78%
+2026-06-08 17:04:34 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:04:41 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-08 17:04:41 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-08 17:04:48 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1166.134103, Val MAPE: 99.85%
+2026-06-08 17:04:48 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1166.134103, Val MAPE: 99.85%
+2026-06-08 17:04:50 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 484.245998, Val MAPE: 93.61%
+2026-06-08 17:04:50 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 484.245998, Val MAPE: 93.61%
+2026-06-08 17:04:52 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 112.077680, Val MAPE: 55.70%
+2026-06-08 17:04:52 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 112.077680, Val MAPE: 55.70%
+2026-06-08 17:04:54 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 39.055366, Val MAPE: 37.07%
+2026-06-08 17:04:54 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 39.055366, Val MAPE: 37.07%
+2026-06-08 17:04:55 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 30.857982, Val MAPE: 41.87%
+2026-06-08 17:04:55 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 30.857982, Val MAPE: 41.87%
+2026-06-08 17:04:57 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 34.414184, Val MAPE: 40.55%
+2026-06-08 17:04:57 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 34.414184, Val MAPE: 40.55%
+2026-06-08 17:04:59 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 27.744526, Val MAPE: 42.50%
+2026-06-08 17:04:59 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 27.744526, Val MAPE: 42.50%
+2026-06-08 17:05:00 - Centralized_NN - INFO - Early stopping at epoch 155
+2026-06-08 17:05:00 - Centralized_NN - INFO - Final Test Results: MAPE: 46.94% | RMSE: $1,483,441.25 | MAE: $1,035,793.50 | MPE: 9.42% | NRMSE: 16.64% | R2: 0.4822
+2026-06-08 17:05:00 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:05:00 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-08 17:05:00 - Centralized_NN - INFO - Best NN Test MAPE: 46.94%
+2026-06-08 17:05:00 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:05:00 - Centralized_NN - INFO - Early stopping at epoch 155
+2026-06-08 17:05:00 - Centralized_NN - INFO - Final Test Results: MAPE: 46.94% | RMSE: $1,483,441.25 | MAE: $1,035,793.50 | MPE: 9.42% | NRMSE: 16.64% | R2: 0.4822
+2026-06-08 17:05:00 - Centralized_NN - INFO - ==================================================
+2026-06-08 17:05:00 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-08 17:05:00 - Centralized_NN - INFO - Best NN Test MAPE: 46.94%
+2026-06-08 17:05:00 - Centralized_NN - INFO - ==================================================
+2026-06-18 22:17:34 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-18 22:17:39 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1099.849265, Val MAPE: 99.64%
+2026-06-18 22:17:40 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 479.990402, Val MAPE: 91.03%
+2026-06-18 22:17:42 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 108.415010, Val MAPE: 55.72%
+2026-06-18 22:17:44 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 38.110072, Val MAPE: 35.68%
+2026-06-18 22:17:45 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 31.641551, Val MAPE: 46.08%
+2026-06-18 22:17:47 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 28.085373, Val MAPE: 43.10%
+2026-06-18 22:17:48 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 33.534086, Val MAPE: 44.56%
+2026-06-18 22:17:50 - Centralized_NN - INFO - Epoch [160/800] Train Loss: 27.825104, Val MAPE: 46.12%
+2026-06-18 22:17:50 - Centralized_NN - INFO - Early stopping at epoch 164
+2026-06-18 22:17:50 - Centralized_NN - INFO - Final Test Results: MAPE: 50.02% | RMSE: $1,459,400.38 | MAE: $1,004,333.38 | MPE: 17.63% | NRMSE: 16.37% | R2: 0.4988
+2026-06-18 22:17:50 - Centralized_NN - INFO - ==================================================
+2026-06-18 22:17:50 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-18 22:17:50 - Centralized_NN - INFO - Best NN Test MAPE: 50.02%
+2026-06-18 22:17:50 - Centralized_NN - INFO - ==================================================
+2026-06-18 22:17:58 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-18 22:18:03 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1032.118988, Val MAPE: 99.59%
+2026-06-18 22:18:04 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 362.643123, Val MAPE: 87.34%
+2026-06-18 22:18:06 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 69.402863, Val MAPE: 46.56%
+2026-06-18 22:18:08 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 34.459160, Val MAPE: 37.14%
+2026-06-18 22:18:09 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 29.385762, Val MAPE: 43.25%
+2026-06-18 22:18:11 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 27.550605, Val MAPE: 43.26%
+2026-06-18 22:18:13 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 28.209786, Val MAPE: 42.69%
+2026-06-18 22:18:13 - Centralized_NN - INFO - Early stopping at epoch 150
+2026-06-18 22:18:13 - Centralized_NN - INFO - Final Test Results: MAPE: 55.78% | RMSE: $1,501,278.62 | MAE: $1,065,038.12 | MPE: 21.10% | NRMSE: 16.84% | R2: 0.4696
+2026-06-18 22:18:13 - Centralized_NN - INFO - ==================================================
+2026-06-18 22:18:13 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-18 22:18:13 - Centralized_NN - INFO - Best NN Test MAPE: 55.78%
+2026-06-18 22:18:13 - Centralized_NN - INFO - ==================================================
+2026-06-18 22:18:21 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-18 22:18:26 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1072.810242, Val MAPE: 99.75%
+2026-06-18 22:18:28 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 387.369725, Val MAPE: 90.45%
+2026-06-18 22:18:29 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 84.760138, Val MAPE: 47.45%
+2026-06-18 22:18:31 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 33.442894, Val MAPE: 39.84%
+2026-06-18 22:18:33 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 34.035503, Val MAPE: 43.75%
+2026-06-18 22:18:34 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 29.985054, Val MAPE: 45.53%
+2026-06-18 22:18:36 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 25.419247, Val MAPE: 44.95%
+2026-06-18 22:18:37 - Centralized_NN - INFO - Early stopping at epoch 154
+2026-06-18 22:18:37 - Centralized_NN - INFO - Final Test Results: MAPE: 56.78% | RMSE: $1,556,067.62 | MAE: $1,092,374.00 | MPE: 19.92% | NRMSE: 17.46% | R2: 0.4302
+2026-06-18 22:18:37 - Centralized_NN - INFO - ==================================================
+2026-06-18 22:18:37 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-18 22:18:37 - Centralized_NN - INFO - Best NN Test MAPE: 56.78%
+2026-06-18 22:18:37 - Centralized_NN - INFO - ==================================================
+2026-06-18 22:18:45 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-18 22:18:50 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1123.620854, Val MAPE: 99.72%
+2026-06-18 22:18:52 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 464.273390, Val MAPE: 91.11%
+2026-06-18 22:18:53 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 105.834118, Val MAPE: 54.09%
+2026-06-18 22:18:55 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 35.926872, Val MAPE: 33.16%
+2026-06-18 22:18:57 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 32.837091, Val MAPE: 45.64%
+2026-06-18 22:18:58 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 30.468593, Val MAPE: 41.26%
+2026-06-18 22:19:00 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 29.646112, Val MAPE: 39.80%
+2026-06-18 22:19:02 - Centralized_NN - INFO - Early stopping at epoch 159
+2026-06-18 22:19:02 - Centralized_NN - INFO - Final Test Results: MAPE: 50.78% | RMSE: $1,431,269.38 | MAE: $993,218.50 | MPE: 17.11% | NRMSE: 16.06% | R2: 0.5180
+2026-06-18 22:19:02 - Centralized_NN - INFO - ==================================================
+2026-06-18 22:19:02 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-18 22:19:02 - Centralized_NN - INFO - Best NN Test MAPE: 50.78%
+2026-06-18 22:19:02 - Centralized_NN - INFO - ==================================================
+2026-06-18 22:20:12 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-18 22:20:20 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1166.134103, Val MAPE: 99.85%
+2026-06-18 22:20:22 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 484.245998, Val MAPE: 93.61%
+2026-06-18 22:20:23 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 112.077680, Val MAPE: 55.70%
+2026-06-18 22:20:25 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 39.055366, Val MAPE: 37.07%
+2026-06-18 22:20:27 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 30.857982, Val MAPE: 41.87%
+2026-06-18 22:20:28 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 34.414184, Val MAPE: 40.55%
+2026-06-18 22:20:30 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 27.744526, Val MAPE: 42.50%
+2026-06-18 22:20:31 - Centralized_NN - INFO - Early stopping at epoch 155
+2026-06-18 22:20:31 - Centralized_NN - INFO - Final Test Results: MAPE: 46.94% | RMSE: $1,483,441.25 | MAE: $1,035,793.50 | MPE: 9.42% | NRMSE: 16.64% | R2: 0.4822
+2026-06-18 22:20:31 - Centralized_NN - INFO - ==================================================
+2026-06-18 22:20:31 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-18 22:20:31 - Centralized_NN - INFO - Best NN Test MAPE: 46.94%
+2026-06-18 22:20:31 - Centralized_NN - INFO - ==================================================
+2026-06-26 21:40:17 - Centralized_NN - INFO - Starting ANN传统神经网络
+2026-06-26 21:40:31 - Centralized_NN - INFO - Epoch [20/800] Train Loss: 1099.849265, Val MAPE: 99.64%
+2026-06-26 21:40:35 - Centralized_NN - INFO - Epoch [40/800] Train Loss: 479.990402, Val MAPE: 91.03%
+2026-06-26 21:40:37 - Centralized_NN - INFO - Epoch [60/800] Train Loss: 108.415010, Val MAPE: 55.72%
+2026-06-26 21:40:41 - Centralized_NN - INFO - Epoch [80/800] Train Loss: 38.110072, Val MAPE: 35.68%
+2026-06-26 21:40:44 - Centralized_NN - INFO - Epoch [100/800] Train Loss: 31.641551, Val MAPE: 46.08%
+2026-06-26 21:40:47 - Centralized_NN - INFO - Epoch [120/800] Train Loss: 28.085373, Val MAPE: 43.10%
+2026-06-26 21:40:49 - Centralized_NN - INFO - Epoch [140/800] Train Loss: 33.534086, Val MAPE: 44.56%
+2026-06-26 21:40:53 - Centralized_NN - INFO - Epoch [160/800] Train Loss: 27.825104, Val MAPE: 46.12%
+2026-06-26 21:40:53 - Centralized_NN - INFO - Early stopping at epoch 164
+2026-06-26 21:40:53 - Centralized_NN - INFO - Final Test Results: MAPE: 43.02% | RMSE: $1,484,185.00 | MAE: $1,039,525.00 | MPE: -1.51% | NRMSE: 16.65% | R2: 0.4817
+2026-06-26 21:40:53 - Centralized_NN - INFO - ==================================================
+2026-06-26 21:40:53 - Centralized_NN - INFO - ANN传统神经网络 completed successfully
+2026-06-26 21:40:53 - Centralized_NN - INFO - Best NN Test MAPE: 43.02%
+2026-06-26 21:40:53 - Centralized_NN - INFO - ==================================================

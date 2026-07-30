@@ -1,0 +1,2 @@
+selected_server_lr,selected_update_clip_norm,selected_max_coordinate_step_ratio,selection_metric,selected_best_val_mape_mean,selected_best_val_mape_std,selected_n_success,expected_seed_count,fallback_to_default,seeds
+0.5,,1.0,mean_best_val_mape,0.368074285,0.04547023993469188,2,2,False,"777,888"

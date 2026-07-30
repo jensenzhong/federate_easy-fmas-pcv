@@ -1,0 +1,97 @@
+======================================================================
+MULTI-SEED EXPERIMENT RUNNER
+======================================================================
+Scenarios: ['FEDYOGI', 'VG_FEDYOGI_TR', 'MAS_VG_FEDYOGI_TR']
+Seeds: [42, 123, 456, 789, 2024]
+Total runs: 15
+
+============================================================
+Experiment: 自适应联邦学习（FedYogi-TR） [FEDYOGI]
+============================================================
+
+  Running 自适应联邦学习（FedYogi-TR） (seed=42)...
+    [OK] 55.6s MAPE=0.42322993
+
+  Running 自适应联邦学习（FedYogi-TR） (seed=123)...
+    [OK] 55.4s MAPE=0.4993004
+
+  Running 自适应联邦学习（FedYogi-TR） (seed=456)...
+    [OK] 54.2s MAPE=0.53500766
+
+  Running 自适应联邦学习（FedYogi-TR） (seed=789)...
+    [OK] 55.8s MAPE=0.56067306
+
+  Running 自适应联邦学习（FedYogi-TR） (seed=2024)...
+    [OK] 53.9s MAPE=0.58628196
+
+============================================================
+Experiment: 验证引导自适应联邦学习（VG-FedYogi-TR） [VG_FEDYOGI_TR]
+============================================================
+
+  Running 验证引导自适应联邦学习（VG-FedYogi-TR） (seed=42)...
+    [OK] 77.4s MAPE=0.42802858
+
+  Running 验证引导自适应联邦学习（VG-FedYogi-TR） (seed=123)...
+    [OK] 73.5s MAPE=0.44955593
+
+  Running 验证引导自适应联邦学习（VG-FedYogi-TR） (seed=456)...
+    [OK] 74.7s MAPE=0.47299063
+
+  Running 验证引导自适应联邦学习（VG-FedYogi-TR） (seed=789)...
+    [OK] 75.8s MAPE=0.6081546
+
+  Running 验证引导自适应联邦学习（VG-FedYogi-TR） (seed=2024)...
+    [OK] 74.0s MAPE=0.46674618
+
+============================================================
+Experiment: 多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR） [MAS_VG_FEDYOGI_TR]
+============================================================
+
+  Running 多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR） (seed=42)...
+    [OK] 208.5s MAPE=0.42802858
+
+  Running 多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR） (seed=123)...
+    [OK] 152.0s MAPE=0.44955593
+
+  Running 多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR） (seed=456)...
+    [OK] 147.8s MAPE=0.47299063
+
+  Running 多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR） (seed=789)...
+    [OK] 145.9s MAPE=0.6081546
+
+  Running 多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR） (seed=2024)...
+    [OK] 136.8s MAPE=0.46674618
+
+
+All results saved to results\multi_seed\all_results.csv
+
+======================================================================
+MULTI-SEED SUMMARY (mean +/- std)
+======================================================================
+
+  自适应联邦学习（FedYogi-TR）: n=5
+    MAPE: 52.09% +/- 6.34%
+    RMSE: $1,699,221 +/- $126,534
+    MAE: $1,230,727 +/- $133,747
+    MPE: -13.07% +/- 13.94%
+    R2: 0.3176 +/- 0.1048
+    MAPE (bias corrected): 52.98% +/- 7.03%
+
+  验证引导自适应联邦学习（VG-FedYogi-TR）: n=5
+    MAPE: 48.51% +/- 7.10%
+    RMSE: $1,620,081 +/- $95,694
+    MAE: $1,164,206 +/- $101,611
+    MPE: -12.56% +/- 12.98%
+    R2: 0.3807 +/- 0.0735
+    MAPE (bias corrected): 50.47% +/- 9.61%
+
+  多智能体协同验证引导自适应联邦学习（MAS-VG-FedYogi-TR）: n=5
+    MAPE: 48.51% +/- 7.10%
+    RMSE: $1,620,081 +/- $95,694
+    MAE: $1,164,206 +/- $101,611
+    MPE: -12.56% +/- 12.98%
+    R2: 0.3807 +/- 0.0735
+    MAPE (bias corrected): 50.47% +/- 9.61%
+
+
+Next step: python scripts/statistical_analysis.py

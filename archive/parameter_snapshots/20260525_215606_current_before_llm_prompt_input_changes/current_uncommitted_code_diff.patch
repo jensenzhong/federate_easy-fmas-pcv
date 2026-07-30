@@ -1,0 +1,27 @@
+﻿diff --git a/experiments/scenario_C_llm.py b/experiments/scenario_C_llm.py
+index cf957cc..e94e215 100644
+--- a/experiments/scenario_C_llm.py
++++ b/experiments/scenario_C_llm.py
+@@ -76,6 +76,12 @@ def parse_args():
+         choices=["deepseek", "qwen", "openai"],
+         help="选择LLM提供商（默认使用config中的default_provider）"
+     )
++    parser.add_argument(
++        "--temperature",
++        type=float,
++        default=None,
++        help="LLM采样温度；仅在--use_llm时覆盖配置文件中的scene_c.llm.temperature"
++    )
+     parser.add_argument(
+         "--learning_rate",
+         type=float,
+@@ -201,6 +207,9 @@ def run_with_llm(args, config, client_train_sets, client_val_sets,
+     
+     # 创建LLM规划器
+     print("\n[LLM] Initializing LLM Planner...")
++    if args.temperature is not None:
++        config.setdefault('scene_c', {}).setdefault('llm', {})['temperature'] = args.temperature
++        print(f"[LLM] Temperature override: {args.temperature}")
+     llm_planner = create_llm_planner(config, config['output']['logs_dir'], provider_override=args.llm_provider)
+     active_provider = args.llm_provider or config['scene_c']['llm'].get('default_provider')
+     print(f"[LLM] Provider: {active_provider}")
