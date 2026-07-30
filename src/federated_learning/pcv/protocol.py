@@ -1,5 +1,6 @@
 """Deterministic, client-local data partition construction."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from hashlib import sha256
 import math
@@ -7,6 +8,9 @@ import unicodedata
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
+
+from .client_evaluation import MetricSums, aggregate_metric_sums, build_vote
+from .schemas import ClientTelemetry, LocalCandidateVote
 
 
 PARTITION_PUBLICATION_PROTOCOL = "strict_partition_csv_commit_v1"
@@ -151,6 +155,144 @@ def require_test_unlock(
         raise TestPartitionLocked(
             "locked test is unavailable before frozen formal evaluation"
         )
+
+
+class ClientDataVault:
+    """Own client-private partitions and expose aggregate-only operations."""
+
+    __slots__ = (
+        "client_id",
+        "__train_dataset",
+        "__controller_validation_dataset",
+        "__locked_test_dataset",
+        "__train_fn",
+        "__telemetry_fn",
+        "__metric_sums_fn",
+    )
+
+    def __init__(
+        self,
+        *,
+        client_id: str,
+        train_dataset,
+        controller_validation_dataset,
+        locked_test_dataset,
+        train_fn: Callable,
+        telemetry_fn: Callable,
+        metric_sums_fn: Callable,
+    ) -> None:
+        if not isinstance(client_id, str) or not client_id.strip():
+            raise ValueError("client_id must be a non-empty string")
+        for name, callback in (
+            ("train_fn", train_fn),
+            ("telemetry_fn", telemetry_fn),
+            ("metric_sums_fn", metric_sums_fn),
+        ):
+            if not callable(callback):
+                raise TypeError(f"{name} must be callable")
+        self.client_id = client_id
+        self.__train_dataset = train_dataset
+        self.__controller_validation_dataset = controller_validation_dataset
+        self.__locked_test_dataset = locked_test_dataset
+        self.__train_fn = train_fn
+        self.__telemetry_fn = telemetry_fn
+        self.__metric_sums_fn = metric_sums_fn
+
+    def train_local(self, global_state, training_config, seed):
+        return self.__train_fn(
+            self.__train_dataset,
+            global_state,
+            training_config,
+            seed,
+        )
+
+    def controller_telemetry(self, model_state) -> ClientTelemetry:
+        telemetry = self.__telemetry_fn(
+            self.client_id,
+            self.__controller_validation_dataset,
+            model_state,
+        )
+        if not isinstance(telemetry, ClientTelemetry):
+            raise TypeError("telemetry_fn must return ClientTelemetry")
+        if telemetry.client_id != self.client_id:
+            raise ValueError("telemetry client_id must match the vault client")
+        return telemetry
+
+    def _validated_metric_sums(self, dataset, model_state) -> MetricSums:
+        sums = self.__metric_sums_fn(dataset, model_state)
+        if not isinstance(sums, MetricSums):
+            raise TypeError("metric_sums_fn must return MetricSums")
+        return sums
+
+    def evaluate_candidates(
+        self,
+        candidate_states: dict[str, dict],
+        stronger_anchor_id: str,
+    ) -> list[LocalCandidateVote]:
+        if not isinstance(candidate_states, dict):
+            raise TypeError("candidate_states must be a dictionary")
+        candidate_items = list(candidate_states.items())
+        if not candidate_items:
+            raise ValueError("candidate evaluation requires at least one candidate")
+
+        candidate_ids = [candidate_id for candidate_id, _ in candidate_items]
+        if any(
+            not isinstance(candidate_id, str) or not candidate_id.strip()
+            for candidate_id in candidate_ids
+        ):
+            raise ValueError("candidate IDs must be non-empty strings")
+        if len(set(candidate_ids)) != len(candidate_ids):
+            raise ValueError("duplicate candidate IDs are not allowed")
+        if stronger_anchor_id not in set(candidate_ids):
+            raise ValueError("stronger anchor must exist among candidate states")
+
+        candidate_sums = [
+            (
+                candidate_id,
+                self._validated_metric_sums(
+                    self.__controller_validation_dataset,
+                    model_state,
+                ),
+            )
+            for candidate_id, model_state in candidate_items
+        ]
+        sample_counts = {sums.n for _, sums in candidate_sums}
+        if len(sample_counts) != 1:
+            raise ValueError("candidate sample_count values must be consistent")
+
+        metrics = {
+            candidate_id: aggregate_metric_sums([sums])
+            for candidate_id, sums in candidate_sums
+        }
+        ranked_ids = sorted(
+            metrics,
+            key=lambda candidate_id: (
+                float(metrics[candidate_id]["mape"]),
+                candidate_id,
+            ),
+        )
+        anchor = metrics[stronger_anchor_id]
+        confidence = 1.0 / len(ranked_ids)
+        return [
+            build_vote(
+                client_id=self.client_id,
+                candidate_id=candidate_id,
+                sample_count=int(metrics[candidate_id]["sample_count"]),
+                candidate_mape=float(metrics[candidate_id]["mape"]),
+                candidate_rmse=float(metrics[candidate_id]["rmse"]),
+                anchor_mape=float(anchor["mape"]),
+                anchor_rmse=float(anchor["rmse"]),
+                rank=rank,
+                confidence=confidence,
+            )
+            for rank, candidate_id in enumerate(ranked_ids, start=1)
+        ]
+
+    def final_test_sums(self, model_state, unlock_context) -> MetricSums:
+        if not isinstance(unlock_context, dict):
+            raise TypeError("unlock_context must be a dictionary")
+        require_test_unlock(**unlock_context)
+        return self._validated_metric_sums(self.__locked_test_dataset, model_state)
 
 
 @dataclass(frozen=True)
