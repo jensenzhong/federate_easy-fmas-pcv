@@ -1,7 +1,9 @@
 """Immutable value objects shared by the FMAS-PCV protocol."""
 
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
 import math
+from types import MappingProxyType
 from typing import Any
 
 
@@ -27,12 +29,19 @@ class ClientTelemetry:
 @dataclass(frozen=True)
 class CandidateAction:
     candidate_id: str
-    weights: dict[str, float]
+    weights: Mapping[str, float]
     server_optimizer: str
     server_lr_scale: float
     update_clip_norm: float | None
     source: str
     rationale: str
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "weights",
+            MappingProxyType(dict(self.weights)),
+        )
 
     def validate(self, client_ids: tuple[str, ...]) -> None:
         if (
@@ -44,8 +53,8 @@ class CandidateAction:
             or len(set(client_ids)) != len(client_ids)
         ):
             raise ValueError("client ids must be non-empty and unique")
-        if not isinstance(self.weights, dict):
-            raise ValueError("candidate weights must be a dictionary")
+        if not isinstance(self.weights, Mapping):
+            raise ValueError("candidate weights must be a mapping")
         if set(self.weights) != set(client_ids):
             raise ValueError("candidate weights must match client ids")
 
@@ -107,4 +116,11 @@ class CandidateDecision:
     selected_candidate_id: str
     gate_status: str
     rationale: str
-    diagnostics: dict[str, Any] = field(default_factory=dict)
+    diagnostics: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "diagnostics",
+            MappingProxyType(dict(self.diagnostics)),
+        )

@@ -1,9 +1,9 @@
 """Deterministic, client-local data partition construction."""
 
-from collections.abc import Mapping
 from dataclasses import dataclass
 from hashlib import sha256
 import math
+import unicodedata
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -21,38 +21,44 @@ class TestPartitionLocked(RuntimeError):
     """Raised when locked-test access is requested before formal unlock."""
 
 
-FORBIDDEN_PROMPT_KEYS = {
-    "raw",
-    "raw_data",
-    "raw_features",
-    "raw_labels",
-    "raw_rows",
-    "label",
-    "labels",
-    "row_prediction",
-    "row_predictions",
-    "predictions",
-    "residuals",
-    "test_loss",
-    "test_mape",
-    "test_rmse",
-    "test_mae",
-    "test_r2",
-    "test_metrics",
-    "locked_test",
-}
+APPROVED_PROMPT_KEYS = frozenset(
+    {
+        "round_index",
+        "clients",
+        "client_id",
+        "sample_count",
+        "train_loss",
+        "val_mape",
+        "val_rmse",
+        "update_norm",
+        "cosine_to_mean",
+        "cosine_to_previous",
+    }
+)
 
 
 def assert_prompt_payload_safe(payload) -> None:
-    """Reject raw, row-level, or locked-test data anywhere in a payload."""
-    if isinstance(payload, Mapping):
+    """Allow only approved aggregate fields and JSON-safe finite values."""
+    if type(payload) is dict:
         for key, value in payload.items():
-            if str(key).strip().lower() in FORBIDDEN_PROMPT_KEYS:
-                raise PrivacyViolation(f"prohibited prompt field: {key}")
+            if type(key) is not str:
+                raise PrivacyViolation("prompt field names must be exact strings")
+            normalized_key = unicodedata.normalize("NFKC", key).casefold()
+            if normalized_key not in APPROVED_PROMPT_KEYS:
+                raise PrivacyViolation(f"unapproved prompt field: {key}")
             assert_prompt_payload_safe(value)
-    elif isinstance(payload, (list, tuple)):
+    elif type(payload) in (list, tuple):
         for value in payload:
             assert_prompt_payload_safe(value)
+    elif type(payload) is float:
+        if not math.isfinite(payload):
+            raise PrivacyViolation("prompt floats must be finite")
+    elif payload is None or type(payload) in (str, int, bool):
+        return
+    else:
+        raise PrivacyViolation(
+            f"unsupported prompt value type: {type(payload).__name__}"
+        )
 
 
 def require_test_unlock(

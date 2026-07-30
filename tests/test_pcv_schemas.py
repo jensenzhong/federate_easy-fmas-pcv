@@ -145,3 +145,34 @@ def test_candidate_action_rejects_empty_or_duplicate_expected_client_ids(client_
 def test_candidate_action_rejects_blank_identity_fields(field):
     with pytest.raises(ValueError):
         _candidate(**{field: "  "}).validate(CLIENT_IDS)
+
+
+def test_candidate_weights_are_defensively_copied_and_immutable():
+    source_weights = {
+        "client_01": 0.3,
+        "client_02": 0.4,
+        "client_03": 0.3,
+    }
+    candidate = _candidate(weights=source_weights)
+    candidate.validate(CLIENT_IDS)
+
+    source_weights["client_01"] = 0.8
+    assert candidate.weights["client_01"] == 0.3
+    with pytest.raises(TypeError):
+        candidate.weights["client_01"] = 0.8
+
+
+def test_candidate_decision_diagnostics_are_defensively_copied_and_immutable():
+    source_diagnostics = {"vote_margin": 0.2}
+    decision = CandidateDecision(
+        "performance_01",
+        "performance_01",
+        "accepted",
+        "safe",
+        diagnostics=source_diagnostics,
+    )
+
+    source_diagnostics["vote_margin"] = 0.9
+    assert decision.diagnostics["vote_margin"] == 0.2
+    with pytest.raises(TypeError):
+        decision.diagnostics["vote_margin"] = 0.9

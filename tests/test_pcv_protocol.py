@@ -36,16 +36,54 @@ def test_prompt_rejects_forbidden_keys_case_insensitively():
 
 
 @pytest.mark.parametrize(
+    "unknown_key",
+    (
+        "features",
+        "ground_truth",
+        "teſt_mape",
+    ),
+)
+def test_prompt_rejects_unknown_or_unicode_normalized_keys(unknown_key):
+    with pytest.raises(PrivacyViolation):
+        assert_prompt_payload_safe({unknown_key: 0.4})
+
+
+def test_prompt_rejects_non_exact_string_keys():
+    class K(str):
+        pass
+
+    for key in (1, K("round_index")):
+        with pytest.raises(PrivacyViolation):
+            assert_prompt_payload_safe({key: 2})
+
+
+@pytest.mark.parametrize(
     "payload",
     (
-        {"outer": {"raw_features": [1.0]}},
-        {"outer": [{"safe": 1}, {"labels": [2.0]}]},
-        {"outer": ({"row_predictions": [3.0]},)},
+        {"clients": [{"client_id": "client_01", "raw_features": [1.0]}]},
+        {"clients": [{"client_id": "client_01", "labels": [2.0]}]},
+        {"clients": ({"client_id": "client_01", "row_predictions": [3.0]},)},
     ),
 )
 def test_prompt_rejects_forbidden_keys_in_nested_dict_list_or_tuple(payload):
     with pytest.raises(PrivacyViolation):
         assert_prompt_payload_safe(payload)
+
+
+@pytest.mark.parametrize(
+    "unsafe_value",
+    (
+        {1, 2},
+        iter((1, 2)),
+        object(),
+        float("nan"),
+        float("inf"),
+        float("-inf"),
+    ),
+)
+def test_prompt_rejects_non_json_or_non_finite_values(unsafe_value):
+    with pytest.raises(PrivacyViolation):
+        assert_prompt_payload_safe({"round_index": unsafe_value})
 
 
 def test_prompt_accepts_approved_aggregate_telemetry():
@@ -66,6 +104,10 @@ def test_prompt_accepts_approved_aggregate_telemetry():
             ],
         }
     )
+
+
+def test_prompt_normalizes_approved_key_spelling():
+    assert_prompt_payload_safe({"ＲＯＵＮＤ_ＩＮＤＥＸ": 2})
 
 
 @pytest.mark.parametrize(
