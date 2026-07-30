@@ -1,6 +1,9 @@
 {
+  "csv_name": "strict_partition_v1.csv",
   "dataset_sha256": "2bd607881e0355c54aa723f9d95b82d375b92ee85e37a9196b71b0d7f851ae8d",
   "partition_sha256": "eb527a597c43ef8ef45ec24788c88aedcd13b413115a80a9db5aceb519151935",
+  "publication_protocol": "strict_partition_csv_commit_v1",
+  "publication_schema": 1,
   "rows": 688,
   "split_seed": 20260730
 }

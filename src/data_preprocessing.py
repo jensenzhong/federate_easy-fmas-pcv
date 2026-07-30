@@ -17,6 +17,10 @@ import torch
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 
+from src.federated_learning.pcv.protocol import (
+    PARTITION_PUBLICATION_PROTOCOL,
+    PARTITION_PUBLICATION_SCHEMA,
+)
 from src.utils import load_data
 
 
@@ -343,6 +347,9 @@ def load_strict_partition_frames(
     except (FileNotFoundError, json.JSONDecodeError, OSError) as exc:
         raise ValueError("partition metadata is missing or invalid") from exc
     required_metadata_fields = {
+        "publication_protocol",
+        "publication_schema",
+        "csv_name",
         "dataset_sha256",
         "partition_sha256",
         "rows",
@@ -356,6 +363,12 @@ def load_strict_partition_frames(
             "partition metadata missing fields: "
             f"{sorted(missing_metadata_fields)}"
         )
+    if metadata["publication_protocol"] != PARTITION_PUBLICATION_PROTOCOL:
+        raise ValueError("metadata publication_protocol mismatch")
+    if metadata["publication_schema"] != PARTITION_PUBLICATION_SCHEMA:
+        raise ValueError("metadata publication_schema mismatch")
+    if metadata["csv_name"] != manifest_path.name:
+        raise ValueError("metadata csv_name mismatch")
     if metadata["dataset_sha256"] != dataset_sha256:
         raise ValueError("metadata dataset_sha256 mismatch")
     if metadata["partition_sha256"] != partition_sha256:

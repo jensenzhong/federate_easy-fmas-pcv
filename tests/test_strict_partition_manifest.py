@@ -46,6 +46,9 @@ def _write_manifest_pair(
     manifest_path.with_suffix(".json").write_text(
         json.dumps(
             {
+                "publication_protocol": "strict_partition_csv_commit_v1",
+                "publication_schema": 1,
+                "csv_name": manifest_path.name,
                 "dataset_sha256": dataset_sha256,
                 "partition_sha256": partition_sha256,
                 "rows": len(manifest),
@@ -313,6 +316,12 @@ def test_manifest_publisher_writes_verified_csv_json_pair(tmp_path):
     metadata_path = output.with_suffix(".json")
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     assert output.exists()
+    assert (
+        metadata["publication_protocol"]
+        == "strict_partition_csv_commit_v1"
+    )
+    assert metadata["publication_schema"] == 1
+    assert metadata["csv_name"] == output.name
     assert metadata["dataset_sha256"] == dataset_sha256
     assert metadata["partition_sha256"] == hashlib.sha256(
         output.read_bytes()
@@ -321,7 +330,7 @@ def test_manifest_publisher_writes_verified_csv_json_pair(tmp_path):
     assert not list(tmp_path.glob(".strict_partition_v1.*.tmp"))
 
 
-def test_manifest_publisher_rolls_back_csv_when_json_publish_fails(
+def test_manifest_publisher_leaves_no_final_when_metadata_publish_fails(
     tmp_path,
     monkeypatch,
 ):
@@ -348,6 +357,140 @@ def test_manifest_publisher_rolls_back_csv_when_json_publish_fails(
     assert not output.exists()
     assert not metadata_path.exists()
     assert not list(tmp_path.glob(".strict_partition_v1.*.tmp"))
+
+
+def test_manifest_publisher_rolls_back_sidecar_when_csv_commit_fails(
+    tmp_path,
+    monkeypatch,
+):
+    output = tmp_path / "strict_partition_v1.csv"
+    metadata_path = output.with_suffix(".json")
+    dataset_sha256 = "0" * 64
+    real_link = manifest_script.os.link
+    link_destinations = []
+
+    def fail_csv_link(source, destination):
+        destination = Path(destination)
+        link_destinations.append(destination)
+        if destination == output:
+            raise OSError("simulated CSV commit failure")
+        return real_link(source, destination)
+
+    monkeypatch.setattr(manifest_script.os, "link", fail_csv_link)
+
+    with pytest.raises(OSError, match="simulated CSV commit failure"):
+        manifest_script.publish_partition_artifacts(
+            _publishable_manifest(dataset_sha256),
+            output,
+            dataset_sha256=dataset_sha256,
+            split_seed=20260730,
+        )
+
+    assert link_destinations == [metadata_path, output]
+    assert not output.exists()
+    assert not metadata_path.exists()
+    assert not list(tmp_path.glob(".strict_partition_v1.*.tmp"))
+
+
+def _orphan_metadata(
+    output: Path,
+    manifest: pd.DataFrame,
+    dataset_sha256: str,
+) -> dict:
+    csv_bytes = manifest.to_csv(index=False).encode("utf-8")
+    return {
+        "publication_protocol": "strict_partition_csv_commit_v1",
+        "publication_schema": 1,
+        "csv_name": output.name,
+        "dataset_sha256": dataset_sha256,
+        "partition_sha256": hashlib.sha256(csv_bytes).hexdigest(),
+        "split_seed": 20260730,
+        "rows": len(manifest),
+    }
+
+
+def test_manifest_publisher_recovers_valid_uncommitted_sidecar(tmp_path):
+    output = tmp_path / "strict_partition_v1.csv"
+    metadata_path = output.with_suffix(".json")
+    dataset_sha256 = "0" * 64
+    manifest = _publishable_manifest(dataset_sha256)
+    metadata_path.write_text(
+        json.dumps(_orphan_metadata(output, manifest, dataset_sha256)),
+        encoding="utf-8",
+    )
+
+    manifest_script.publish_partition_artifacts(
+        manifest,
+        output,
+        dataset_sha256=dataset_sha256,
+        split_seed=20260730,
+    )
+
+    assert output.exists()
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    assert metadata["partition_sha256"] == hashlib.sha256(
+        output.read_bytes()
+    ).hexdigest()
+    assert metadata["csv_name"] == output.name
+
+
+def test_manifest_publisher_refuses_unknown_sidecar_without_deleting_it(
+    tmp_path,
+):
+    output = tmp_path / "strict_partition_v1.csv"
+    metadata_path = output.with_suffix(".json")
+    unknown = {
+        "publication_protocol": "strict_partition_csv_commit_v1",
+        "publication_schema": 1,
+        "csv_name": "different.csv",
+    }
+    metadata_path.write_text(json.dumps(unknown), encoding="utf-8")
+    original_bytes = metadata_path.read_bytes()
+
+    with pytest.raises(FileExistsError, match="unrecognized partition metadata"):
+        manifest_script.publish_partition_artifacts(
+            _publishable_manifest("0" * 64),
+            output,
+            dataset_sha256="0" * 64,
+            split_seed=20260730,
+        )
+
+    assert not output.exists()
+    assert metadata_path.read_bytes() == original_bytes
+
+
+def test_csv_commit_point_observes_complete_valid_sidecar(
+    tmp_path,
+    monkeypatch,
+):
+    output = tmp_path / "strict_partition_v1.csv"
+    metadata_path = output.with_suffix(".json")
+    real_link = manifest_script.os.link
+    observed_csv_commit = False
+
+    def observe_link(source, destination):
+        nonlocal observed_csv_commit
+        destination = Path(destination)
+        if destination == output:
+            observed_csv_commit = True
+            assert metadata_path.exists()
+            metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+            assert metadata["csv_name"] == output.name
+            assert metadata["partition_sha256"] == hashlib.sha256(
+                Path(source).read_bytes()
+            ).hexdigest()
+        return real_link(source, destination)
+
+    monkeypatch.setattr(manifest_script.os, "link", observe_link)
+
+    manifest_script.publish_partition_artifacts(
+        _publishable_manifest("0" * 64),
+        output,
+        dataset_sha256="0" * 64,
+        split_seed=20260730,
+    )
+
+    assert observed_csv_commit
 
 
 def test_manifest_publisher_cleans_temp_when_second_temp_creation_fails(
@@ -381,16 +524,23 @@ def test_manifest_publisher_cleans_temp_when_second_temp_creation_fails(
     assert not list(tmp_path.glob(".strict_partition_v1.*.tmp"))
 
 
-@pytest.mark.parametrize("existing_suffix", [".csv", ".json"])
+@pytest.mark.parametrize(
+    ("existing_suffix", "error_match"),
+    [
+        (".csv", "partition output already exists"),
+        (".json", "unrecognized partition metadata"),
+    ],
+)
 def test_manifest_publisher_refuses_any_existing_final(
     tmp_path,
     existing_suffix,
+    error_match,
 ):
     output = tmp_path / "strict_partition_v1.csv"
     existing_path = output.with_suffix(existing_suffix)
     existing_path.write_bytes(b"existing")
 
-    with pytest.raises(FileExistsError, match="partition output already exists"):
+    with pytest.raises(FileExistsError, match=error_match):
         manifest_script.publish_partition_artifacts(
             _publishable_manifest("0" * 64),
             output,
@@ -408,6 +558,8 @@ def test_manifest_publisher_does_not_overwrite_concurrent_final(
 ):
     output = tmp_path / "strict_partition_v1.csv"
 
+    metadata_path = output.with_suffix(".json")
+
     def concurrent_link(_source, destination):
         Path(destination).write_bytes(b"concurrent")
         raise FileExistsError("simulated concurrent publisher")
@@ -422,8 +574,8 @@ def test_manifest_publisher_does_not_overwrite_concurrent_final(
             split_seed=20260730,
         )
 
-    assert output.read_bytes() == b"concurrent"
-    assert not output.with_suffix(".json").exists()
+    assert not output.exists()
+    assert metadata_path.read_bytes() == b"concurrent"
     assert not list(tmp_path.glob(".strict_partition_v1.*.tmp"))
 
 
@@ -502,12 +654,21 @@ def test_strict_loader_requires_same_stem_metadata(tmp_path):
         load_strict_partition_frames(config, str(manifest_path))
 
 
-@pytest.mark.parametrize("metadata_key", ["dataset_sha256", "partition_sha256"])
+@pytest.mark.parametrize(
+    "metadata_key",
+    [
+        "publication_protocol",
+        "publication_schema",
+        "csv_name",
+        "dataset_sha256",
+        "partition_sha256",
+    ],
+)
 def test_strict_loader_rejects_tampered_metadata(tmp_path, metadata_key):
     config, manifest_path, _, _ = _strict_loader_fixture(tmp_path)
     metadata_path = manifest_path.with_suffix(".json")
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-    metadata[metadata_key] = "f" * 64
+    metadata[metadata_key] = "tampered"
     metadata_path.write_text(json.dumps(metadata), encoding="utf-8")
 
     with pytest.raises(ValueError, match=f"metadata {metadata_key} mismatch"):

@@ -12,6 +12,8 @@ sys.path.insert(0, str(project_root))
 import pandas as pd
 
 from src.federated_learning.pcv.protocol import (
+    PARTITION_PUBLICATION_PROTOCOL,
+    PARTITION_PUBLICATION_SCHEMA,
     PartitionRatios,
     build_partition_manifest,
 )
@@ -44,6 +46,30 @@ def _fsync_metadata_json(path: Path, metadata: dict) -> None:
         os.fsync(handle.fileno())
 
 
+def _read_candidate_orphan_metadata(
+    metadata_path: Path,
+    output: Path,
+) -> dict:
+    try:
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise FileExistsError(
+            f"unrecognized partition metadata: {metadata_path}"
+        ) from exc
+    if (
+        not isinstance(metadata, dict)
+        or metadata.get("publication_protocol")
+        != PARTITION_PUBLICATION_PROTOCOL
+        or metadata.get("publication_schema")
+        != PARTITION_PUBLICATION_SCHEMA
+        or metadata.get("csv_name") != output.name
+    ):
+        raise FileExistsError(
+            f"unrecognized partition metadata: {metadata_path}"
+        )
+    return metadata
+
+
 def publish_partition_artifacts(
     manifest: pd.DataFrame,
     output: Path,
@@ -56,8 +82,14 @@ def publish_partition_artifacts(
     output = Path(output)
     metadata_path = output.with_suffix(".json")
     output.parent.mkdir(parents=True, exist_ok=True)
-    if os.path.lexists(output) or os.path.lexists(metadata_path):
+    if os.path.lexists(output):
         raise FileExistsError(f"partition output already exists: {output}")
+    orphan_metadata = None
+    if os.path.lexists(metadata_path):
+        orphan_metadata = _read_candidate_orphan_metadata(
+            metadata_path,
+            output,
+        )
 
     temporary_paths: list[Path] = []
     published_paths: list[Path] = []
@@ -83,6 +115,9 @@ def publish_partition_artifacts(
         )
         partition_sha256 = hashlib.sha256(csv_temp.read_bytes()).hexdigest()
         metadata = {
+            "publication_protocol": PARTITION_PUBLICATION_PROTOCOL,
+            "publication_schema": PARTITION_PUBLICATION_SCHEMA,
+            "csv_name": output.name,
             "dataset_sha256": dataset_sha256,
             "partition_sha256": partition_sha256,
             "split_seed": split_seed,
@@ -93,15 +128,22 @@ def publish_partition_artifacts(
         if verified_metadata != metadata:
             raise RuntimeError("partition metadata temporary verification failed")
 
-        os.link(csv_temp, output)
-        published_paths.append(output)
+        if orphan_metadata is not None:
+            if orphan_metadata != metadata:
+                raise FileExistsError(
+                    f"unrecognized partition metadata: {metadata_path}"
+                )
+            metadata_path.unlink()
+
         os.link(json_temp, metadata_path)
         published_paths.append(metadata_path)
-
-        if hashlib.sha256(output.read_bytes()).hexdigest() != partition_sha256:
-            raise RuntimeError("published partition CSV hash verification failed")
         if json.loads(metadata_path.read_text(encoding="utf-8")) != metadata:
             raise RuntimeError("published partition metadata verification failed")
+
+        os.link(csv_temp, output)
+        published_paths.append(output)
+        if hashlib.sha256(output.read_bytes()).hexdigest() != partition_sha256:
+            raise RuntimeError("published partition CSV hash verification failed")
         return metadata
     except BaseException:
         for published_path in reversed(published_paths):
@@ -128,9 +170,6 @@ def main() -> int:
     )
     args = parser.parse_args()
     output = Path(args.output)
-    metadata_path = output.with_suffix(".json")
-    if os.path.lexists(output) or os.path.lexists(metadata_path):
-        raise FileExistsError(f"partition output already exists: {output}")
 
     study = load_study_manifest(Path(args.study_manifest))
     config = load_config(args.config)

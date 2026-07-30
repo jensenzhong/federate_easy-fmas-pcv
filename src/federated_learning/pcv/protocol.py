@@ -8,6 +8,10 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
+PARTITION_PUBLICATION_PROTOCOL = "strict_partition_csv_commit_v1"
+PARTITION_PUBLICATION_SCHEMA = 1
+
+
 @dataclass(frozen=True)
 class PartitionRatios:
     train: float
