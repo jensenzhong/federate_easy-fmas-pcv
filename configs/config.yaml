@@ -1,0 +1,450 @@
+# ==========================================
+# 联邦学习高速公路成本预测项目配置文件
+# Federated Learning for Highway Cost Prediction
+# ==========================================
+
+# ==========================================
+# 1. 数据路径配置
+# ==========================================
+data:
+  # 原始数据集
+  test_set: "Data/all_Data/FinalTestSet.csv"          # 最终测试集 (101个项目)
+  validation_set: "Data/all_Data/GlobalValidationSet.csv"  # 全局验证集 (101个项目)
+  
+  # 三公司训练数据
+  company_a: "Data/processed/Company_A_train.csv"     # 公司A (274个项目)
+  company_b: "Data/processed/Company_B_train.csv"     # 公司B (107个项目)
+  company_c: "Data/processed/Company_C_train.csv"     # 公司C (160个项目)
+  
+  # 输入特征列名
+  feature_columns:
+    - "BIDS"       # 投标人数
+    - "CPPR"       # 承包商过往表现评级
+    - "ContDays"   # 合同天数
+    - "LEN"        # 项目长度 (英里)
+    - "LANE"       # 车道数量
+    - "WDays"      # 天气天数
+    - "CPI"        # 消费者价格指数
+    - "ContSpend"  # 建筑支出
+    - "PLR"        # 最优惠贷款利率
+    - "PPI"        # 生产者价格指数
+  
+  # 目标变量列名
+  target_column: "ContAmnt"  # 合同金额
+
+# ==========================================
+# 2. 数据预处理配置
+# ==========================================
+preprocessing:
+  # 特征标准化
+  scaler: "StandardScaler"  # 使用StandardScaler进行特征标准化
+  
+  # 目标变量变换
+  target_transform: "power_0.25"  # 对ContAmnt进行0.25次幂变换 (Y = ContAmnt^0.25, 参考Zhang et al., 2023)
+  inverse_transform: "power_4"    # 预测后使用4次幂还原 (ContAmnt = Y^4)
+  
+  # 数据加载
+  random_seed: 42            # 随机种子（保证可复现性）
+  shuffle: true              # 是否打乱数据
+
+# ==========================================
+# 3. 数据分层阈值（用于分析，不用于训练）
+# ==========================================
+thresholds:
+  small_project_max: 1000000      # $1M - 小型项目上限
+  medium_project_max: 5000000     # $5M - 中型项目上限
+  # 大型项目: >= $5M
+
+# ==========================================
+# 4. 神经网络模型配置
+# ==========================================
+model:
+  # 网络结构
+  architecture:
+    input_dim: 10               # 输入特征维度
+    hidden_dims: [64, 32]       # 隐藏层维度 [第1层, 第2层]
+    output_dim: 1               # 输出维度
+    activation: "relu"          # 激活函数
+    dropout: 0.0                # Dropout比例 (0表示不使用)
+  
+  # 训练超参数
+  training:
+    learning_rate: 0.001        # 学习率
+    batch_size: 32              # 批量大小
+    optimizer: "adam"           # 优化器
+    loss_function: "mse"        # 损失函数 (均方误差)
+    
+  # 模型初始化
+  initialization:
+    method: "xavier_uniform"    # 权重初始化方法
+    seed: 42                    # 初始化随机种子
+
+# ==========================================
+# 5. 联邦学习配置
+# ==========================================
+federated_learning:
+  # 基本设置
+  num_rounds: 20                # 联邦学习总轮数
+  num_clients: 3                # 客户端数量（3个公司）
+  fedprox_mu: 0.01              # FedProx正则化系数 (mu), 0表示不使用
+  
+  # 客户端训练配置
+  client:
+    local_epochs: 20             # 每轮本地训练的epoch数
+    batch_size: 32              # 本地训练批量大小
+    learning_rate: 0.0005        # 本地学习率
+  
+  # 服务器配置
+  server:
+    fraction_fit: 1.0           # 每轮参与训练的客户端比例 (1.0=全部参与)
+    fraction_evaluate: 1.0      # 每轮参与评估的客户端比例
+    min_fit_clients: 3          # 最少参与训练的客户端数
+    min_evaluate_clients: 3     # 最少参与评估的客户端数
+    min_available_clients: 3    # 服务器等待的最少客户端数
+  
+  # FedAvg策略配置（场景B使用）
+  fedavg:
+    strategy: "weighted_average"  # 按数据量加权平均
+    initial_parameters: "random"  # 初始全局模型参数
+
+# ==========================================
+# 6. 集中式训练配置（场景A）
+# ==========================================
+centralized:
+  # 训练超参数
+  epochs: 100                   # 训练epoch数
+  batch_size: 32                # 批量大小
+  learning_rate: 0.001          # 学习率
+  
+  # 早停策略
+  early_stopping:
+    enabled: true               # 是否启用早停
+    patience: 15                # 容忍轮数（性能不提升的最大轮数）
+    min_delta: 0.001            # 最小改善阈值
+    monitor: "val_mape"         # 监控指标
+  
+  # 验证配置
+  validation:
+    split: 0.0                  # 不从训练集分割验证集（使用全局验证集）
+    frequency: 1                # 验证频率（每N个epoch验证一次）
+
+# ==========================================
+# 场景B: FedAvg基线配置
+# 数据配置与场景C完全相同，确保公平对比
+# 唯一差异：纯FedAvg（无FedProx、固定size_only策略、无LLM）
+# ==========================================
+scene_b:
+  data:
+    raw_csv: "Data/all_Data/Client_Data_Split_Cleaned.csv"
+    cleaned_csv: "Data/processed/Client_Data_Split_Cleaned_EN.csv"
+    client_column: "Client"
+    target_column: "ContAmnt"
+    feature_columns:
+      - "BIDS"
+      - "CPPR"
+      - "ContDays"
+      - "LEN"
+      - "LANE"
+      - "WeatherDelayDays"
+      - "CPI"
+      - "ContSpend"
+      - "PLR"
+      - "PPI"
+    drop_columns:
+      - "Dist"
+      - "ActualAmnt"
+    rename_map:
+      "Dist区域": "Dist"
+      "BIDS投标数量": "BIDS"
+      "WorkDays工期": "WeatherDelayDays"
+      "Length长度": "LEN"
+      "Lanes车道数": "LANE"
+      "ContDays合同日期": "ContDays"
+      "ContAmnt合同金额": "ContAmnt"
+      "CPPR承包商绩效评分": "CPPR"
+      "CPI消费物价指数": "CPI"
+      "ConstSpndg建设投资支出": "ContSpend"
+      "PLR基准贷款利率": "PLR"
+      "PPI (2 year lag)生产物价指数": "PPI"
+      "ActualAmnt实际结算金额": "ActualAmnt"
+    splits:
+      global_train: 0.8
+      global_val: 0.1
+      global_test: 0.1
+      local_val: 0.2
+
+  # 训练配置 - 与场景C保持一致的轮数和超参数
+  num_rounds: 20
+  batch_size: 32
+  learning_rate: 0.0005
+  local_epochs: 20
+
+  # FedAvg特有配置
+  fedprox_mu: 0.0           # 纯FedAvg，不使用FedProx
+  strategy: "size_only"     # 固定使用按数据量加权
+
+# ==========================================
+# 场景C: 多智能体联邦学习 + LLM决策 (MAS-FL-LLM)
+# ==========================================
+scene_c:
+  # --- scene_c data mapping (auto) ---
+  data:
+    raw_csv: "Data/all_Data/Client_Data_Split_Cleaned.csv"
+    cleaned_csv: "Data/processed/Client_Data_Split_Cleaned_EN.csv"
+    client_column: "Client"
+    target_column: "ContAmnt"
+    feature_columns:
+      - "BIDS"
+      - "CPPR"
+      - "ContDays"
+      - "LEN"
+      - "LANE"
+      - "WeatherDelayDays"
+      - "CPI"
+      - "ContSpend"
+      - "PLR"
+      - "PPI"
+    drop_columns:
+      - "Dist"
+      - "ActualAmnt"
+    rename_map:
+      "Dist区域": "Dist"
+      "BIDS投标数量": "BIDS"
+      "WorkDays工期": "WeatherDelayDays"
+      "Length长度": "LEN"
+      "Lanes车道数": "LANE"
+      "ContDays合同日期": "ContDays"
+      "ContAmnt合同金额": "ContAmnt"
+      "CPPR承包商绩效评分": "CPPR"
+      "CPI消费物价指数": "CPI"
+      "ConstSpndg建设投资支出": "ContSpend"
+      "PLR基准贷款利率": "PLR"
+      "PPI (2 year lag)生产物价指数": "PPI"
+      "ActualAmnt实际结算金额": "ActualAmnt"
+    splits:
+      global_train: 0.8
+      global_val: 0.1
+      global_test: 0.1
+      local_val: 0.2
+  # --- end scene_c data mapping ---
+
+
+  # 基本训练配置
+  num_rounds: 20                  # 联邦学习总轮数（与场景B统一为20轮）
+  batch_size: 32                  # 批量大小
+  learning_rate: 0.0005           # 基础学习率
+  local_epochs: 20                # 每轮本地训练epoch数
+  
+  # 聚合策略配置
+  # 支持的策略: size_only, perf_only, hybrid, fairness_clip
+  default_strategy: "size_only"   # 默认策略
+  
+  strategies:
+    - name: "size_only"           # 仅按样本数加权（等价FedAvg）
+      description: "权重与客户端样本数成正比"
+    
+    - name: "perf_only"           # 仅按性能加权
+      description: "权重与1/val_mape成正比，表现好的客户端权重更大"
+    
+    - name: "hybrid"              # 混合策略
+      description: "结合样本数和性能的加权"
+      lambda_hybrid: 0.5          # 性能权重占比，0=纯size，1=纯perf
+    
+    - name: "fairness_clip"       # 公平性约束策略
+      description: "限制大客户端权重上限，保护小客户端贡献"
+      lambda_hybrid: 0.3          # 性能权重占比
+      alpha_min: 0.1              # 每个客户端的最小权重下限
+      alpha_max: 0.6              # 每个客户端的最大权重上限
+  
+  # LLM配置（阶段3使用）- 优化版
+  llm:
+    enabled: true                 # 是否启用LLM决策
+    default_provider: "deepseek"  # 默认LLM提供商，可切换：deepseek, qwen, openai
+    providers:
+      deepseek:
+        model_name: "deepseek-chat"                  # DeepSeek模型
+        base_url: "https://api.deepseek.com"         # DeepSeek兼容OpenAI的Base URL
+        api_key_env: "DEEPSEEK_API_KEY"              # 环境变量读取API密钥
+      qwen:
+        model_name: "qwen-plus"                      # 或 qwen-max 等
+        base_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"  # 通义千问OpenAI兼容端点
+        api_key_env: "DASHSCOPE_API_KEY"
+      openai:
+        model_name: "gpt-4o-mini"                    # 或 gpt-4o 等
+        base_url: "https://api.openai.com/v1"
+        api_key_env: "OPENAI_API_KEY"
+    call_every_n_rounds: 1        # 每N轮调用一次LLM
+    recent_rounds: 10             # LLM分析最近多少轮的历史（从5增加到10）
+    max_tokens: 1024              # LLM最大输出token数
+    temperature: 0.8              # 采样温度（从0.7增加到0.8，增加多样性）
+    timeout: 60                   # 请求超时时间（秒）
+    force_initial_exploration: false  # false=LLM从第1轮开始自由选择；true=恢复前4轮固定探索
+    input_enhancement:
+      candidate_weight_preview: true      # 给LLM四种候选策略的本轮权重预览
+      candidate_validation_preview: true  # 给LLM四种候选聚合模型的validation-only预评估
+      marginal_effect_history: true       # 给LLM历史边际validation改善摘要
+      client_diagnostics: true            # 给LLM匿名客户端级validation诊断
+    parameter_bounds:
+      lr_scale_min: 0.5
+      lr_scale_max: 2.0
+      epoch_delta_min: -5
+      epoch_delta_max: 5
+      lambda_hybrid_min: 0.0
+      lambda_hybrid_max: 1.0
+      alpha_min_min: 0.0
+      alpha_max_max: 1.0
+
+# ==========================================
+# 7. 结果保存路径配置
+# ==========================================
+output:
+  # 根目录
+  base_dir: "results/"
+  
+  # 子目录
+  models_dir: "results/models/"       # 保存训练好的模型
+  logs_dir: "results/logs/"           # 训练日志
+  figures_dir: "results/figures/"     # 可视化图表
+  tensorboard_dir: "results/tensorboard/"  # TensorBoard日志
+  
+  # 模型文件名
+  model_names:
+    centralized: "centralized_model.pth"
+    fedavg: "fedavg_global_model.pth"
+    scenario_c: "scenario_c_model.pth"
+  
+  # 日志文件名
+  log_names:
+    centralized: "centralized_training.log"
+    fedavg: "fedavg_training.log"
+    scenario_c: "scenario_c.log"
+  
+  # 结果文件名
+  result_files:
+    metrics: "experiment_metrics.csv"       # 性能指标对比
+    predictions: "predictions.csv"          # 预测结果
+
+# ==========================================
+# 8. 评估指标配置
+# ==========================================
+evaluation:
+  # 主要指标
+  metrics:
+    - "MAPE"    # 平均绝对百分比误差 (主要指标)
+    - "RMSE"    # 均方根误差
+    - "MAE"     # 平均绝对误差
+    - "R2"      # R平方
+  
+  # 评估配置
+  batch_size: 64                # 评估时的批量大小
+  
+  # 按项目规模分层评估
+  stratified_evaluation:
+    enabled: true               # 是否进行分层评估
+    strata:
+      - "small"    # < $1M
+      - "medium"   # $1M - $5M
+      - "large"    # >= $5M
+
+# ==========================================
+# 9. 可视化配置
+# ==========================================
+visualization:
+  # 图表设置
+  figure_size: [12, 8]          # 默认图表大小 [宽, 高]
+  dpi: 300                      # 图像分辨率
+  style: "seaborn-v0_8"         # 绘图风格
+  
+  # 中文字体设置（Windows）
+  font:
+    family: "SimHei"            # 黑体（支持中文）
+    size: 11                    # 字体大小
+  
+  # 颜色配置
+  colors:
+    company_a: "blue"
+    company_b: "orange"
+    company_c: "green"
+    centralized: "red"
+    fedavg: "purple"
+    scenario_c: "darkgreen"
+  
+  # 生成的图表列表
+  figures:
+    - "convergence_curve"       # 收敛曲线图
+    - "performance_comparison"  # 性能对比条形图
+    - "error_distribution"      # 误差分布直方图
+    - "stratified_performance"  # 分层性能对比图
+
+# ==========================================
+# 10. 日志与调试配置
+# ==========================================
+logging:
+  # 日志级别
+  level: "INFO"                 # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  
+  # 日志格式
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  date_format: "%Y-%m-%d %H:%M:%S"
+  
+  # 输出配置
+  console: true                 # 是否输出到控制台
+  file: true                    # 是否输出到文件
+  
+  # 详细程度
+  verbose: true                 # 是否显示详细信息
+
+# ==========================================
+# 11. 实验配置
+# ==========================================
+experiment:
+  # 实验名称
+  name: "Federated-Learning-Highway-Cost-Prediction"
+  
+  # 重复次数（用于统计显著性测试）
+  num_runs: 1                   # 每个场景运行次数
+  
+  # 随机种子列表（多次运行时使用）
+  random_seeds: [42, 123, 456, 789, 2024]
+  
+  # 场景开关（控制哪些场景需要运行）
+  scenarios:
+    scenario_a_centralized: true    # 场景A: 集中式训练
+    scenario_b_fedavg: true         # 场景B: FedAvg基线
+    scenario_c_llm: false           # 场景C: 基于LLM API的预测（待开发）
+  
+  # 性能目标
+  targets:
+    mape_threshold: 0.30        # 目标MAPE阈值 (30%)
+
+# ==========================================
+# 12. 计算资源配置
+# ==========================================
+compute:
+  # 设备配置
+  device: "auto"                # auto, cpu, cuda, cuda:0
+  
+  # 多进程配置
+  num_workers: 4                # DataLoader工作进程数
+  pin_memory: true              # 是否将数据固定在内存中（GPU训练时加速）
+  
+  # 内存管理
+  batch_accumulation: 1         # 梯度累积步数（模拟更大batch_size）
+
+# ==========================================
+# 13. 项目元信息
+# ==========================================
+meta:
+  project_name: "Federated Learning for Highway Cost Prediction"
+  version: "2.0.0"
+  author: "待补充"
+  institution: "待补充"
+  created_date: "2025-10-08"
+  last_updated: "2025-11-26"
+  description: "联邦学习框架用于高速公路成本预测，包含集中式训练和FedAvg联邦学习基线"
+  
+  # 参考论文
+  references:
+    fedavg: "McMahan et al., 2017"
+    lasso_cost: "待补充原始论文引用"
+
