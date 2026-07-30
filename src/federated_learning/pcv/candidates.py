@@ -107,6 +107,8 @@ def weighted_average_state(
                 raise ValueError(f"state tensor shape mismatch for {key}")
             if tensor.dtype != reference.dtype:
                 raise ValueError(f"state tensor dtype mismatch for {key}")
+            if tensor.device != reference.device:
+                raise ValueError(f"state tensor device mismatch for {key}")
 
     averaged: dict[str, torch.Tensor] = {}
     for key in expected_keys:
@@ -142,6 +144,28 @@ def _candidate_key(candidate: CandidateAction) -> tuple[Any, ...]:
     )
 
 
+def _validate_anchor_identity(candidate: CandidateAction) -> bool:
+    is_reserved_id = candidate.candidate_id in _ANCHOR_ORDER
+    if candidate.source == "anchor" and not is_reserved_id:
+        raise ValueError("anchor source requires a canonical anchor id")
+    if not is_reserved_id:
+        return False
+    if candidate.source != "anchor":
+        raise ValueError("reserved anchor id requires anchor source")
+    if candidate.candidate_id == "anchor_fedavg" and (
+        candidate.server_optimizer != "fedavg"
+        or candidate.server_lr_scale != 1.0
+        or candidate.update_clip_norm is not None
+    ):
+        raise ValueError("anchor_fedavg has invalid anchor semantics")
+    if (
+        candidate.candidate_id == "anchor_fedyogi"
+        and candidate.server_optimizer != "fedyogi"
+    ):
+        raise ValueError("anchor_fedyogi has invalid anchor semantics")
+    return True
+
+
 def deduplicate_candidates(
     candidates: Sequence[CandidateAction],
     budget: int = _MAX_CANDIDATES,
@@ -149,27 +173,34 @@ def deduplicate_candidates(
     if isinstance(budget, bool) or not isinstance(budget, int) or budget <= 0:
         raise ValueError("candidate budget must be a positive integer")
     effective_budget = min(budget, _MAX_CANDIDATES)
-    ordered = sorted(
-        enumerate(candidates),
-        key=lambda item: (
-            _ANCHOR_ORDER.get(item[1].candidate_id, len(_ANCHOR_ORDER)),
-            item[0],
-        ),
-    )
-    anchor_count = sum(
-        candidate.candidate_id in _ANCHOR_ORDER
-        for candidate in candidates
-    )
-    if anchor_count > effective_budget:
-        raise ValueError("candidate budget cannot discard anchors")
+    client_ids = tuple(candidates[0].weights) if candidates else ()
 
-    client_ids = tuple(ordered[0][1].weights) if ordered else ()
-    for _, candidate in ordered:
+    canonical_by_id: dict[str, CandidateAction] = {}
+    proposals: list[CandidateAction] = []
+    for candidate in candidates:
         candidate.validate(client_ids)
+        if not _validate_anchor_identity(candidate):
+            proposals.append(candidate)
+            continue
+        existing = canonical_by_id.get(candidate.candidate_id)
+        if existing is None:
+            canonical_by_id[candidate.candidate_id] = candidate
+        elif _candidate_key(existing) != _candidate_key(candidate):
+            raise ValueError(
+                f"conflicting canonical anchor: {candidate.candidate_id}"
+            )
+
+    canonical_anchors = [
+        canonical_by_id[candidate_id]
+        for candidate_id in _ANCHOR_ORDER
+        if candidate_id in canonical_by_id
+    ]
+    if len(canonical_anchors) > effective_budget:
+        raise ValueError("candidate budget cannot discard anchors")
 
     selected: list[CandidateAction] = []
     seen: set[tuple[Any, ...]] = set()
-    for _, candidate in ordered:
+    for candidate in [*canonical_anchors, *proposals]:
         key = _candidate_key(candidate)
         if key in seen:
             continue
@@ -247,6 +278,42 @@ def _project_weights(
     return projected
 
 
+def _validate_telemetry(
+    telemetry: Mapping[str, Any] | None,
+    sample_counts: Mapping[str, int],
+) -> None:
+    if telemetry is None:
+        return
+    if not isinstance(telemetry, Mapping):
+        raise ValueError("telemetry must be a mapping")
+    unknown_client_ids = set(telemetry) - set(sample_counts)
+    if unknown_client_ids:
+        raise ValueError(
+            f"unknown telemetry client: {sorted(unknown_client_ids)[0]}"
+        )
+
+    for client_id, record in telemetry.items():
+        if isinstance(record, Mapping):
+            record_client_id = record.get("client_id")
+            record_sample_count = record.get("sample_count")
+        else:
+            record_client_id = getattr(record, "client_id", None)
+            record_sample_count = getattr(record, "sample_count", None)
+        if record_client_id != client_id:
+            raise ValueError(
+                f"telemetry client_id mismatch for {client_id}"
+            )
+        if (
+            isinstance(record_sample_count, bool)
+            or not isinstance(record_sample_count, int)
+            or record_sample_count <= 0
+            or record_sample_count != sample_counts[client_id]
+        ):
+            raise ValueError(
+                f"telemetry sample_count mismatch for {client_id}"
+            )
+
+
 def _telemetry_value(
     telemetry: Mapping[str, Any],
     client_id: str,
@@ -302,6 +369,7 @@ def build_deterministic_candidates(
         raise ValueError("candidate budget cannot discard anchors")
     client_ids = tuple(sample_counts)
     size_weights = _validated_size_weights(sample_counts)
+    _validate_telemetry(telemetry, sample_counts)
     previous = size_weights if previous_weights is None else previous_weights
     candidates = build_anchor_candidates(
         sample_counts,

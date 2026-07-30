@@ -9,7 +9,7 @@ from src.federated_learning.pcv.candidates import (
     deduplicate_candidates,
     weighted_average_state,
 )
-from src.federated_learning.pcv.schemas import CandidateAction
+from src.federated_learning.pcv.schemas import CandidateAction, ClientTelemetry
 
 
 def _candidate(
@@ -34,14 +34,17 @@ def _telemetry(
     *,
     val_mapes: tuple[float, float, float] = (0.1, 0.2, 0.4),
     coherences: tuple[float, float, float] = (0.8, 0.4, -0.2),
-) -> dict[str, dict[str, float]]:
+) -> dict[str, dict[str, float | int | str]]:
     return {
         client_id: {
+            "client_id": client_id,
+            "sample_count": sample_count,
             "val_mape": val_mape,
             "cosine_to_mean": coherence,
         }
-        for client_id, val_mape, coherence in zip(
+        for client_id, sample_count, val_mape, coherence in zip(
             ("client_01", "client_02", "client_03"),
+            (2, 3, 5),
             val_mapes,
             coherences,
         )
@@ -144,6 +147,52 @@ def test_weighted_average_state_rejects_incompatible_states(states, match):
         weighted_average_state(states, {"client_01": 0.5, "client_02": 0.5})
 
 
+def test_weighted_average_state_rejects_device_mismatch_before_arithmetic():
+    states = {
+        "client_01": {"w": torch.ones(2, device="cpu")},
+        "client_02": {"w": torch.ones(2, device="meta")},
+    }
+
+    with pytest.raises(ValueError, match="device"):
+        weighted_average_state(states, {"client_01": 0.5, "client_02": 0.5})
+
+
+def test_weighted_average_state_does_not_mutate_input_states_or_tensors():
+    states = {
+        "client_01": {
+            "w": torch.tensor([1.0, 2.0]),
+            "steps": torch.tensor([7], dtype=torch.int64),
+        },
+        "client_02": {
+            "w": torch.tensor([3.0, 4.0]),
+            "steps": torch.tensor([9], dtype=torch.int64),
+        },
+    }
+    original_keys = {
+        client_id: tuple(state)
+        for client_id, state in states.items()
+    }
+    original_tensors = {
+        client_id: {
+            key: (tensor, tensor.clone())
+            for key, tensor in state.items()
+        }
+        for client_id, state in states.items()
+    }
+
+    weighted_average_state(
+        states,
+        {"client_01": 0.25, "client_02": 0.75},
+    )
+
+    for client_id, state in states.items():
+        assert tuple(state) == original_keys[client_id]
+        for key, tensor in state.items():
+            original_object, original_value = original_tensors[client_id][key]
+            assert tensor is original_object
+            torch.testing.assert_close(tensor, original_value)
+
+
 def test_candidate_deduplication_keeps_eight_or_fewer():
     repeated = [
         _candidate(
@@ -179,6 +228,48 @@ def test_candidate_deduplication_prioritizes_anchors_and_preserves_budget():
         "anchor_fedavg",
         "anchor_fedyogi",
     ]
+
+
+def test_duplicate_canonical_anchor_counts_once_before_budgeting():
+    weights = {"client_01": 0.2, "client_02": 0.3, "client_03": 0.5}
+    fedavg_anchor = _candidate(
+        "anchor_fedavg",
+        weights,
+        optimizer="fedavg",
+        source="anchor",
+    )
+    candidates = [
+        fedavg_anchor,
+        fedavg_anchor,
+        _candidate("anchor_fedyogi", weights, source="anchor"),
+    ]
+
+    selected = deduplicate_candidates(candidates, budget=2)
+
+    assert [candidate.candidate_id for candidate in selected] == [
+        "anchor_fedavg",
+        "anchor_fedyogi",
+    ]
+
+
+@pytest.mark.parametrize(
+    "spoof",
+    [
+        _candidate(
+            "anchor_fedavg",
+            {"client_01": 0.2, "client_02": 0.3, "client_03": 0.5},
+        ),
+        _candidate(
+            "anchor_fedavg",
+            {"client_01": 0.2, "client_02": 0.3, "client_03": 0.5},
+            optimizer="fedyogi",
+            source="anchor",
+        ),
+    ],
+)
+def test_reserved_anchor_id_spoof_fails_closed(spoof):
+    with pytest.raises(ValueError, match="anchor"):
+        deduplicate_candidates([spoof], budget=2)
 
 
 def test_candidate_deduplication_validates_actions_beyond_budget():
@@ -317,3 +408,60 @@ def test_missing_telemetry_rejects_affected_candidate_without_imputation():
     assert "deterministic_positive_coherence" not in candidate_ids
     assert "deterministic_inverse_val_mape" in candidate_ids
     assert "deterministic_error_compensation" in candidate_ids
+
+
+def test_telemetry_client_identity_swap_fails_closed():
+    telemetry = {
+        "client_01": ClientTelemetry(
+            client_id="client_02",
+            sample_count=2,
+            train_loss=0.1,
+            val_mape=0.1,
+            val_rmse=1.0,
+            update_norm=0.2,
+            cosine_to_mean=0.8,
+            cosine_to_previous=0.7,
+        )
+    }
+
+    with pytest.raises(ValueError, match="client_id"):
+        build_deterministic_candidates(
+            sample_counts={"client_01": 2, "client_02": 3, "client_03": 5},
+            previous_weights=None,
+            telemetry=telemetry,
+            fedyogi_lr_scale=1.0,
+            fedyogi_clip_norm=1.0,
+        )
+
+
+def test_stale_telemetry_sample_count_fails_closed():
+    telemetry = _telemetry()
+    telemetry["client_02"]["sample_count"] = 30
+
+    with pytest.raises(ValueError, match="sample_count"):
+        build_deterministic_candidates(
+            sample_counts={"client_01": 2, "client_02": 3, "client_03": 5},
+            previous_weights=None,
+            telemetry=telemetry,
+            fedyogi_lr_scale=1.0,
+            fedyogi_clip_norm=1.0,
+        )
+
+
+def test_unknown_telemetry_client_key_fails_closed():
+    telemetry = _telemetry()
+    telemetry["client_99"] = {
+        "client_id": "client_99",
+        "sample_count": 1,
+        "val_mape": 0.3,
+        "cosine_to_mean": 0.4,
+    }
+
+    with pytest.raises(ValueError, match="unknown telemetry client"):
+        build_deterministic_candidates(
+            sample_counts={"client_01": 2, "client_02": 3, "client_03": 5},
+            previous_weights=None,
+            telemetry=telemetry,
+            fedyogi_lr_scale=1.0,
+            fedyogi_clip_norm=1.0,
+        )
