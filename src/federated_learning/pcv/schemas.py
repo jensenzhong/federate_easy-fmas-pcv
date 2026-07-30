@@ -11,6 +11,37 @@ ALLOWED_LR_SCALES = (0.50, 0.75, 1.00, 1.25)
 ALLOWED_CLIP_NORMS = (None, 0.5, 1.0, 2.0)
 
 
+def _deep_freeze(value, *, _active_ids: set[int] | None = None):
+    if _active_ids is None:
+        _active_ids = set()
+    if isinstance(value, Mapping) or type(value) in (list, tuple):
+        marker = id(value)
+        if marker in _active_ids:
+            raise TypeError("diagnostics must not contain cycles")
+        _active_ids.add(marker)
+        try:
+            if isinstance(value, Mapping):
+                return MappingProxyType(
+                    {
+                        _deep_freeze(key, _active_ids=_active_ids): _deep_freeze(
+                            item,
+                            _active_ids=_active_ids,
+                        )
+                        for key, item in value.items()
+                    }
+                )
+            return tuple(
+                _deep_freeze(item, _active_ids=_active_ids) for item in value
+            )
+        finally:
+            _active_ids.remove(marker)
+    if type(value) in (str, bytes, int, float, bool, type(None)):
+        return value
+    raise TypeError(
+        f"unsupported diagnostics value type: {type(value).__name__}"
+    )
+
+
 @dataclass(frozen=True)
 class ClientTelemetry:
     client_id: str
@@ -119,8 +150,10 @@ class CandidateDecision:
     diagnostics: Mapping[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
+        if not isinstance(self.diagnostics, Mapping):
+            raise TypeError("diagnostics must be a mapping")
         object.__setattr__(
             self,
             "diagnostics",
-            MappingProxyType(dict(self.diagnostics)),
+            _deep_freeze(self.diagnostics),
         )

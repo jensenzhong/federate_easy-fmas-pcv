@@ -163,7 +163,9 @@ def test_candidate_weights_are_defensively_copied_and_immutable():
 
 
 def test_candidate_decision_diagnostics_are_defensively_copied_and_immutable():
-    source_diagnostics = {"vote_margin": 0.2}
+    source_scores = [0.2, 0.3]
+    source_summary = {"scores": source_scores}
+    source_diagnostics = {"vote_summary": source_summary}
     decision = CandidateDecision(
         "performance_01",
         "performance_01",
@@ -172,7 +174,26 @@ def test_candidate_decision_diagnostics_are_defensively_copied_and_immutable():
         diagnostics=source_diagnostics,
     )
 
-    source_diagnostics["vote_margin"] = 0.9
-    assert decision.diagnostics["vote_margin"] == 0.2
+    source_scores.append(0.9)
+    source_summary["winner"] = "other"
+    source_diagnostics["vote_summary"] = {}
+    assert decision.diagnostics["vote_summary"]["scores"] == (0.2, 0.3)
+    assert "winner" not in decision.diagnostics["vote_summary"]
+
     with pytest.raises(TypeError):
-        decision.diagnostics["vote_margin"] = 0.9
+        decision.diagnostics["vote_summary"] = {}
+    with pytest.raises(TypeError):
+        decision.diagnostics["vote_summary"]["winner"] = "other"
+    with pytest.raises(AttributeError):
+        decision.diagnostics["vote_summary"]["scores"].append(0.9)
+
+
+def test_candidate_decision_rejects_unsupported_diagnostic_values():
+    with pytest.raises(TypeError):
+        CandidateDecision(
+            "performance_01",
+            "performance_01",
+            "accepted",
+            "safe",
+            diagnostics={"mutable_set": {1, 2}},
+        )

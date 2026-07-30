@@ -21,12 +21,23 @@ class TestPartitionLocked(RuntimeError):
     """Raised when locked-test access is requested before formal unlock."""
 
 
-APPROVED_PROMPT_KEYS = frozenset(
+ROOT_PROMPT_KEYS = frozenset({"round_index", "clients"})
+REQUIRED_CLIENT_PROMPT_KEYS = frozenset(
     {
-        "round_index",
-        "clients",
         "client_id",
         "sample_count",
+        "train_loss",
+        "val_mape",
+        "val_rmse",
+        "update_norm",
+    }
+)
+OPTIONAL_CLIENT_PROMPT_KEYS = frozenset(
+    {"cosine_to_mean", "cosine_to_previous"}
+)
+CLIENT_PROMPT_KEYS = REQUIRED_CLIENT_PROMPT_KEYS | OPTIONAL_CLIENT_PROMPT_KEYS
+CLIENT_METRIC_KEYS = frozenset(
+    {
         "train_loss",
         "val_mape",
         "val_rmse",
@@ -35,30 +46,94 @@ APPROVED_PROMPT_KEYS = frozenset(
         "cosine_to_previous",
     }
 )
+APPROVED_PROMPT_KEYS = ROOT_PROMPT_KEYS | CLIENT_PROMPT_KEYS
+
+
+def _normalized_prompt_mapping(
+    value,
+    *,
+    allowed_keys: frozenset[str],
+    context: str,
+) -> dict[str, object]:
+    if type(value) is not dict:
+        raise PrivacyViolation(f"{context} must be an exact mapping")
+
+    normalized = {}
+    for key, item in value.items():
+        if type(key) is not str:
+            raise PrivacyViolation(f"{context} field names must be exact strings")
+        normalized_key = unicodedata.normalize("NFKC", key).casefold()
+        if normalized_key in normalized:
+            raise PrivacyViolation(
+                f"{context} contains colliding normalized field: {key}"
+            )
+        if normalized_key not in allowed_keys:
+            raise PrivacyViolation(f"unapproved {context} field: {key}")
+        normalized[normalized_key] = item
+    return normalized
+
+
+def _require_fields(
+    value: dict[str, object],
+    required_fields: frozenset[str],
+    *,
+    context: str,
+) -> None:
+    missing = required_fields - value.keys()
+    if missing:
+        raise PrivacyViolation(
+            f"{context} missing required fields: {sorted(missing)}"
+        )
 
 
 def assert_prompt_payload_safe(payload) -> None:
-    """Allow only approved aggregate fields and JSON-safe finite values."""
-    if type(payload) is dict:
-        for key, value in payload.items():
-            if type(key) is not str:
-                raise PrivacyViolation("prompt field names must be exact strings")
-            normalized_key = unicodedata.normalize("NFKC", key).casefold()
-            if normalized_key not in APPROVED_PROMPT_KEYS:
-                raise PrivacyViolation(f"unapproved prompt field: {key}")
-            assert_prompt_payload_safe(value)
-    elif type(payload) in (list, tuple):
-        for value in payload:
-            assert_prompt_payload_safe(value)
-    elif type(payload) is float:
-        if not math.isfinite(payload):
-            raise PrivacyViolation("prompt floats must be finite")
-    elif payload is None or type(payload) in (str, int, bool):
-        return
-    else:
-        raise PrivacyViolation(
-            f"unsupported prompt value type: {type(payload).__name__}"
+    """Validate the complete aggregate client-telemetry prompt schema."""
+    root = _normalized_prompt_mapping(
+        payload,
+        allowed_keys=ROOT_PROMPT_KEYS,
+        context="prompt root",
+    )
+    _require_fields(root, ROOT_PROMPT_KEYS, context="prompt root")
+
+    round_index = root["round_index"]
+    if type(round_index) is not int or round_index < 0:
+        raise PrivacyViolation("round_index must be a non-negative exact int")
+
+    clients = root["clients"]
+    if type(clients) not in (list, tuple):
+        raise PrivacyViolation("clients must be an exact list or tuple")
+
+    for index, client_payload in enumerate(clients):
+        context = f"clients[{index}]"
+        client = _normalized_prompt_mapping(
+            client_payload,
+            allowed_keys=CLIENT_PROMPT_KEYS,
+            context=context,
         )
+        _require_fields(
+            client,
+            REQUIRED_CLIENT_PROMPT_KEYS,
+            context=context,
+        )
+
+        client_id = client["client_id"]
+        if type(client_id) is not str or not client_id.strip():
+            raise PrivacyViolation(f"{context}.client_id must be non-empty")
+
+        sample_count = client["sample_count"]
+        if type(sample_count) is not int or sample_count <= 0:
+            raise PrivacyViolation(
+                f"{context}.sample_count must be a positive exact int"
+            )
+
+        for metric_key in CLIENT_METRIC_KEYS & client.keys():
+            metric = client[metric_key]
+            if type(metric) not in (int, float) or (
+                type(metric) is float and not math.isfinite(metric)
+            ):
+                raise PrivacyViolation(
+                    f"{context}.{metric_key} must be a finite exact number"
+                )
 
 
 def require_test_unlock(

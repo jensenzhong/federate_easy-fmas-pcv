@@ -8,6 +8,24 @@ from src.federated_learning.pcv.protocol import (
 )
 
 
+def _approved_payload():
+    return {
+        "round_index": 2,
+        "clients": [
+            {
+                "client_id": "client_01",
+                "sample_count": 100,
+                "train_loss": 0.3,
+                "val_mape": 0.4,
+                "val_rmse": 1.2,
+                "update_norm": 0.8,
+                "cosine_to_mean": 0.9,
+                "cosine_to_previous": 0.7,
+            }
+        ],
+    }
+
+
 @pytest.mark.parametrize(
     "forbidden_key",
     (
@@ -82,32 +100,101 @@ def test_prompt_rejects_forbidden_keys_in_nested_dict_list_or_tuple(payload):
     ),
 )
 def test_prompt_rejects_non_json_or_non_finite_values(unsafe_value):
+    payload = _approved_payload()
+    payload["round_index"] = unsafe_value
     with pytest.raises(PrivacyViolation):
-        assert_prompt_payload_safe({"round_index": unsafe_value})
+        assert_prompt_payload_safe(payload)
 
 
 def test_prompt_accepts_approved_aggregate_telemetry():
+    assert_prompt_payload_safe(_approved_payload())
+
+
+def test_prompt_normalizes_approved_key_spelling():
     assert_prompt_payload_safe(
         {
-            "round_index": 2,
-            "clients": [
-                {
-                    "client_id": "client_01",
-                    "sample_count": 100,
-                    "train_loss": 0.3,
-                    "val_mape": 0.4,
-                    "val_rmse": 1.2,
-                    "update_norm": 0.8,
-                    "cosine_to_mean": 0.9,
-                    "cosine_to_previous": 0.7,
-                }
-            ],
+            "ＲＯＵＮＤ_ＩＮＤＥＸ": 2,
+            "ＣＬＩＥＮＴＳ": [],
         }
     )
 
 
-def test_prompt_normalizes_approved_key_spelling():
-    assert_prompt_payload_safe({"ＲＯＵＮＤ_ＩＮＤＥＸ": 2})
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (
+        ("round_index", True),
+        ("round_index", -1),
+        ("round_index", 2.0),
+        ("clients", ["client_01"]),
+    ),
+)
+def test_prompt_rejects_wrong_root_field_types(field, value):
+    payload = _approved_payload()
+    payload[field] = value
+    with pytest.raises(PrivacyViolation):
+        assert_prompt_payload_safe(payload)
+
+
+def test_prompt_rejects_normalized_root_key_collisions():
+    payload = _approved_payload()
+    payload["ＣＬＩＥＮＴＳ"] = []
+    with pytest.raises(PrivacyViolation):
+        assert_prompt_payload_safe(payload)
+
+
+@pytest.mark.parametrize("missing_field", ("round_index", "clients"))
+def test_prompt_rejects_missing_required_root_fields(missing_field):
+    payload = _approved_payload()
+    del payload[missing_field]
+    with pytest.raises(PrivacyViolation):
+        assert_prompt_payload_safe(payload)
+
+
+@pytest.mark.parametrize(
+    "missing_field",
+    (
+        "client_id",
+        "sample_count",
+        "train_loss",
+        "val_mape",
+        "val_rmse",
+        "update_norm",
+    ),
+)
+def test_prompt_rejects_missing_required_client_fields(missing_field):
+    payload = _approved_payload()
+    del payload["clients"][0][missing_field]
+    with pytest.raises(PrivacyViolation):
+        assert_prompt_payload_safe(payload)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    (
+        ("client_id", ""),
+        ("client_id", 1),
+        ("sample_count", True),
+        ("sample_count", 0),
+        ("sample_count", 100.0),
+        ("sample_count", {"value": 100}),
+        ("train_loss", [0.3]),
+        ("val_mape", True),
+        ("val_rmse", float("nan")),
+        ("update_norm", float("inf")),
+    ),
+)
+def test_prompt_rejects_wrong_client_field_types(field, value):
+    payload = _approved_payload()
+    payload["clients"][0][field] = value
+    with pytest.raises(PrivacyViolation):
+        assert_prompt_payload_safe(payload)
+
+
+def test_prompt_allows_optional_cosine_fields_to_be_absent():
+    payload = _approved_payload()
+    del payload["clients"][0]["cosine_to_mean"]
+    del payload["clients"][0]["cosine_to_previous"]
+    assert_prompt_payload_safe(payload)
 
 
 @pytest.mark.parametrize(
