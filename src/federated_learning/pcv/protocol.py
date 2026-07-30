@@ -1,5 +1,6 @@
 """Deterministic, client-local data partition construction."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from hashlib import sha256
 import math
@@ -10,6 +11,65 @@ from sklearn.model_selection import train_test_split
 
 PARTITION_PUBLICATION_PROTOCOL = "strict_partition_csv_commit_v1"
 PARTITION_PUBLICATION_SCHEMA = 1
+
+
+class PrivacyViolation(RuntimeError):
+    """Raised when a prompt payload crosses the aggregate-only boundary."""
+
+
+class TestPartitionLocked(RuntimeError):
+    """Raised when locked-test access is requested before formal unlock."""
+
+
+FORBIDDEN_PROMPT_KEYS = {
+    "raw",
+    "raw_data",
+    "raw_features",
+    "raw_labels",
+    "raw_rows",
+    "label",
+    "labels",
+    "row_prediction",
+    "row_predictions",
+    "predictions",
+    "residuals",
+    "test_loss",
+    "test_mape",
+    "test_rmse",
+    "test_mae",
+    "test_r2",
+    "test_metrics",
+    "locked_test",
+}
+
+
+def assert_prompt_payload_safe(payload) -> None:
+    """Reject raw, row-level, or locked-test data anywhere in a payload."""
+    if isinstance(payload, Mapping):
+        for key, value in payload.items():
+            if str(key).strip().lower() in FORBIDDEN_PROMPT_KEYS:
+                raise PrivacyViolation(f"prohibited prompt field: {key}")
+            assert_prompt_payload_safe(value)
+    elif isinstance(payload, (list, tuple)):
+        for value in payload:
+            assert_prompt_payload_safe(value)
+
+
+def require_test_unlock(
+    *,
+    phase: str,
+    formal_frozen: bool,
+    explicit_unlock: bool,
+) -> None:
+    """Require the exact frozen formal-evaluation unlock combination."""
+    if (
+        phase != "formal_evaluate"
+        or formal_frozen is not True
+        or explicit_unlock is not True
+    ):
+        raise TestPartitionLocked(
+            "locked test is unavailable before frozen formal evaluation"
+        )
 
 
 @dataclass(frozen=True)
