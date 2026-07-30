@@ -5,13 +5,16 @@
 参考: Zhang et al. (2023) - 使用ContAmnt^0.25作为因变量
 """
 
+from dataclasses import dataclass
+import hashlib
+from pathlib import Path
+from typing import Any, Dict, Optional, Tuple, Union
+
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import TensorDataset, DataLoader
 from sklearn.preprocessing import StandardScaler
-from typing import Tuple, Optional, Union, Dict, Any
-from pathlib import Path
+from torch.utils.data import DataLoader, TensorDataset
 
 from src.utils import load_data
 
@@ -301,6 +304,96 @@ class DataPreprocessor:
             })
         
         return stats
+
+
+@dataclass(frozen=True)
+class StrictPartitionFrames:
+    """Client-local frames plus train-only federated preprocessing state."""
+
+    client_frames: dict[str, dict[str, pd.DataFrame]]
+    preprocessor: DataPreprocessor
+    dataset_sha256: str
+    partition_sha256: str
+
+
+def load_strict_partition_frames(
+    config: dict,
+    partition_manifest_path: str,
+) -> StrictPartitionFrames:
+    """Load fixed client partitions and fit feature statistics on train only."""
+
+    data_cfg = config["scene_c"]["data"]
+    raw_path = Path(data_cfg["raw_csv"])
+    raw_bytes = raw_path.read_bytes()
+    dataset_sha256 = hashlib.sha256(raw_bytes).hexdigest()
+    frame = pd.read_csv(raw_path).rename(columns=data_cfg.get("rename_map", {}))
+    frame = frame[
+        data_cfg["feature_columns"]
+        + [data_cfg["target_column"], data_cfg["client_column"]]
+    ].copy()
+    frame["source_index"] = frame.index.astype(int)
+
+    manifest_path = Path(partition_manifest_path)
+    partition_sha256 = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    manifest = pd.read_csv(manifest_path)
+    expected_dataset_sha256 = manifest["dataset_sha256"].drop_duplicates().tolist()
+    if expected_dataset_sha256 != [dataset_sha256]:
+        raise ValueError(
+            "partition manifest dataset hash does not match canonical data"
+        )
+    canonical_source_indices = set(frame["source_index"].tolist())
+    manifest_source_indices = manifest["source_index"]
+    if (
+        len(manifest_source_indices) != len(frame)
+        or not manifest_source_indices.is_unique
+        or set(manifest_source_indices.tolist()) != canonical_source_indices
+    ):
+        raise ValueError(
+            "partition manifest does not cover the canonical dataset exactly"
+        )
+    merged = frame.merge(
+        manifest[["source_index", "client_id", "partition"]],
+        on="source_index",
+        how="inner",
+        validate="one_to_one",
+    )
+    if len(merged) != len(frame):
+        raise ValueError(
+            "partition manifest does not cover the canonical dataset exactly"
+        )
+
+    feature_columns = data_cfg["feature_columns"]
+    train_only = merged[merged["partition"] == "train"]
+    local_stats = [
+        compute_local_stats(client_frame, feature_columns)
+        for _, client_frame in train_only.groupby("client_id", sort=True)
+    ]
+    global_stats = aggregate_federated_stats(local_stats)
+    preprocessor = DataPreprocessor(
+        feature_scaler=config["preprocessing"]["scaler"],
+        target_transform=config["preprocessing"]["target_transform"],
+        random_seed=int(config["preprocessing"]["random_seed"]),
+    )
+    preprocessor.set_global_stats(
+        mean=global_stats["mean"],
+        std=global_stats["std"],
+        var=global_stats["var"],
+        n_samples=global_stats["count"],
+        feature_columns=feature_columns,
+    )
+    client_frames = {
+        str(client_id): {
+            partition: rows.drop(columns=["client_id", "partition"]).copy()
+            for partition, rows in client_rows.groupby("partition", sort=True)
+        }
+        for client_id, client_rows in merged.groupby("client_id", sort=True)
+    }
+    return StrictPartitionFrames(
+        client_frames=client_frames,
+        preprocessor=preprocessor,
+        dataset_sha256=dataset_sha256,
+        partition_sha256=partition_sha256,
+    )
 
 
 def create_dataloader(
