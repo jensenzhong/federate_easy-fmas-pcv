@@ -7,6 +7,7 @@
 
 from dataclasses import dataclass
 import hashlib
+import json
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple, Union
 
@@ -334,13 +335,69 @@ def load_strict_partition_frames(
     frame["source_index"] = frame.index.astype(int)
 
     manifest_path = Path(partition_manifest_path)
-    partition_sha256 = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+    manifest_bytes = manifest_path.read_bytes()
+    partition_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+    metadata_path = manifest_path.with_suffix(".json")
+    try:
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError, OSError) as exc:
+        raise ValueError("partition metadata is missing or invalid") from exc
+    required_metadata_fields = {
+        "dataset_sha256",
+        "partition_sha256",
+        "rows",
+        "split_seed",
+    }
+    if not isinstance(metadata, dict):
+        raise ValueError("partition metadata is missing or invalid")
+    missing_metadata_fields = required_metadata_fields - set(metadata)
+    if missing_metadata_fields:
+        raise ValueError(
+            "partition metadata missing fields: "
+            f"{sorted(missing_metadata_fields)}"
+        )
+    if metadata["dataset_sha256"] != dataset_sha256:
+        raise ValueError("metadata dataset_sha256 mismatch")
+    if metadata["partition_sha256"] != partition_sha256:
+        raise ValueError("metadata partition_sha256 mismatch")
+
     manifest = pd.read_csv(manifest_path)
+    required_manifest_columns = {
+        "row_id",
+        "source_index",
+        "client_id",
+        "partition",
+        "dataset_sha256",
+    }
+    missing_manifest_columns = required_manifest_columns - set(manifest.columns)
+    if missing_manifest_columns:
+        raise ValueError(
+            "partition manifest missing columns: "
+            f"{sorted(missing_manifest_columns)}"
+        )
+    if metadata["rows"] != len(manifest):
+        raise ValueError("partition metadata rows mismatch")
+
     expected_dataset_sha256 = manifest["dataset_sha256"].drop_duplicates().tolist()
     if expected_dataset_sha256 != [dataset_sha256]:
         raise ValueError(
             "partition manifest dataset hash does not match canonical data"
         )
+    allowed_partitions = {
+        "train",
+        "controller_validation",
+        "locked_test",
+    }
+    actual_partitions = set(manifest["partition"].dropna().astype(str))
+    if (
+        manifest["partition"].isna().any()
+        or not actual_partitions <= allowed_partitions
+    ):
+        invalid_partitions = sorted(actual_partitions - allowed_partitions)
+        raise ValueError(
+            f"partition manifest contains invalid partition: {invalid_partitions}"
+        )
+
     canonical_source_indices = set(frame["source_index"].tolist())
     manifest_source_indices = manifest["source_index"]
     if (
@@ -351,6 +408,14 @@ def load_strict_partition_frames(
         raise ValueError(
             "partition manifest does not cover the canonical dataset exactly"
         )
+    expected_row_ids = manifest["source_index"].astype(int).map(
+        lambda source_index: hashlib.sha256(
+            f"{dataset_sha256}:{source_index}".encode("utf-8")
+        ).hexdigest()[:24]
+    )
+    if not manifest["row_id"].astype(str).equals(expected_row_ids):
+        raise ValueError("partition manifest row_id mismatch")
+
     merged = frame.merge(
         manifest[["source_index", "client_id", "partition"]],
         on="source_index",
@@ -361,6 +426,12 @@ def load_strict_partition_frames(
         raise ValueError(
             "partition manifest does not cover the canonical dataset exactly"
         )
+    client_column = data_cfg["client_column"]
+    ownership_mismatch = (
+        merged[client_column].astype(str) != merged["client_id"].astype(str)
+    )
+    if ownership_mismatch.any():
+        raise ValueError("partition manifest client_id ownership mismatch")
 
     feature_columns = data_cfg["feature_columns"]
     train_only = merged[merged["partition"] == "train"]

@@ -1,8 +1,10 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import sys
+import tempfile
 
 project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
@@ -17,6 +19,105 @@ from src.study_manifest import load_study_manifest
 from src.utils import load_config
 
 
+def _temporary_artifact_path(output: Path, artifact_suffix: str) -> Path:
+    descriptor, path = tempfile.mkstemp(
+        dir=output.parent,
+        prefix=f".{output.stem}.",
+        suffix=f".{artifact_suffix}.tmp",
+    )
+    os.close(descriptor)
+    return Path(path)
+
+
+def _fsync_manifest_csv(path: Path, manifest: pd.DataFrame) -> None:
+    with path.open("w", encoding="utf-8", newline="") as handle:
+        manifest.to_csv(handle, index=False)
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def _fsync_metadata_json(path: Path, metadata: dict) -> None:
+    with path.open("w", encoding="utf-8") as handle:
+        json.dump(metadata, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def publish_partition_artifacts(
+    manifest: pd.DataFrame,
+    output: Path,
+    *,
+    dataset_sha256: str,
+    split_seed: int,
+) -> dict:
+    """Publish a verified CSV/JSON pair without replacing existing files."""
+
+    output = Path(output)
+    metadata_path = output.with_suffix(".json")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    if os.path.lexists(output) or os.path.lexists(metadata_path):
+        raise FileExistsError(f"partition output already exists: {output}")
+
+    temporary_paths: list[Path] = []
+    published_paths: list[Path] = []
+    try:
+        csv_temp = _temporary_artifact_path(output, "csv")
+        temporary_paths.append(csv_temp)
+        json_temp = _temporary_artifact_path(output, "json")
+        temporary_paths.append(json_temp)
+        _fsync_manifest_csv(csv_temp, manifest)
+        verified_manifest = pd.read_csv(
+            csv_temp,
+            dtype={
+                "row_id": "string",
+                "client_id": "string",
+                "partition": "string",
+                "dataset_sha256": "string",
+            },
+        )
+        pd.testing.assert_frame_equal(
+            verified_manifest,
+            manifest.reset_index(drop=True),
+            check_dtype=False,
+        )
+        partition_sha256 = hashlib.sha256(csv_temp.read_bytes()).hexdigest()
+        metadata = {
+            "dataset_sha256": dataset_sha256,
+            "partition_sha256": partition_sha256,
+            "split_seed": split_seed,
+            "rows": len(manifest),
+        }
+        _fsync_metadata_json(json_temp, metadata)
+        verified_metadata = json.loads(json_temp.read_text(encoding="utf-8"))
+        if verified_metadata != metadata:
+            raise RuntimeError("partition metadata temporary verification failed")
+
+        os.link(csv_temp, output)
+        published_paths.append(output)
+        os.link(json_temp, metadata_path)
+        published_paths.append(metadata_path)
+
+        if hashlib.sha256(output.read_bytes()).hexdigest() != partition_sha256:
+            raise RuntimeError("published partition CSV hash verification failed")
+        if json.loads(metadata_path.read_text(encoding="utf-8")) != metadata:
+            raise RuntimeError("published partition metadata verification failed")
+        return metadata
+    except BaseException:
+        for published_path in reversed(published_paths):
+            try:
+                published_path.unlink()
+            except FileNotFoundError:
+                pass
+        raise
+    finally:
+        for temporary_path in temporary_paths:
+            try:
+                temporary_path.unlink()
+            except FileNotFoundError:
+                pass
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--study-manifest", default="study_manifest.yaml")
@@ -28,7 +129,7 @@ def main() -> int:
     args = parser.parse_args()
     output = Path(args.output)
     metadata_path = output.with_suffix(".json")
-    if output.exists() or metadata_path.exists():
+    if os.path.lexists(output) or os.path.lexists(metadata_path):
         raise FileExistsError(f"partition output already exists: {output}")
 
     study = load_study_manifest(Path(args.study_manifest))
@@ -55,21 +156,11 @@ def main() -> int:
         ),
         quantile_bins=int(protocol["target_quantile_bins"]),
     )
-    output.parent.mkdir(parents=True, exist_ok=True)
-    manifest.to_csv(output, index=False)
-    partition_sha256 = hashlib.sha256(output.read_bytes()).hexdigest()
-    metadata_path.write_text(
-        json.dumps(
-            {
-                "dataset_sha256": dataset_sha256,
-                "partition_sha256": partition_sha256,
-                "split_seed": study.split_seed,
-                "rows": len(manifest),
-            },
-            indent=2,
-            sort_keys=True,
-        ),
-        encoding="utf-8",
+    publish_partition_artifacts(
+        manifest,
+        output,
+        dataset_sha256=dataset_sha256,
+        split_seed=study.split_seed,
     )
     return 0
 
