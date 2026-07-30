@@ -82,6 +82,9 @@ class FedAvgServerOptimizer:
         }
 
 
+_UNSET = object()
+
+
 class FedYogiServerOptimizer:
     """FedYogi server optimizer.
 
@@ -142,6 +145,7 @@ class FedYogiServerOptimizer:
         current_state: StateDict,
         weighted_average_state: StateDict,
         server_lr_scale: float = 1.0,
+        update_clip_norm_override: float | None | object = _UNSET,
     ) -> Tuple[StateDict, dict]:
         saved = self.get_optimizer_state()
         try:
@@ -149,6 +153,7 @@ class FedYogiServerOptimizer:
                 current_state=current_state,
                 weighted_average_state=weighted_average_state,
                 server_lr_scale=server_lr_scale,
+                update_clip_norm_override=update_clip_norm_override,
             )
         finally:
             self.load_optimizer_state(saved)
@@ -158,8 +163,14 @@ class FedYogiServerOptimizer:
         current_state: StateDict,
         weighted_average_state: StateDict,
         server_lr_scale: float = 1.0,
+        update_clip_norm_override: float | None | object = _UNSET,
     ) -> Tuple[StateDict, dict]:
         effective_lr = self.server_lr * float(server_lr_scale)
+        effective_clip_norm = (
+            self.update_clip_norm
+            if update_clip_norm_override is _UNSET
+            else update_clip_norm_override
+        )
         updated: StateDict = {}
         coordinate_step_clipped = False
         coordinate_direction_rejected = False
@@ -205,7 +216,11 @@ class FedYogiServerOptimizer:
             next_value = current_float + raw_step
             updated[key] = next_value.to(dtype=current_value.dtype, device=current_value.device)
 
-        updated, clipped, final_norm = _clip_state_update(current_state, updated, self.update_clip_norm)
+        updated, clipped, final_norm = _clip_state_update(
+            current_state,
+            updated,
+            effective_clip_norm,
+        )
         aggregation_delta_norm = _state_delta_norm(weighted_average_state, current_state)
         return updated, {
             "server_optimizer": self.name,

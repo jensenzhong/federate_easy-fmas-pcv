@@ -153,6 +153,74 @@ class ServerOptimizerTests(unittest.TestCase):
         expected_next, _ = clone.step(preview_current, preview_target, server_lr_scale=0.5)
         torch.testing.assert_close(preview_next["w"], expected_next["w"])
 
+    def test_fedyogi_preview_clip_overrides_are_side_effect_free(self):
+        from src.federated_learning.server_optimizers import FedYogiServerOptimizer
+
+        optimizer = FedYogiServerOptimizer(
+            server_lr=0.1,
+            beta1=0.9,
+            beta2=0.99,
+            tau=1e-3,
+            update_clip_norm=2.0,
+        )
+        current = {"w": torch.tensor([0.0, 0.0])}
+        target = {"w": torch.tensor([10.0, 0.0])}
+        optimizer.step(current, target)
+        saved_state = optimizer.get_optimizer_state()
+
+        preview_current = {"w": torch.tensor([0.0, 0.0])}
+        preview_target = {"w": torch.tensor([10.0, 0.0])}
+        clipped, clipped_info = optimizer.preview_step(
+            preview_current,
+            preview_target,
+            update_clip_norm_override=0.05,
+        )
+        unclipped, unclipped_info = optimizer.preview_step(
+            preview_current,
+            preview_target,
+            update_clip_norm_override=None,
+        )
+
+        self.assertLess(clipped_info["update_norm"], unclipped_info["update_norm"])
+        self.assertLess(torch.linalg.vector_norm(clipped["w"]), torch.linalg.vector_norm(unclipped["w"]))
+        self.assertEqual(optimizer.update_clip_norm, 2.0)
+        restored_state = optimizer.get_optimizer_state()
+        self.assertEqual(restored_state["update_clip_norm"], saved_state["update_clip_norm"])
+        self.assertEqual(restored_state["server_lr"], saved_state["server_lr"])
+        self.assertEqual(restored_state["beta1"], saved_state["beta1"])
+        self.assertEqual(restored_state["beta2"], saved_state["beta2"])
+        self.assertEqual(restored_state["tau"], saved_state["tau"])
+        self.assertEqual(
+            restored_state["max_coordinate_step_ratio"],
+            saved_state["max_coordinate_step_ratio"],
+        )
+        torch.testing.assert_close(restored_state["m"]["w"], saved_state["m"]["w"])
+        torch.testing.assert_close(restored_state["v"]["w"], saved_state["v"]["w"])
+
+    def test_fedyogi_step_clip_override_does_not_change_default(self):
+        from src.federated_learning.server_optimizers import FedYogiServerOptimizer
+
+        optimizer = FedYogiServerOptimizer(
+            server_lr=1.0,
+            beta1=0.0,
+            beta2=0.0,
+            tau=1e-3,
+            update_clip_norm=2.0,
+            max_coordinate_step_ratio=None,
+        )
+        current = {"w": torch.tensor([0.0])}
+        target = {"w": torch.tensor([10.0])}
+
+        updated, info = optimizer.step(
+            current,
+            target,
+            update_clip_norm_override=0.5,
+        )
+
+        self.assertAlmostEqual(updated["w"].item(), 0.5)
+        self.assertTrue(info["update_clipped"])
+        self.assertEqual(optimizer.update_clip_norm, 2.0)
+
     def test_fedyogi_optimizer_state_round_trips(self):
         from src.federated_learning.server_optimizers import FedYogiServerOptimizer
 
