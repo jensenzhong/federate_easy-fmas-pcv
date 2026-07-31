@@ -175,8 +175,8 @@ class LocalTrainingResult:
         for name, tensor in self.model_state.items():
             if type(name) is not str or not name:
                 raise TypeError("model_state keys must be non-empty exact strings")
-            if not isinstance(tensor, torch.Tensor):
-                raise TypeError("model_state values must be torch.Tensor instances")
+            if type(tensor) is not torch.Tensor:
+                raise TypeError("model_state values must be exact torch.Tensor instances")
             cloned_state[name] = tensor.detach().clone()
         if type(self.sample_count) is not int:
             raise TypeError("sample_count must be an exact integer")

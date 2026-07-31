@@ -711,3 +711,45 @@ def test_final_test_sums_normalizes_custom_numeric_fields_to_plain_float():
     )
 
     assert type(returned.ape_sum) is float
+
+
+class _LeakyTensor(torch.Tensor):
+    private_dataset = object()
+
+
+@pytest.mark.parametrize(
+    "unsafe_tensor",
+    [
+        torch.Tensor._make_subclass(
+            _LeakyTensor,
+            torch.tensor([1.0]),
+            require_grad=False,
+        ),
+        torch.nn.Parameter(torch.tensor([1.0])),
+    ],
+)
+def test_local_training_result_rejects_tensor_subclass_data_channels(unsafe_tensor):
+    with pytest.raises(TypeError, match="exact torch.Tensor"):
+        LocalTrainingResult(
+            model_state={"weight": unsafe_tensor},
+            sample_count=5,
+            train_loss=0.25,
+        )
+
+
+def test_plain_state_dict_tensors_survive_train_local_double_sanitization():
+    plain_state = dict(torch.nn.Linear(2, 1).state_dict())
+    callback_result = LocalTrainingResult(
+        model_state=plain_state,
+        sample_count=5,
+        train_loss=0.25,
+    )
+    vault, _, _, _, _ = _vault(train_fn=lambda *args: callback_result)
+
+    returned = vault.train_local(plain_state, {}, 1)
+
+    assert all(type(tensor) is torch.Tensor for tensor in returned.model_state.values())
+    assert all(
+        returned.model_state[name] is not callback_result.model_state[name]
+        for name in returned.model_state
+    )
