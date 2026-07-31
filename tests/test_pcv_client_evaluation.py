@@ -143,6 +143,56 @@ def test_zero_and_constant_targets_have_finite_metrics_and_defined_r2():
         assert all(math.isfinite(value) for value in metrics.values())
 
 
+def test_aggregate_r2_avoids_overflow_before_dividing_by_sample_count():
+    metrics = aggregate_metric_sums(
+        [
+            MetricSums(
+                n=4,
+                ape_sum=0.0,
+                se_sum=1.25e307,
+                ae_sum=0.0,
+                y_sum=2.0e154,
+                y_sq_sum=1.25e308,
+            )
+        ]
+    )
+
+    assert metrics["r2"] == pytest.approx(0.5)
+
+
+def test_aggregate_r2_clamps_rounding_scale_negative_target_variance_to_zero():
+    metrics = aggregate_metric_sums(
+        [
+            MetricSums(
+                n=3,
+                ape_sum=0.0,
+                se_sum=1.0,
+                ae_sum=0.0,
+                y_sum=3.0,
+                y_sq_sum=np.nextafter(3.0, 0.0),
+            )
+        ]
+    )
+
+    assert metrics["r2"] == 0.0
+
+
+def test_aggregate_rejects_inconsistent_target_sufficient_statistics():
+    with pytest.raises(ValueError, match="inconsistent"):
+        aggregate_metric_sums(
+            [
+                MetricSums(
+                    n=3,
+                    ape_sum=0.0,
+                    se_sum=1.0,
+                    ae_sum=0.0,
+                    y_sum=3.0,
+                    y_sq_sum=2.0,
+                )
+            ]
+        )
+
+
 def _vote(**overrides):
     values = {
         "client_id": "client_01",

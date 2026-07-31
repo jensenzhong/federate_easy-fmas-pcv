@@ -108,7 +108,17 @@ def aggregate_metric_sums(items: Iterable[MetricSums]) -> dict[str, float | int]
     ae_sum = math.fsum(float(item.ae_sum) for item in values)
     y_sum = math.fsum(float(item.y_sum) for item in values)
     y_sq_sum = math.fsum(float(item.y_sq_sum) for item in values)
-    target_ss = y_sq_sum - y_sum * y_sum / n
+    mean_times_sum = (y_sum / n) * y_sum
+    if not math.isfinite(mean_times_sum):
+        raise ValueError("target sufficient statistics exceed the finite range")
+    target_ss = math.fsum((y_sq_sum, -mean_times_sum))
+    target_scale = max(abs(y_sq_sum), abs(mean_times_sum), 1.0)
+    target_tolerance = max(target_scale * 1e-12, math.ulp(target_scale) * 16.0)
+    if target_ss < -target_tolerance:
+        raise ValueError("target sufficient statistics are inconsistent")
+    if target_ss < 0.0:
+        target_ss = 0.0
+
     r2 = 1.0 - se_sum / target_ss if target_ss > 0.0 else 0.0
     metrics: dict[str, float | int] = {
         "sample_count": n,

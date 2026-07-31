@@ -1,13 +1,16 @@
 """Deterministic, client-local data partition construction."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from hashlib import sha256
 import math
+from numbers import Real
+from types import MappingProxyType
 import unicodedata
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
+import torch
 
 from .client_evaluation import MetricSums, aggregate_metric_sums, build_vote
 from .schemas import ClientTelemetry, LocalCandidateVote
@@ -157,8 +160,39 @@ def require_test_unlock(
         )
 
 
+@dataclass(frozen=True, slots=True)
+class LocalTrainingResult:
+    """Sanitized client training result with cloned parameter tensors."""
+
+    model_state: Mapping[str, torch.Tensor]
+    sample_count: int
+    train_loss: float
+
+    def __post_init__(self) -> None:
+        if type(self.model_state) is not dict:
+            raise TypeError("model_state must be an exact dictionary")
+        cloned_state: dict[str, torch.Tensor] = {}
+        for name, tensor in self.model_state.items():
+            if type(name) is not str or not name:
+                raise TypeError("model_state keys must be non-empty exact strings")
+            if not isinstance(tensor, torch.Tensor):
+                raise TypeError("model_state values must be torch.Tensor instances")
+            cloned_state[name] = tensor.detach().clone()
+        if type(self.sample_count) is not int:
+            raise TypeError("sample_count must be an exact integer")
+        if self.sample_count <= 0:
+            raise ValueError("sample_count must be positive")
+        if isinstance(self.train_loss, bool) or not isinstance(self.train_loss, Real):
+            raise TypeError("train_loss must be a real scalar")
+        train_loss = float(self.train_loss)
+        if not math.isfinite(train_loss):
+            raise ValueError("train_loss must be finite")
+        object.__setattr__(self, "model_state", MappingProxyType(cloned_state))
+        object.__setattr__(self, "train_loss", train_loss)
+
+
 class ClientDataVault:
-    """Own client-private partitions and expose aggregate-only operations."""
+    """Own client-private partitions and expose sanitized aggregate operations."""
 
     __slots__ = (
         "client_id",
@@ -181,8 +215,8 @@ class ClientDataVault:
         telemetry_fn: Callable,
         metric_sums_fn: Callable,
     ) -> None:
-        if not isinstance(client_id, str) or not client_id.strip():
-            raise ValueError("client_id must be a non-empty string")
+        if type(client_id) is not str or not client_id.strip():
+            raise ValueError("client_id must be a non-empty exact string")
         for name, callback in (
             ("train_fn", train_fn),
             ("telemetry_fn", telemetry_fn),
@@ -198,12 +232,41 @@ class ClientDataVault:
         self.__telemetry_fn = telemetry_fn
         self.__metric_sums_fn = metric_sums_fn
 
-    def train_local(self, global_state, training_config, seed):
-        return self.__train_fn(
+    @staticmethod
+    def _positive_exact_int(value, *, name: str) -> int:
+        if type(value) is not int:
+            raise TypeError(f"{name} must be an exact integer")
+        if value <= 0:
+            raise ValueError(f"{name} must be positive")
+        return value
+
+    @staticmethod
+    def _finite_scalar(value, *, name: str) -> float:
+        if isinstance(value, bool) or not isinstance(value, Real):
+            raise TypeError(f"{name} must be a real scalar")
+        number = float(value)
+        if not math.isfinite(number):
+            raise ValueError(f"{name} must be finite")
+        return number
+
+    def train_local(
+        self,
+        global_state,
+        training_config,
+        seed,
+    ) -> LocalTrainingResult:
+        result = self.__train_fn(
             self.__train_dataset,
             global_state,
             training_config,
             seed,
+        )
+        if type(result) is not LocalTrainingResult:
+            raise TypeError("train_fn must return exact LocalTrainingResult")
+        return LocalTrainingResult(
+            model_state=dict(result.model_state),
+            sample_count=result.sample_count,
+            train_loss=result.train_loss,
         )
 
     def controller_telemetry(self, model_state) -> ClientTelemetry:
@@ -212,17 +275,54 @@ class ClientDataVault:
             self.__controller_validation_dataset,
             model_state,
         )
-        if not isinstance(telemetry, ClientTelemetry):
-            raise TypeError("telemetry_fn must return ClientTelemetry")
-        if telemetry.client_id != self.client_id:
+        if type(telemetry) is not ClientTelemetry:
+            raise TypeError("telemetry_fn must return exact ClientTelemetry")
+        if type(telemetry.client_id) is not str or telemetry.client_id != self.client_id:
             raise ValueError("telemetry client_id must match the vault client")
-        return telemetry
+        return ClientTelemetry(
+            client_id=self.client_id,
+            sample_count=self._positive_exact_int(
+                telemetry.sample_count,
+                name="telemetry sample_count",
+            ),
+            train_loss=self._finite_scalar(
+                telemetry.train_loss,
+                name="telemetry train_loss",
+            ),
+            val_mape=self._finite_scalar(
+                telemetry.val_mape,
+                name="telemetry val_mape",
+            ),
+            val_rmse=self._finite_scalar(
+                telemetry.val_rmse,
+                name="telemetry val_rmse",
+            ),
+            update_norm=self._finite_scalar(
+                telemetry.update_norm,
+                name="telemetry update_norm",
+            ),
+            cosine_to_mean=self._finite_scalar(
+                telemetry.cosine_to_mean,
+                name="telemetry cosine_to_mean",
+            ),
+            cosine_to_previous=self._finite_scalar(
+                telemetry.cosine_to_previous,
+                name="telemetry cosine_to_previous",
+            ),
+        )
 
     def _validated_metric_sums(self, dataset, model_state) -> MetricSums:
         sums = self.__metric_sums_fn(dataset, model_state)
-        if not isinstance(sums, MetricSums):
-            raise TypeError("metric_sums_fn must return MetricSums")
-        return sums
+        if type(sums) is not MetricSums:
+            raise TypeError("metric_sums_fn must return exact MetricSums")
+        return MetricSums(
+            n=int(sums.n),
+            ape_sum=float(sums.ape_sum),
+            se_sum=float(sums.se_sum),
+            ae_sum=float(sums.ae_sum),
+            y_sum=float(sums.y_sum),
+            y_sq_sum=float(sums.y_sq_sum),
+        )
 
     def evaluate_candidates(
         self,

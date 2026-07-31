@@ -1,8 +1,12 @@
+from dataclasses import FrozenInstanceError
+
 import pytest
+import torch
 
 from src.federated_learning.pcv.client_evaluation import MetricSums
 from src.federated_learning.pcv.protocol import (
     ClientDataVault,
+    LocalTrainingResult,
     PrivacyViolation,
     TestPartitionLocked as LockedTestError,
     assert_prompt_payload_safe,
@@ -256,15 +260,19 @@ def _telemetry(client_id="client_01"):
     )
 
 
-def _vault(*, telemetry_fn=None, metric_sums_fn=None, calls=None):
+def _vault(*, train_fn=None, telemetry_fn=None, metric_sums_fn=None, calls=None):
     calls = [] if calls is None else calls
     train_dataset = object()
     controller_validation_dataset = object()
     locked_test_dataset = object()
 
-    def train_fn(dataset, global_state, training_config, seed):
+    def default_train_fn(dataset, global_state, training_config, seed):
         calls.append(("train", dataset))
-        return {"model_update": global_state, "seed": seed}
+        return LocalTrainingResult(
+            model_state=global_state,
+            sample_count=10,
+            train_loss=0.2,
+        )
 
     def default_telemetry_fn(client_id, dataset, model_state):
         calls.append(("telemetry", dataset))
@@ -279,7 +287,7 @@ def _vault(*, telemetry_fn=None, metric_sums_fn=None, calls=None):
         train_dataset=train_dataset,
         controller_validation_dataset=controller_validation_dataset,
         locked_test_dataset=locked_test_dataset,
-        train_fn=train_fn,
+        train_fn=train_fn or default_train_fn,
         telemetry_fn=telemetry_fn or default_telemetry_fn,
         metric_sums_fn=metric_sums_fn or default_metric_sums_fn,
     )
@@ -313,7 +321,11 @@ def test_client_data_vault_has_no_public_partition_or_tensor_accessors():
 def test_vault_routes_each_operation_to_only_its_private_partition():
     vault, calls, train_data, controller_data, test_data = _vault()
 
-    vault.train_local({"weight": 1}, {"epochs": 1}, 7)
+    training = vault.train_local(
+        {"weight": torch.tensor([1.0])},
+        {"epochs": 1},
+        7,
+    )
     telemetry = vault.controller_telemetry({"weight": 2})
     votes = vault.evaluate_candidates(
         {"anchor": {"mape": 0.2}, "candidate": {"mape": 0.2}},
@@ -335,9 +347,10 @@ def test_vault_routes_each_operation_to_only_its_private_partition():
         ("metric", controller_data),
         ("metric", test_data),
     ]
-    assert isinstance(telemetry, ClientTelemetry)
-    assert all(isinstance(vote, LocalCandidateVote) for vote in votes)
-    assert isinstance(sums, MetricSums)
+    assert type(training) is LocalTrainingResult
+    assert type(telemetry) is ClientTelemetry
+    assert all(type(vote) is LocalCandidateVote for vote in votes)
+    assert type(sums) is MetricSums
 
 
 def test_vault_candidate_ranking_is_stable_on_mape_ties():
@@ -464,3 +477,237 @@ def test_vault_final_test_rejects_non_metric_sums_callback_result():
                 "explicit_unlock": True,
             },
         )
+
+
+def test_local_training_result_deep_clones_tensors_and_freezes_mapping():
+    source_tensor = torch.tensor([1.0])
+    source_state = {"weight": source_tensor}
+
+    result = LocalTrainingResult(
+        model_state=source_state,
+        sample_count=5,
+        train_loss=0.25,
+    )
+    source_tensor.add_(10.0)
+    source_state["extra"] = torch.tensor([2.0])
+
+    assert list(result.model_state) == ["weight"]
+    assert torch.equal(result.model_state["weight"], torch.tensor([1.0]))
+    assert result.model_state["weight"] is not source_tensor
+    with pytest.raises(TypeError):
+        result.model_state["extra"] = torch.tensor([2.0])
+    with pytest.raises(FrozenInstanceError):
+        result.sample_count = 6
+
+
+class _CustomStateDict(dict):
+    pass
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"model_state": []},
+        {"model_state": _CustomStateDict(weight=torch.tensor([1.0]))},
+        {"model_state": {"weight": 1.0}},
+        {"model_state": {1: torch.tensor([1.0])}},
+        {"sample_count": 0},
+        {"sample_count": True},
+        {"train_loss": float("inf")},
+        {"train_loss": torch.tensor(0.2)},
+    ],
+)
+def test_local_training_result_rejects_custom_or_invalid_payload(kwargs):
+    values = {
+        "model_state": {"weight": torch.tensor([1.0])},
+        "sample_count": 5,
+        "train_loss": 0.25,
+    }
+    values.update(kwargs)
+
+    with pytest.raises((TypeError, ValueError)):
+        LocalTrainingResult(**values)
+
+
+def test_local_training_result_rejects_extra_payload_fields():
+    with pytest.raises(TypeError):
+        LocalTrainingResult(
+            model_state={"weight": torch.tensor([1.0])},
+            sample_count=5,
+            train_loss=0.25,
+            labels=[1.0],
+        )
+
+
+def test_train_local_requires_exact_dto_and_reclones_callback_tensors():
+    callback_result = LocalTrainingResult(
+        model_state={"weight": torch.tensor([1.0])},
+        sample_count=5,
+        train_loss=0.25,
+    )
+    vault, _, _, _, _ = _vault(train_fn=lambda *args: callback_result)
+
+    returned = vault.train_local(
+        {"weight": torch.tensor([0.0])},
+        {"epochs": 1},
+        3,
+    )
+    callback_result.model_state["weight"].add_(10.0)
+
+    assert type(returned) is LocalTrainingResult
+    assert returned is not callback_result
+    assert returned.model_state is not callback_result.model_state
+    assert torch.equal(returned.model_state["weight"], torch.tensor([1.0]))
+
+
+class _AliasedTrainingResult(LocalTrainingResult):
+    leaked_dataset = object()
+
+
+class _AliasedTelemetry(ClientTelemetry):
+    leaked_dataset = object()
+
+
+class _AliasedMetricSums(MetricSums):
+    leaked_test_dataset = object()
+
+
+def test_vault_rejects_training_result_subclass_with_hidden_alias():
+    result = _AliasedTrainingResult(
+        model_state={"weight": torch.tensor([1.0])},
+        sample_count=5,
+        train_loss=0.25,
+    )
+    vault, _, _, _, _ = _vault(train_fn=lambda *args: result)
+
+    with pytest.raises(TypeError, match="exact LocalTrainingResult"):
+        vault.train_local({"weight": torch.tensor([0.0])}, {}, 1)
+
+
+def test_vault_rejects_telemetry_subclass_with_hidden_alias():
+    telemetry = _AliasedTelemetry(**vars(_telemetry()))
+    vault, _, _, _, _ = _vault(telemetry_fn=lambda *args: telemetry)
+
+    with pytest.raises(TypeError, match="exact ClientTelemetry"):
+        vault.controller_telemetry({})
+
+
+def test_vault_rejects_metric_sums_subclass_with_hidden_test_dataset():
+    sums = _AliasedMetricSums(
+        n=10,
+        ape_sum=2.0,
+        se_sum=40.0,
+        ae_sum=20.0,
+        y_sum=0.0,
+        y_sq_sum=0.0,
+    )
+    vault, _, _, _, _ = _vault(metric_sums_fn=lambda *args: sums)
+
+    with pytest.raises(TypeError, match="exact MetricSums"):
+        vault.final_test_sums(
+            {},
+            {
+                "phase": "formal_evaluate",
+                "formal_frozen": True,
+                "explicit_unlock": True,
+            },
+        )
+
+
+@pytest.mark.parametrize("callback_name", ["train", "telemetry", "metric"])
+def test_vault_rejects_callback_returning_private_dataset_directly(callback_name):
+    kwargs = {}
+    if callback_name == "train":
+        kwargs["train_fn"] = lambda dataset, *args: dataset
+    elif callback_name == "telemetry":
+        kwargs["telemetry_fn"] = lambda client_id, dataset, state: dataset
+    else:
+        kwargs["metric_sums_fn"] = lambda dataset, state: dataset
+    vault, _, _, _, _ = _vault(**kwargs)
+
+    with pytest.raises(TypeError):
+        if callback_name == "train":
+            vault.train_local({"weight": torch.tensor([0.0])}, {}, 1)
+        elif callback_name == "telemetry":
+            vault.controller_telemetry({})
+        else:
+            vault.evaluate_candidates({"anchor": {}}, stronger_anchor_id="anchor")
+
+
+def test_controller_telemetry_rebuilds_exact_validated_value():
+    callback_result = _telemetry()
+    vault, _, _, _, _ = _vault(telemetry_fn=lambda *args: callback_result)
+
+    returned = vault.controller_telemetry({})
+
+    assert type(returned) is ClientTelemetry
+    assert returned == callback_result
+    assert returned is not callback_result
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"sample_count": 0},
+        {"sample_count": True},
+        {"train_loss": float("nan")},
+        {"val_mape": float("inf")},
+        {"val_rmse": float("nan")},
+        {"update_norm": float("inf")},
+        {"cosine_to_mean": float("nan")},
+        {"cosine_to_previous": float("inf")},
+    ],
+)
+def test_controller_telemetry_rejects_invalid_scalar_fields(overrides):
+    values = vars(_telemetry()).copy()
+    values.update(overrides)
+    callback_result = ClientTelemetry(**values)
+    vault, _, _, _, _ = _vault(telemetry_fn=lambda *args: callback_result)
+
+    with pytest.raises((TypeError, ValueError)):
+        vault.controller_telemetry({})
+
+
+def test_final_test_sums_rebuilds_exact_metric_sums_value():
+    callback_result = _metric_sums()
+    vault, _, _, _, _ = _vault(metric_sums_fn=lambda *args: callback_result)
+
+    returned = vault.final_test_sums(
+        {},
+        {
+            "phase": "formal_evaluate",
+            "formal_frozen": True,
+            "explicit_unlock": True,
+        },
+    )
+
+    assert type(returned) is MetricSums
+    assert returned == callback_result
+    assert returned is not callback_result
+
+
+class _AliasedFloat(float):
+    leaked_dataset = object()
+
+
+def test_final_test_sums_normalizes_custom_numeric_fields_to_plain_float():
+    callback_result = MetricSums(
+        n=10,
+        ape_sum=_AliasedFloat(2.0),
+        se_sum=40.0,
+        ae_sum=20.0,
+        y_sum=0.0,
+        y_sq_sum=0.0,
+    )
+    vault, _, _, _, _ = _vault(metric_sums_fn=lambda *args: callback_result)
+
+    returned = vault.final_test_sums(
+        {},
+        {
+            "phase": "formal_evaluate",
+            "formal_frozen": True,
+            "explicit_unlock": True,
+        },
+    )
+
+    assert type(returned.ape_sum) is float
