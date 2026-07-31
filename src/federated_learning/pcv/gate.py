@@ -13,7 +13,6 @@ from .voting import aggregate_candidate_votes
 _TRUST_REGION_L1 = 0.35
 _BEST_LEGAL_TOLERANCE = 0.002
 _ANCHOR_DEGRADATION_TOLERANCE = 0.001
-_FLOAT_BOUNDARY_TOLERANCE = 1e-12
 
 
 def _identity(value: object, *, name: str) -> str:
@@ -116,12 +115,7 @@ def _rejection(
 
 
 def _exceeds_boundary(value: float, limit: float) -> bool:
-    return value > limit and not math.isclose(
-        value,
-        limit,
-        rel_tol=0.0,
-        abs_tol=_FLOAT_BOUNDARY_TOLERANCE,
-    )
+    return value > limit
 
 
 def select_with_gate(

@@ -1,4 +1,5 @@
 from dataclasses import FrozenInstanceError
+import math
 
 import pytest
 
@@ -196,6 +197,60 @@ def test_gate_accepts_exact_threshold_equalities():
 
     assert decision.gate_status == "accepted"
     assert decision.diagnostics["l1_distance"] == pytest.approx(0.35)
+
+
+def test_gate_rejects_smallest_representable_l1_excess():
+    inputs = _valid_inputs()
+    inputs["candidates"]["proposal"] = _candidate(
+        "proposal",
+        {
+            "c1": 0.475,
+            "c2": math.nextafter(0.225, -math.inf),
+            "c3": 0.3,
+        },
+    )
+    actual_l1 = math.fsum(
+        abs(
+            inputs["candidates"]["proposal"].weights[client_id]
+            - PREVIOUS_WEIGHTS[client_id]
+        )
+        for client_id in CLIENT_IDS
+    )
+    assert actual_l1 == math.nextafter(0.35, math.inf)
+
+    decision = select_with_gate(**inputs)
+
+    assert decision.gate_status == "rejected_trust_region"
+
+
+def test_gate_rejects_smallest_representable_best_mape_excess():
+    inputs = _valid_inputs()
+    just_over_limit = math.nextafter(0.002, math.inf)
+    inputs["aggregate_mape"].update(
+        anchor=0.4,
+        best=0.0,
+        proposal=just_over_limit,
+    )
+    assert just_over_limit > inputs["aggregate_mape"]["best"] + 0.002
+
+    decision = select_with_gate(**inputs)
+
+    assert decision.gate_status == "rejected_not_near_best"
+
+
+def test_gate_rejects_smallest_representable_anchor_mape_excess():
+    inputs = _valid_inputs()
+    just_over_limit = math.nextafter(0.001, math.inf)
+    inputs["aggregate_mape"].update(
+        anchor=0.0,
+        best=just_over_limit,
+        proposal=just_over_limit,
+    )
+    assert just_over_limit > inputs["aggregate_mape"]["anchor"] + 0.001
+
+    decision = select_with_gate(**inputs)
+
+    assert decision.gate_status == "rejected_anchor_degradation"
 
 
 def test_gate_best_legal_tie_is_deterministic():
