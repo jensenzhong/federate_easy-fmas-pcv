@@ -299,7 +299,6 @@ def test_every_round_stage_failure_restores_complete_runtime_and_artifacts(
         torch.rand(2)
         if stage == "checkpoint":
             checkpoint.write_bytes(b"corrupt new checkpoint")
-            telemetry_path.write_bytes(b"corrupt telemetry")
         raise RuntimeError(f"{stage} Bearer secret-token")
 
     monkeypatch.setattr(engine, method_name, fail)
@@ -391,11 +390,16 @@ def test_fail_stop_agent_does_not_call_remaining_roles(tmp_path):
 
 def test_pause_report_failure_never_overwrites_original_failure(tmp_path, monkeypatch):
     agent = FakeAgent(fail_role="diagnostic")
-    engine = _engine(tmp_path, agent_orchestrator=agent)
-    monkeypatch.setattr(
-        engine,
-        "_write_pause_report",
-        lambda *args, **kwargs: (_ for _ in ()).throw(OSError("report failed")),
+    checkpoint_directory = tmp_path / "checkpoint"
+    checkpoint_directory.mkdir()
+    engine = _engine(
+        tmp_path,
+        agent_orchestrator=agent,
+        checkpoint_path=checkpoint_directory / "last_complete.pt",
+        pause_report_path=tmp_path / "primary" / "PAUSED.json",
+        pause_report_writer=lambda *args, **kwargs: (_ for _ in ()).throw(
+            OSError("report failed with Bearer secret-report-token")
+        ),
     )
 
     with pytest.raises(ExperimentPaused) as paused:
@@ -403,8 +407,143 @@ def test_pause_report_failure_never_overwrites_original_failure(tmp_path, monkey
 
     assert isinstance(paused.value.failure, DeepSeekCallError)
     assert paused.value.failure.category == "connection"
-    assert paused.value.report_path is None
+    assert paused.value.report_path == checkpoint_directory / "PAUSED.json"
+    assert paused.value.report_path.is_file()
     assert paused.value.report_error == "OSError"
+    report = json.loads(paused.value.report_path.read_text(encoding="utf-8"))
+    assert report["primary_report_error"] == {"exception_type": "OSError"}
+    assert "secret-report-token" not in paused.value.report_path.read_text(encoding="utf-8")
+    assert engine.last_complete_round == 2
+
+
+@pytest.mark.parametrize(
+    "method_name",
+    [
+        "_train_clients",
+        "_collect_client_telemetry",
+        "_build_method_proposals",
+        "_preview_candidates",
+        "_evaluate_on_clients",
+        "_gate",
+        "_write_checkpoint",
+    ],
+)
+def test_callback_experiment_paused_is_rewrapped_for_current_round(
+    tmp_path, monkeypatch, method_name
+):
+    engine = _engine(tmp_path)
+    stale_report = tmp_path / "PAUSED.json"
+    stale_report.write_text(
+        '{"status":"paused","failed_round":1,"last_complete_round":0}',
+        encoding="utf-8",
+    )
+    original_failure = DeepSeekCallError(
+        "connection", "diagnostic", "Bearer callback-secret"
+    )
+    original_pause = ExperimentPaused(original_failure, stale_report)
+
+    def fail(*args, **kwargs):
+        del args, kwargs
+        engine.global_state["weight"].add_(99)
+        engine.last_complete_round = 99
+        raise original_pause
+
+    monkeypatch.setattr(engine, method_name, fail)
+    with pytest.raises(ExperimentPaused) as paused:
+        engine.run_round(3)
+
+    assert paused.value is not original_pause
+    assert paused.value.failure is not original_failure
+    assert paused.value.failure.category == "connection"
+    assert paused.value.report_path == tmp_path / "PAUSED.json"
+    assert paused.value.report_path.is_file()
+    assert paused.value.__cause__ is original_pause
+    report_text = paused.value.report_path.read_text(encoding="utf-8")
+    assert json.loads(report_text)["failed_round"] == 3
+    assert "callback-secret" not in report_text
+    assert engine.last_complete_round == 2
+
+
+def test_invalid_nested_pause_failure_is_sanitized_and_rewrapped(tmp_path):
+    engine = _engine(tmp_path)
+    nested = ExperimentPaused.__new__(ExperimentPaused)
+    RuntimeError.__init__(nested, "invalid nested pause")
+    nested.failure = "Bearer invalid nested failure"
+    nested.report_path = tmp_path / "stale.json"
+    engine.train_clients = lambda **kwargs: (_ for _ in ()).throw(nested)
+
+    with pytest.raises(ExperimentPaused) as paused:
+        engine.run_round(3)
+
+    assert isinstance(paused.value.failure, ExperimentRuntimeError)
+    assert paused.value.failure.category == "runtime"
+    assert paused.value.report_path.is_file()
+    assert "invalid nested failure" not in paused.value.report_path.read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "bad_sink",
+    [
+        lambda record: None,
+        type("AppendWithoutPath", (), {"append": lambda self, record: None})(),
+    ],
+)
+def test_non_transactional_telemetry_sink_is_rejected(tmp_path, bad_sink):
+    with pytest.raises(TypeError, match="transactional|AppendOnlyTelemetry|path"):
+        _engine(tmp_path, telemetry_sink=bad_sink)
+
+
+def test_transactional_telemetry_path_must_be_a_regular_file(tmp_path):
+    directory = tmp_path / "not-a-telemetry-file"
+    directory.mkdir()
+    with pytest.raises(ValueError, match="regular file"):
+        _engine(tmp_path, telemetry_sink=AppendOnlyTelemetry(directory))
+
+
+def test_telemetry_append_then_failure_leaves_no_round_record(
+    tmp_path, monkeypatch
+):
+    telemetry_path = tmp_path / "rounds.jsonl"
+    telemetry_path.write_bytes(b'{"old":true}\n')
+    engine = _engine(tmp_path, telemetry_sink=AppendOnlyTelemetry(telemetry_path))
+    append = engine._append_telemetry
+
+    def append_then_fail(record):
+        append(record)
+        raise OSError("failure after telemetry append")
+
+    monkeypatch.setattr(engine, "_append_telemetry", append_then_fail)
+    with pytest.raises(ExperimentPaused):
+        engine.run_round(3)
+
+    assert telemetry_path.read_bytes() == b'{"old":true}\n'
+    assert engine.telemetry_records == []
+    assert engine.last_complete_round == 2
+
+
+def test_checkpoint_failure_after_replace_restores_checkpoint_and_telemetry(tmp_path):
+    telemetry_path = tmp_path / "rounds.jsonl"
+    telemetry_path.write_bytes(b'{"old":true}\n')
+    checkpoint_path = tmp_path / "last_complete.pt"
+    checkpoint_path.write_bytes(b"old-checkpoint")
+
+    def replace_then_fail(path, payload):
+        del payload
+        path.write_bytes(b"new-checkpoint")
+        raise OSError("failure after checkpoint replace")
+
+    engine = _engine(
+        tmp_path,
+        telemetry_sink=AppendOnlyTelemetry(telemetry_path),
+        checkpoint_path=checkpoint_path,
+        checkpoint_writer=replace_then_fail,
+    )
+    with pytest.raises(ExperimentPaused):
+        engine.run_round(3)
+
+    assert checkpoint_path.read_bytes() == b"old-checkpoint"
+    assert telemetry_path.read_bytes() == b'{"old":true}\n'
+    assert engine.telemetry_records == []
     assert engine.last_complete_round == 2
 
 
@@ -444,11 +583,11 @@ def test_invalid_rounds_and_method_fail_closed(tmp_path):
     engine = _engine(tmp_path, "FEDAVG_STRICT")
     with pytest.raises(ExperimentPaused) as gap:
         engine.run_round(4)
-    assert "contiguous" in gap.value.failure.detail
+    assert gap.value.failure.exception_type == "ValueError"
     engine.run_round(3)
     with pytest.raises(ExperimentPaused) as duplicate:
         engine.run_round(3)
-    assert "contiguous" in duplicate.value.failure.detail
+    assert duplicate.value.failure.exception_type == "ValueError"
     assert engine.last_complete_round == 3
 
 
@@ -460,7 +599,7 @@ def test_vote_ids_stronger_anchor_and_selected_state_are_verified(tmp_path):
     engine = _engine(tmp_path, evaluate_candidates=incomplete_votes)
     with pytest.raises(ExperimentPaused) as incomplete:
         engine.run_round(3)
-    assert "candidate IDs" in incomplete.value.failure.detail
+    assert incomplete.value.failure.exception_type == "ValueError"
 
     def false_stronger(**kwargs):
         votes = _evaluate_candidates(**kwargs)
@@ -474,7 +613,7 @@ def test_vote_ids_stronger_anchor_and_selected_state_are_verified(tmp_path):
     engine = _engine(tmp_path, evaluate_candidates=false_stronger)
     with pytest.raises(ExperimentPaused) as stronger:
         engine.run_round(3)
-    assert "stronger anchor" in stronger.value.failure.detail
+    assert stronger.value.failure.exception_type == "ValueError"
 
     def missing_selection(**kwargs):
         return CandidateDecision(
@@ -487,4 +626,4 @@ def test_vote_ids_stronger_anchor_and_selected_state_are_verified(tmp_path):
     engine = _engine(tmp_path, gate_selector=missing_selection)
     with pytest.raises(ExperimentPaused) as selected:
         engine.run_round(3)
-    assert "selected candidate state" in selected.value.failure.detail
+    assert selected.value.failure.exception_type == "ValueError"

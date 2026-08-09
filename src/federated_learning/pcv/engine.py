@@ -10,10 +10,12 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 import copy
+from hashlib import sha256
 import json
 import math
 import os
 from pathlib import Path
+import stat
 import tempfile
 from types import MappingProxyType
 from typing import Any
@@ -36,7 +38,7 @@ from .checkpoint import (
 )
 from .gate import select_with_gate
 from .schemas import CandidateAction, CandidateDecision, ClientTelemetry, LocalCandidateVote
-from .telemetry import sanitize_telemetry_value
+from .telemetry import AppendOnlyTelemetry, sanitize_telemetry_value
 from .voting import aggregate_candidate_votes
 
 
@@ -53,6 +55,22 @@ _FMAS_PROPOSERS = (
     "performance_proposer",
     "stability_proposer",
     "balance_proposer",
+)
+_SAFE_AGENT_FAILURE_CATEGORIES = frozenset(
+    {"authentication", "connection", "http", "schema"}
+)
+_SAFE_AGENT_ROLES = frozenset(
+    {
+        "preflight",
+        "diagnostic",
+        "performance_proposer",
+        "stability_proposer",
+        "balance_proposer",
+        "critic",
+        "coordinator",
+        "single_agent",
+        "orchestrator",
+    }
 )
 
 
@@ -120,16 +138,29 @@ class ExperimentPaused(RuntimeError):
     def __init__(
         self,
         failure: DeepSeekCallError | ExperimentRuntimeError,
-        report_path: Path | None,
+        report_path: str | os.PathLike[str],
         *,
         rollback_errors: Sequence[str] = (),
         report_error: str | None = None,
+        report_persisted: bool = True,
     ):
+        if type(failure) not in (DeepSeekCallError, ExperimentRuntimeError):
+            raise TypeError("failure must be an exact sanitized engine failure")
         self.failure = failure
-        self.report_path = report_path
+        self.report_path = Path(report_path)
         self.rollback_errors = tuple(rollback_errors)
         self.report_error = report_error
+        self.report_persisted = bool(report_persisted)
         super().__init__(f"experiment paused after {failure.category} failure")
+
+
+class PauseReportPersistenceError(RuntimeError):
+    """All built-in pause-report targets were unavailable."""
+
+    def __init__(self, attempted_path: Path, error_types: Sequence[str]):
+        self.attempted_path = attempted_path
+        self.error_types = tuple(error_types)
+        super().__init__("pause report could not be persisted")
 
 
 @dataclass(frozen=True)
@@ -199,6 +230,14 @@ class _RuntimeSnapshot:
     pending_telemetry: list[dict[str, Any]]
     rng_state: dict[str, Any]
     artifacts: dict[Path, bytes | None]
+    telemetry: "_TelemetrySnapshot | None"
+
+
+@dataclass(frozen=True)
+class _TelemetrySnapshot:
+    path: Path
+    existed: bool
+    offset: int
 
 
 class PCVEngine:
@@ -235,6 +274,7 @@ class PCVEngine:
         checkpoint_path: str | os.PathLike[str] | None = None,
         checkpoint_writer: Callable[..., Any] | None = None,
         pause_report_path: str | os.PathLike[str] | None = None,
+        pause_report_writer: Callable[..., Any] | None = None,
         freeze_id: str = "development",
         llm_rep: int = 0,
         partition_sha256: str = "development-partition",
@@ -290,9 +330,11 @@ class PCVEngine:
         self.agent_orchestrator = agent_orchestrator
         self.single_agent = single_agent
         self.gate_selector = gate_selector
-        self.telemetry_sink = telemetry_sink
         self.checkpoint_path = None if checkpoint_path is None else Path(checkpoint_path)
         self.checkpoint_writer = checkpoint_writer
+        if pause_report_writer is not None and not callable(pause_report_writer):
+            raise TypeError("pause_report_writer must be callable")
+        self.pause_report_writer = pause_report_writer
         if pause_report_path is None:
             pause_report_path = (
                 self.checkpoint_path.parent / "PAUSED.json"
@@ -302,6 +344,22 @@ class PCVEngine:
         self.pause_report_path = Path(pause_report_path)
         if self.pause_report_path == self.checkpoint_path:
             raise ValueError("pause report and checkpoint paths must differ")
+
+        self.telemetry_sink = self._validated_telemetry_sink(telemetry_sink)
+        self._telemetry_path = (
+            None
+            if self.telemetry_sink is None
+            else Path(self.telemetry_sink.path).resolve(strict=False)
+        )
+        if self._telemetry_path is not None and self._telemetry_path in {
+            (
+                None
+                if self.checkpoint_path is None
+                else self.checkpoint_path.resolve(strict=False)
+            ),
+            self.pause_report_path.resolve(strict=False),
+        }:
+            raise ValueError("telemetry path must be separate from checkpoint and pause report")
 
         self.freeze_id = str(freeze_id)
         self.llm_rep = int(llm_rep)
@@ -320,6 +378,26 @@ class PCVEngine:
         self.telemetry_records: list[dict[str, Any]] = []
         self.pending_telemetry: list[dict[str, Any]] = []
         self._active_work: _RoundWork | None = None
+
+    @staticmethod
+    def _validated_telemetry_sink(value: Any) -> AppendOnlyTelemetry | None:
+        if value is None:
+            return None
+        if type(value) is not AppendOnlyTelemetry:
+            raise TypeError(
+                "telemetry_sink must be an exact path-backed AppendOnlyTelemetry "
+                "transactional sink"
+            )
+        if not callable(getattr(value, "append", None)):
+            raise TypeError("transactional telemetry sink must provide append()")
+        path = Path(value.path).resolve(strict=False)
+        if path.exists():
+            metadata = path.lstat()
+            if path.is_symlink() or not stat.S_ISREG(metadata.st_mode):
+                raise ValueError("telemetry path must be a local regular file")
+        elif path.parent.exists() and not path.parent.is_dir():
+            raise ValueError("telemetry parent must be a local directory")
+        return value
 
     def _validated_initial_weights(
         self, value: Mapping[str, float] | None
@@ -340,12 +418,24 @@ class PCVEngine:
         paths: list[Path] = []
         if self.checkpoint_path is not None:
             paths.append(self.checkpoint_path)
-        sink_path = getattr(self.telemetry_sink, "path", None)
-        if sink_path is not None:
-            candidate = Path(sink_path)
-            if candidate not in paths:
-                paths.append(candidate)
         return tuple(paths)
+
+    def _snapshot_telemetry(self) -> _TelemetrySnapshot | None:
+        if self._telemetry_path is None:
+            return None
+        if Path(self.telemetry_sink.path).resolve(strict=False) != self._telemetry_path:
+            raise ValueError("transactional telemetry path changed after validation")
+        path = self._telemetry_path
+        if not path.exists():
+            return _TelemetrySnapshot(path=path, existed=False, offset=0)
+        metadata = path.lstat()
+        if path.is_symlink() or not stat.S_ISREG(metadata.st_mode):
+            raise ValueError("telemetry path must remain a local regular file")
+        return _TelemetrySnapshot(
+            path=path,
+            existed=True,
+            offset=int(metadata.st_size),
+        )
 
     def _snapshot_runtime(self) -> _RuntimeSnapshot:
         artifacts = {
@@ -364,6 +454,7 @@ class PCVEngine:
             pending_telemetry=_clone(self.pending_telemetry),
             rng_state=capture_rng_state(),
             artifacts=artifacts,
+            telemetry=self._snapshot_telemetry(),
         )
 
     @staticmethod
@@ -411,7 +502,34 @@ class PCVEngine:
                 self._restore_file(path, content)
             except Exception as error:
                 errors.append(f"artifact:{type(error).__name__}")
+        if snapshot.telemetry is not None:
+            try:
+                self._restore_telemetry(snapshot.telemetry)
+            except Exception as error:
+                errors.append(f"telemetry:{type(error).__name__}")
         return tuple(errors)
+
+    @staticmethod
+    def _restore_telemetry(snapshot: _TelemetrySnapshot) -> None:
+        path = snapshot.path
+        if not snapshot.existed:
+            if path.exists():
+                metadata = path.lstat()
+                if path.is_symlink() or not stat.S_ISREG(metadata.st_mode):
+                    raise ValueError("refusing to remove a non-regular telemetry path")
+                path.unlink()
+            return
+        if not path.exists():
+            raise FileNotFoundError("transactional telemetry file disappeared")
+        metadata = path.lstat()
+        if path.is_symlink() or not stat.S_ISREG(metadata.st_mode):
+            raise ValueError("telemetry path ceased to be a regular file")
+        if metadata.st_size < snapshot.offset:
+            raise OSError("telemetry file shrank during the round transaction")
+        with open(path, "r+b", buffering=0) as stream:
+            os.ftruncate(stream.fileno(), snapshot.offset)
+            stream.flush()
+            os.fsync(stream.fileno())
 
     def _train_clients(self, round_index: int) -> dict[str, dict[str, torch.Tensor]]:
         result = self.train_clients(
@@ -772,13 +890,9 @@ class PCVEngine:
     def _append_telemetry(self, record: dict[str, Any]) -> None:
         if self.telemetry_sink is None:
             return
-        appender = getattr(self.telemetry_sink, "append", None)
-        if callable(appender):
-            appender(_clone(record))
-        elif callable(self.telemetry_sink):
-            self.telemetry_sink(_clone(record))
-        else:
-            raise TypeError("telemetry_sink must be callable or provide append()")
+        if Path(self.telemetry_sink.path).resolve(strict=False) != self._telemetry_path:
+            raise ValueError("transactional telemetry path changed during the round")
+        self.telemetry_sink.append(_clone(record))
 
     def _checkpoint_payload(self, round_index: int) -> dict[str, Any]:
         return build_checkpoint_payload(
@@ -842,11 +956,47 @@ class PCVEngine:
         checkpoint_path = self._write_checkpoint(round_index)
         return record, checkpoint_path
 
-    def _write_pause_report(
+    @staticmethod
+    def _sanitized_failure(
+        failure: Any,
+    ) -> DeepSeekCallError | ExperimentRuntimeError:
+        if type(failure) is DeepSeekCallError:
+            category = getattr(failure, "category", None)
+            role = getattr(failure, "role", None)
+            if (
+                type(category) is str
+                and category in _SAFE_AGENT_FAILURE_CATEGORIES
+                and type(role) is str
+                and role in _SAFE_AGENT_ROLES
+            ):
+                return DeepSeekCallError(
+                    category,
+                    role,
+                    "round stopped after a sanitized agent failure",
+                )
+        elif type(failure) is ExperimentRuntimeError:
+            exception_type = getattr(failure, "exception_type", None)
+            if (
+                type(exception_type) is str
+                and exception_type.isidentifier()
+                and len(exception_type) <= 80
+            ):
+                return ExperimentRuntimeError(
+                    exception_type,
+                    "round stopped after a sanitized runtime failure",
+                )
+        return ExperimentRuntimeError(
+            "InvalidExperimentPausedFailure",
+            "nested ExperimentPaused.failure was invalid",
+        )
+
+    def _pause_report_record(
         self,
         round_index: int,
         failure: DeepSeekCallError | ExperimentRuntimeError,
-    ) -> Path:
+        *,
+        primary_report_error: Exception | None = None,
+    ) -> dict[str, Any]:
         failure_record = {
             "category": failure.category,
             "role": getattr(failure, "role", "engine"),
@@ -856,17 +1006,25 @@ class PCVEngine:
                 else type(failure).__name__
             ),
         }
-        report = sanitize_telemetry_value(
-            {
-                "status": "paused",
-                "failed_round": round_index,
-                "last_complete_round": self.last_complete_round,
-                "method": self.method,
-                "failure": failure_record,
+        report: dict[str, Any] = {
+            "status": "paused",
+            "failed_round": round_index,
+            "last_complete_round": self.last_complete_round,
+            "method": self.method,
+            "failure": failure_record,
+        }
+        if primary_report_error is not None:
+            report["primary_report_error"] = {
+                "exception_type": type(primary_report_error).__name__,
             }
-        )
+        return sanitize_telemetry_value(report)
+
+    @staticmethod
+    def _atomic_write_pause_report(target: Path, report: Mapping[str, Any]) -> Path:
+        target = Path(target)
+        if target.exists() and (target.is_symlink() or not target.is_file()):
+            raise ValueError("pause report target must be a regular file")
         encoded = (json.dumps(report, sort_keys=True, ensure_ascii=False) + "\n").encode("utf-8")
-        target = self.pause_report_path
         target.parent.mkdir(parents=True, exist_ok=True)
         descriptor, name = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp", dir=target.parent)
         temporary = Path(name)
@@ -881,6 +1039,76 @@ class PCVEngine:
             raise
         return target
 
+    def _write_pause_report(
+        self,
+        round_index: int,
+        failure: DeepSeekCallError | ExperimentRuntimeError,
+    ) -> Path:
+        report = self._pause_report_record(round_index, failure)
+        if self.pause_report_writer is None:
+            return self._atomic_write_pause_report(self.pause_report_path, report)
+        result = self.pause_report_writer(self.pause_report_path, _clone(report))
+        path = self.pause_report_path if result is None else Path(result)
+        self._validate_pause_report(path, report)
+        return path
+
+    @staticmethod
+    def _validate_pause_report(path: Path, expected: Mapping[str, Any]) -> None:
+        if not path.exists() or path.is_symlink() or not path.is_file():
+            raise OSError("primary pause writer did not persist a regular report")
+        try:
+            actual = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as error:
+            raise OSError("primary pause writer persisted an invalid report") from error
+        if actual != expected:
+            raise OSError("primary pause writer persisted a stale or nonstandard report")
+
+    def _fallback_pause_paths(self, round_index: int) -> tuple[Path, ...]:
+        candidates: list[Path] = []
+        if self.checkpoint_path is not None:
+            candidates.append(self.checkpoint_path.parent / "PAUSED.json")
+        candidates.append(self.pause_report_path.parent / "PAUSED.json")
+        identity = sha256(
+            (
+                f"{self.method}|{round_index}|"
+                f"{self.pause_report_path.resolve(strict=False)}"
+            ).encode("utf-8")
+        ).hexdigest()[:20]
+        candidates.append(Path(tempfile.gettempdir()) / f"pcv-{identity}-PAUSED.json")
+        unique: list[Path] = []
+        for candidate in candidates:
+            if candidate not in unique and candidate != self.checkpoint_path:
+                unique.append(candidate)
+        return tuple(unique)
+
+    def _write_fallback_pause_report(
+        self,
+        round_index: int,
+        failure: DeepSeekCallError | ExperimentRuntimeError,
+        primary_error: Exception,
+    ) -> tuple[Path, bool, PauseReportPersistenceError | None]:
+        report = self._pause_report_record(
+            round_index,
+            failure,
+            primary_report_error=primary_error,
+        )
+        errors: list[str] = []
+        attempted_path = self.pause_report_path
+        for target in self._fallback_pause_paths(round_index):
+            attempted_path = target
+            try:
+                path = self._atomic_write_pause_report(target, report)
+                if path.is_file():
+                    return path, True, None
+                raise OSError("fallback pause report did not exist after write")
+            except Exception as error:
+                errors.append(type(error).__name__)
+        return (
+            attempted_path,
+            False,
+            PauseReportPersistenceError(attempted_path, errors),
+        )
+
     def _pause_after_failure(
         self,
         *,
@@ -890,17 +1118,33 @@ class PCVEngine:
         cause: Exception,
     ) -> ExperimentPaused:
         rollback_errors = self._restore_runtime(snapshot)
-        report_path: Path | None = None
+        failure = self._sanitized_failure(failure)
+        report_path = self.pause_report_path
         report_error: str | None = None
+        report_persisted = False
         try:
             report_path = self._write_pause_report(round_index, failure)
-        except Exception as error:
-            report_error = type(error).__name__
+            report_persisted = report_path.is_file()
+        except Exception as primary_error:
+            report_error = type(primary_error).__name__
+            report_path, report_persisted, persistence_error = (
+                self._write_fallback_pause_report(
+                    round_index,
+                    failure,
+                    primary_error,
+                )
+            )
+            if persistence_error is not None:
+                rollback_errors = (
+                    *rollback_errors,
+                    f"pause_report:{type(persistence_error).__name__}",
+                )
         paused = ExperimentPaused(
             failure,
             report_path,
             rollback_errors=rollback_errors,
             report_error=report_error,
+            report_persisted=report_persisted,
         )
         paused.__cause__ = cause
         return paused
@@ -948,9 +1192,16 @@ class PCVEngine:
             )
             self._active_work = None
             return result
-        except ExperimentPaused:
-            self._restore_runtime(snapshot)
-            raise
+        except ExperimentPaused as paused_failure:
+            nested_failure = self._sanitized_failure(
+                getattr(paused_failure, "failure", None)
+            )
+            raise self._pause_after_failure(
+                round_index=round_index,
+                failure=nested_failure,
+                snapshot=snapshot,
+                cause=paused_failure,
+            ) from paused_failure
         except DeepSeekCallError as failure:
             raise self._pause_after_failure(
                 round_index=round_index,
@@ -972,6 +1223,7 @@ __all__ = [
     "FORMAL_METHODS",
     "ExperimentPaused",
     "ExperimentRuntimeError",
+    "PauseReportPersistenceError",
     "PCVEngine",
     "RoundResult",
 ]
