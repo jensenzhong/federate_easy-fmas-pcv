@@ -245,6 +245,77 @@ def test_rng_restore_rejects_cuda_topology_mismatch_before_any_global_mutation(
         restore_rng_state(state)
 
 
+@pytest.mark.parametrize(
+    "saved_states",
+    [
+        [torch.zeros(3, dtype=torch.uint8), torch.zeros(8, dtype=torch.uint8)],
+        [torch.zeros(4, dtype=torch.uint8), torch.zeros(9, dtype=torch.uint8)],
+        [torch.zeros((2, 2), dtype=torch.uint8), torch.zeros(8, dtype=torch.uint8)],
+    ],
+)
+def test_rng_restore_preflights_each_cuda_state_shape_before_any_setter(
+    monkeypatch,
+    saved_states,
+):
+    current_states = [
+        torch.ones(4, dtype=torch.uint8),
+        torch.ones(8, dtype=torch.uint8),
+    ]
+    state = capture_rng_state()
+    state["cuda_initialized"] = True
+    state["cuda_device_count"] = 2
+    state["torch_cuda"] = saved_states
+    monkeypatch.setattr(torch.cuda, "is_initialized", lambda: True)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: 2)
+    monkeypatch.setattr(torch.cuda, "get_rng_state_all", lambda: current_states)
+    monkeypatch.setattr(
+        random,
+        "setstate",
+        lambda value: (_ for _ in ()).throw(AssertionError("Python RNG mutated")),
+    )
+    monkeypatch.setattr(
+        np.random,
+        "set_state",
+        lambda value: (_ for _ in ()).throw(AssertionError("NumPy RNG mutated")),
+    )
+    monkeypatch.setattr(
+        torch,
+        "set_rng_state",
+        lambda value: (_ for _ in ()).throw(AssertionError("Torch CPU RNG mutated")),
+    )
+
+    with pytest.raises(
+        (CheckpointFormatError, CheckpointRestoreError),
+        match="CUDA.*(shape|size|numel|one-dimensional)",
+    ):
+        restore_rng_state(state)
+
+
+def test_rng_restore_accepts_matching_per_device_cuda_state_shapes(monkeypatch):
+    current_states = [
+        torch.ones(4, dtype=torch.uint8),
+        torch.ones(8, dtype=torch.uint8),
+    ]
+    saved_states = [
+        torch.zeros(4, dtype=torch.uint8),
+        torch.zeros(8, dtype=torch.uint8),
+    ]
+    state = capture_rng_state()
+    state["cuda_initialized"] = True
+    state["cuda_device_count"] = 2
+    state["torch_cuda"] = saved_states
+    restored_cuda = []
+    monkeypatch.setattr(torch.cuda, "is_initialized", lambda: True)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: 2)
+    monkeypatch.setattr(torch.cuda, "get_rng_state_all", lambda: current_states)
+    monkeypatch.setattr(torch.cuda, "set_rng_state_all", lambda states: restored_cuda.extend(states))
+
+    restore_rng_state(state)
+
+    assert len(restored_cuda) == 2
+    assert all(torch.equal(actual, expected) for actual, expected in zip(restored_cuda, saved_states))
+
+
 def test_resume_requires_explicit_user_approval_flag():
     with pytest.raises(ResumeApprovalRequired):
         validate_resume(

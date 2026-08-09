@@ -259,6 +259,28 @@ def _validate_cuda_topology_for_restore(state: Mapping[str, Any]) -> None:
         raise CheckpointRestoreError(
             "CUDA topology mismatch: device count differs from checkpoint"
         )
+    if current_initialized:
+        current_states = torch.cuda.get_rng_state_all()
+        if type(current_states) is not list or len(current_states) != current_device_count:
+            raise CheckpointRestoreError(
+                "CUDA topology mismatch: current RNG state count differs from device count"
+            )
+        for device_index, (saved_state, current_state) in enumerate(
+            zip(state["torch_cuda"], current_states)
+        ):
+            if (
+                type(current_state) is not torch.Tensor
+                or current_state.device.type != "cpu"
+                or current_state.dtype != torch.uint8
+                or current_state.ndim != 1
+            ):
+                raise CheckpointRestoreError(
+                    f"CUDA RNG state format is invalid for current device {device_index}"
+                )
+            if saved_state.shape != current_state.shape or saved_state.numel() != current_state.numel():
+                raise CheckpointRestoreError(
+                    f"CUDA RNG state shape/numel mismatch for device {device_index}"
+                )
 
 
 def _set_rng_state_unchecked(state: Mapping[str, Any]) -> None:
