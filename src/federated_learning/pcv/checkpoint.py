@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import copy
+import errno
 import os
 import random
+import stat
 import tempfile
 from collections.abc import Mapping
 from pathlib import Path
@@ -16,6 +17,19 @@ import torch
 
 SCHEMA_VERSION = 1
 CHECKPOINT_FILENAME = "last_complete.pt"
+
+_DIRECTORY_FSYNC_SUPPORTED = os.name != "nt" and hasattr(os, "O_DIRECTORY")
+_DIRECTORY_OPEN_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+_UNSUPPORTED_DIRECTORY_FSYNC_ERRNOS = frozenset(
+    value
+    for value in (
+        errno.EINVAL,
+        errno.ENOTSUP,
+        getattr(errno, "EOPNOTSUPP", None),
+        getattr(errno, "ENOSYS", None),
+    )
+    if value is not None
+)
 
 _REQUIRED_FIELDS = frozenset(
     {
@@ -68,30 +82,81 @@ def _deep_clone(value: Any) -> Any:
     if isinstance(value, torch.Tensor):
         return _plain_tensor(value)
     if isinstance(value, np.ndarray):
-        return value.copy()
+        if value.dtype.hasobject:
+            raise CheckpointFormatError("object-dtype NumPy arrays are unsafe in checkpoints")
+        if value.dtype.kind not in "biufc":
+            raise CheckpointFormatError(f"unsupported NumPy array dtype: {value.dtype}")
+        copied = np.array(value, copy=True, order="K", subok=False)
+        if not copied.dtype.isnative:
+            copied = copied.astype(copied.dtype.newbyteorder("="), copy=False)
+        try:
+            return _plain_tensor(torch.from_numpy(copied))
+        except (TypeError, ValueError, RuntimeError) as exc:
+            raise CheckpointFormatError(f"unsupported NumPy array dtype: {value.dtype}") from exc
+    if isinstance(value, np.generic):
+        return _deep_clone(value.item())
     if isinstance(value, Mapping):
-        return {_deep_clone(key): _deep_clone(item) for key, item in value.items()}
+        cloned = {}
+        for key, item in value.items():
+            if type(key) not in (bool, int, float, str):
+                raise CheckpointFormatError(f"unsupported checkpoint mapping key: {type(key).__name__}")
+            cloned[key] = _deep_clone(item)
+        return cloned
     if isinstance(value, tuple):
         return tuple(_deep_clone(item) for item in value)
     if isinstance(value, list):
         return [_deep_clone(item) for item in value]
-    if isinstance(value, set):
-        return {_deep_clone(item) for item in value}
-    return copy.deepcopy(value)
+    if type(value) in (type(None), bool, int, float, str):
+        return value
+    raise CheckpointFormatError(f"unsupported unsafe checkpoint value: {type(value).__name__}")
+
+
+def _encode_numpy_rng_state(state: tuple[Any, ...]) -> dict[str, Any]:
+    if type(state) is not tuple or len(state) != 5:
+        raise CheckpointFormatError("NumPy RNG state has an invalid shape")
+    bit_generator, keys, position, has_gauss, cached_gaussian = state
+    if not isinstance(keys, np.ndarray) or keys.dtype.hasobject:
+        raise CheckpointFormatError("NumPy RNG keys must be a numeric array")
+    return {
+        "bit_generator": str(bit_generator),
+        "keys": torch.tensor(keys.astype(np.int64, copy=True), dtype=torch.int64),
+        "position": int(position),
+        "has_gauss": int(has_gauss),
+        "cached_gaussian": float(cached_gaussian),
+    }
+
+
+def _decode_numpy_rng_state(state: Mapping[str, Any]) -> tuple[Any, ...]:
+    keys = state["keys"]
+    return (
+        state["bit_generator"],
+        keys.detach().cpu().numpy().astype(np.uint32, copy=True),
+        state["position"],
+        state["has_gauss"],
+        state["cached_gaussian"],
+    )
 
 
 def capture_rng_state() -> dict[str, Any]:
     """Capture Python, NumPy, CPU Torch, and already-initialized CUDA RNGs."""
 
+    cuda_initialized = bool(torch.cuda.is_initialized())
+    cuda_device_count = int(torch.cuda.device_count())
     cuda_state = None
     # Checking initialization is deliberately used instead of availability:
     # checkpointing a CPU run must not initialize a CUDA context.
-    if torch.cuda.is_initialized():
+    if cuda_initialized:
         cuda_state = [_plain_tensor(state) for state in torch.cuda.get_rng_state_all()]
+        if len(cuda_state) != cuda_device_count:
+            raise CheckpointFormatError(
+                "CUDA RNG state count does not match the captured CUDA device count"
+            )
     return {
-        "python": copy.deepcopy(random.getstate()),
-        "numpy": _deep_clone(np.random.get_state()),
+        "python": _deep_clone(random.getstate()),
+        "numpy": _encode_numpy_rng_state(np.random.get_state()),
         "torch_cpu": _plain_tensor(torch.get_rng_state()),
+        "cuda_initialized": cuda_initialized,
+        "cuda_device_count": cuda_device_count,
         "torch_cuda": cuda_state,
     }
 
@@ -99,19 +164,54 @@ def capture_rng_state() -> dict[str, Any]:
 def _validate_rng_state(state: Any) -> None:
     if not isinstance(state, Mapping):
         raise CheckpointFormatError("rng_state must be a mapping")
-    expected = {"python", "numpy", "torch_cpu", "torch_cuda"}
+    expected = {
+        "python",
+        "numpy",
+        "torch_cpu",
+        "cuda_initialized",
+        "cuda_device_count",
+        "torch_cuda",
+    }
     if set(state) != expected:
         raise CheckpointFormatError("rng_state fields do not match schema")
 
     try:
         validator = random.Random()
-        validator.setstate(copy.deepcopy(state["python"]))
+        validator.setstate(_deep_clone(state["python"]))
     except Exception as exc:
         raise CheckpointFormatError("rng_state.python is invalid") from exc
 
     try:
+        numpy_state = state["numpy"]
+        expected_numpy = {
+            "bit_generator",
+            "keys",
+            "position",
+            "has_gauss",
+            "cached_gaussian",
+        }
+        if type(numpy_state) is not dict or set(numpy_state) != expected_numpy:
+            raise ValueError("NumPy RNG state fields do not match schema")
+        if type(numpy_state["bit_generator"]) is not str:
+            raise ValueError("NumPy bit generator must be a string")
+        keys = numpy_state["keys"]
+        if (
+            type(keys) is not torch.Tensor
+            or keys.device.type != "cpu"
+            or keys.dtype != torch.int64
+            or keys.ndim != 1
+        ):
+            raise ValueError("NumPy RNG keys must be a one-dimensional int64 CPU tensor")
+        if bool(torch.any(keys < 0).item()) or bool(torch.any(keys > np.iinfo(np.uint32).max).item()):
+            raise ValueError("NumPy RNG keys exceed uint32 range")
+        if type(numpy_state["position"]) is not int:
+            raise ValueError("NumPy RNG position must be an integer")
+        if type(numpy_state["has_gauss"]) is not int:
+            raise ValueError("NumPy RNG has_gauss must be an integer")
+        if type(numpy_state["cached_gaussian"]) is not float:
+            raise ValueError("NumPy cached Gaussian must be a float")
         validator_np = np.random.RandomState()
-        validator_np.set_state(_deep_clone(state["numpy"]))
+        validator_np.set_state(_decode_numpy_rng_state(numpy_state))
     except Exception as exc:
         raise CheckpointFormatError("rng_state.numpy is invalid") from exc
 
@@ -125,16 +225,45 @@ def _validate_rng_state(state: Any) -> None:
         raise CheckpointFormatError("rng_state.torch_cpu is invalid") from exc
 
     cuda_state = state["torch_cuda"]
-    if cuda_state is not None:
-        if not isinstance(cuda_state, (list, tuple)):
-            raise CheckpointFormatError("rng_state.torch_cuda must be a sequence or None")
-        if any(type(item) is not torch.Tensor or item.device.type != "cpu" for item in cuda_state):
-            raise CheckpointFormatError("CUDA RNG states must be plain CPU tensors")
+    cuda_initialized = state["cuda_initialized"]
+    cuda_device_count = state["cuda_device_count"]
+    if type(cuda_initialized) is not bool:
+        raise CheckpointFormatError("rng_state.cuda_initialized must be a boolean")
+    if type(cuda_device_count) is not int or cuda_device_count < 0:
+        raise CheckpointFormatError("rng_state.cuda_device_count must be a non-negative integer")
+    if cuda_initialized:
+        if type(cuda_state) is not list:
+            raise CheckpointFormatError("initialized CUDA RNG states must be a list")
+        if len(cuda_state) != cuda_device_count:
+            raise CheckpointFormatError("CUDA RNG state count does not match cuda_device_count")
+        if any(
+            type(item) is not torch.Tensor
+            or item.device.type != "cpu"
+            or item.dtype != torch.uint8
+            or item.ndim != 1
+            for item in cuda_state
+        ):
+            raise CheckpointFormatError("CUDA RNG states must be one-dimensional uint8 CPU tensors")
+    elif cuda_state is not None:
+        raise CheckpointFormatError("uninitialized CUDA must have no CUDA RNG states")
+
+
+def _validate_cuda_topology_for_restore(state: Mapping[str, Any]) -> None:
+    current_initialized = bool(torch.cuda.is_initialized())
+    current_device_count = int(torch.cuda.device_count())
+    if state["cuda_initialized"] is not current_initialized:
+        raise CheckpointRestoreError(
+            "CUDA topology mismatch: initialization state differs from checkpoint"
+        )
+    if state["cuda_device_count"] != current_device_count:
+        raise CheckpointRestoreError(
+            "CUDA topology mismatch: device count differs from checkpoint"
+        )
 
 
 def _set_rng_state_unchecked(state: Mapping[str, Any]) -> None:
-    random.setstate(copy.deepcopy(state["python"]))
-    np.random.set_state(_deep_clone(state["numpy"]))
+    random.setstate(_deep_clone(state["python"]))
+    np.random.set_state(_decode_numpy_rng_state(state["numpy"]))
     torch.set_rng_state(_plain_tensor(state["torch_cpu"]).cpu())
     if state["torch_cuda"] is not None:
         torch.cuda.set_rng_state_all([_plain_tensor(item).cpu() for item in state["torch_cuda"]])
@@ -144,6 +273,7 @@ def restore_rng_state(state: Mapping[str, Any]) -> None:
     """Restore every captured RNG exactly, rolling back on a setter failure."""
 
     _validate_rng_state(state)
+    _validate_cuda_topology_for_restore(state)
     before = capture_rng_state()
     try:
         _set_rng_state_unchecked(state)
@@ -253,9 +383,28 @@ def _validate_tensor_state(value: Any, field: str) -> None:
         raise CheckpointFormatError(f"{field} must map strings to plain tensors")
 
 
+def _validate_safe_value(value: Any, path: str = "checkpoint") -> None:
+    if type(value) in (type(None), bool, int, float, str, torch.Tensor):
+        return
+    if type(value) in (list, tuple):
+        for index, item in enumerate(value):
+            _validate_safe_value(item, f"{path}[{index}]")
+        return
+    if type(value) is dict:
+        for key, item in value.items():
+            if type(key) not in (bool, int, float, str):
+                raise CheckpointFormatError(
+                    f"{path} has an unsupported mapping key: {type(key).__name__}"
+                )
+            _validate_safe_value(item, f"{path}[{key!r}]")
+        return
+    raise CheckpointFormatError(f"{path} contains unsupported unsafe type {type(value).__name__}")
+
+
 def _validate_payload(payload: Any) -> None:
-    if not isinstance(payload, Mapping):
-        raise CheckpointFormatError("checkpoint payload must be a mapping")
+    if type(payload) is not dict:
+        raise CheckpointFormatError("checkpoint payload must be a plain dictionary")
+    _validate_safe_value(payload)
     if set(payload) != _REQUIRED_FIELDS:
         missing = sorted(_REQUIRED_FIELDS.difference(payload))
         extra = sorted(set(payload).difference(_REQUIRED_FIELDS))
@@ -287,15 +436,15 @@ def _checkpoint_target(directory_or_path: os.PathLike[str] | str) -> Path:
 
 
 def _fsync_directory(directory: Path) -> None:
-    if not hasattr(os, "O_DIRECTORY"):
+    if not _DIRECTORY_FSYNC_SUPPORTED:
         return
     descriptor = None
     try:
-        descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+        descriptor = os.open(directory, _DIRECTORY_OPEN_FLAGS)
         os.fsync(descriptor)
-    except OSError:
-        # Directory fsync is not supported on all filesystems/platforms.
-        pass
+    except OSError as exc:
+        if exc.errno not in _UNSUPPORTED_DIRECTORY_FSYNC_ERRNOS:
+            raise
     finally:
         if descriptor is not None:
             os.close(descriptor)
@@ -333,24 +482,32 @@ def save_checkpoint(
 
 
 def load_checkpoint(path: os.PathLike[str] | str) -> dict[str, Any]:
-    """Load a trusted local checkpoint onto CPU and validate it completely."""
+    """Safely load one regular-file descriptor onto CPU and validate it."""
 
     checkpoint_path = Path(path)
-    if not checkpoint_path.is_file():
-        raise FileNotFoundError(checkpoint_path)
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0)
+    descriptor = None
     try:
-        # Explicit weights_only=False is required because exact NumPy/Python RNG
-        # states are not weights-only objects and Torch's default changed in 2.6.
-        payload = torch.load(
-            checkpoint_path,
-            map_location=torch.device("cpu"),
-            weights_only=False,
-        )
+        descriptor = os.open(checkpoint_path, flags)
+        if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+            raise CheckpointFormatError(f"checkpoint path is not a regular file: {checkpoint_path}")
+        with os.fdopen(descriptor, "rb") as handle:
+            descriptor = None
+            payload = torch.load(
+                handle,
+                map_location=torch.device("cpu"),
+                weights_only=True,
+            )
         _validate_payload(payload)
+    except FileNotFoundError:
+        raise
     except CheckpointFormatError:
         raise
     except Exception as exc:
         raise CheckpointFormatError(f"could not load checkpoint {checkpoint_path}: {exc}") from exc
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
     return dict(payload)
 
 

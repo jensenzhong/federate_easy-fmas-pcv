@@ -1,4 +1,5 @@
 import copy
+import errno
 import random
 
 import numpy as np
@@ -29,6 +30,23 @@ class _Optimizer:
 
     def load_optimizer_state(self, state):
         self.state = state
+
+
+class _UnsafeValue:
+    pass
+
+
+def _write_pickle_marker(path):
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write("executed")
+
+
+class _MaliciousPickle:
+    def __init__(self, marker):
+        self.marker = marker
+
+    def __reduce__(self):
+        return _write_pickle_marker, (self.marker,)
 
 
 def _payload(**overrides):
@@ -70,15 +88,34 @@ def _resume_kwargs(**overrides):
 
 def _assert_rng_states_equal(left, right):
     assert left["python"] == right["python"]
-    assert left["numpy"][0] == right["numpy"][0]
-    assert np.array_equal(left["numpy"][1], right["numpy"][1])
-    assert left["numpy"][2:] == right["numpy"][2:]
+    assert left["numpy"]["bit_generator"] == right["numpy"]["bit_generator"]
+    assert torch.equal(left["numpy"]["keys"], right["numpy"]["keys"])
+    assert left["numpy"]["position"] == right["numpy"]["position"]
+    assert left["numpy"]["has_gauss"] == right["numpy"]["has_gauss"]
+    assert left["numpy"]["cached_gaussian"] == right["numpy"]["cached_gaussian"]
     assert torch.equal(left["torch_cpu"], right["torch_cpu"])
+    assert left["cuda_initialized"] is right["cuda_initialized"]
+    assert left["cuda_device_count"] == right["cuda_device_count"]
     if left["torch_cuda"] is None or right["torch_cuda"] is None:
         assert left["torch_cuda"] is right["torch_cuda"]
     else:
         assert len(left["torch_cuda"]) == len(right["torch_cuda"])
         assert all(torch.equal(a, b) for a, b in zip(left["torch_cuda"], right["torch_cuda"]))
+
+
+def _assert_weights_only_safe(value):
+    if type(value) in (type(None), bool, int, float, str) or type(value) is torch.Tensor:
+        return
+    if type(value) in (list, tuple):
+        for item in value:
+            _assert_weights_only_safe(item)
+        return
+    if type(value) is dict:
+        for key, item in value.items():
+            assert type(key) in (bool, int, float, str)
+            _assert_weights_only_safe(item)
+        return
+    raise AssertionError(f"unsafe checkpoint value: {type(value)!r}")
 
 
 def test_rng_state_round_trip_is_exact():
@@ -94,23 +131,118 @@ def test_rng_state_round_trip_is_exact():
 
 def test_rng_capture_does_not_initialize_cuda(monkeypatch):
     monkeypatch.setattr(torch.cuda, "is_initialized", lambda: False)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: 2)
 
     def unexpected_cuda_access():
         raise AssertionError("CUDA RNG access would initialize CUDA")
 
     monkeypatch.setattr(torch.cuda, "get_rng_state_all", unexpected_cuda_access)
-    assert capture_rng_state()["torch_cuda"] is None
+    state = capture_rng_state()
+    assert state["cuda_initialized"] is False
+    assert state["cuda_device_count"] == 2
+    assert state["torch_cuda"] is None
 
 
 def test_rng_state_is_detached_from_mutable_runtime_state():
     state = capture_rng_state()
     cpu_copy = state["torch_cpu"].clone()
-    numpy_copy = state["numpy"][1].copy()
+    numpy_copy = state["numpy"]["keys"].clone()
     random.random()
     np.random.rand()
     torch.rand(1)
     assert torch.equal(state["torch_cpu"], cpu_copy)
-    assert np.array_equal(state["numpy"][1], numpy_copy)
+    assert torch.equal(state["numpy"]["keys"], numpy_copy)
+
+
+@pytest.mark.parametrize(
+    ("initialized", "device_count", "cuda_states"),
+    [
+        (False, 0, None),
+        (True, 1, [torch.arange(4, dtype=torch.uint8)]),
+        (
+            True,
+            2,
+            [torch.arange(4, dtype=torch.uint8), torch.arange(4, dtype=torch.uint8) + 1],
+        ),
+    ],
+)
+def test_rng_capture_records_exact_cuda_topology(
+    monkeypatch,
+    initialized,
+    device_count,
+    cuda_states,
+):
+    monkeypatch.setattr(torch.cuda, "is_initialized", lambda: initialized)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: device_count)
+    if cuda_states is None:
+        monkeypatch.setattr(
+            torch.cuda,
+            "get_rng_state_all",
+            lambda: (_ for _ in ()).throw(AssertionError("CUDA states must not be read")),
+        )
+    else:
+        monkeypatch.setattr(torch.cuda, "get_rng_state_all", lambda: cuda_states)
+
+    state = capture_rng_state()
+
+    assert state["cuda_initialized"] is initialized
+    assert state["cuda_device_count"] == device_count
+    if cuda_states is None:
+        assert state["torch_cuda"] is None
+    else:
+        assert len(state["torch_cuda"]) == len(cuda_states)
+        assert all(torch.equal(left, right) for left, right in zip(state["torch_cuda"], cuda_states))
+        assert all(left.data_ptr() != right.data_ptr() for left, right in zip(state["torch_cuda"], cuda_states))
+
+
+@pytest.mark.parametrize(
+    ("saved_initialized", "saved_count", "saved_states", "current_initialized", "current_count"),
+    [
+        (False, 0, None, True, 0),
+        (False, 1, None, False, 2),
+        (True, 2, [torch.zeros(4, dtype=torch.uint8)], True, 2),
+        (
+            True,
+            1,
+            [torch.zeros(4, dtype=torch.uint8), torch.ones(4, dtype=torch.uint8)],
+            True,
+            1,
+        ),
+        (True, 1, [torch.zeros(4, dtype=torch.uint8)], False, 1),
+    ],
+)
+def test_rng_restore_rejects_cuda_topology_mismatch_before_any_global_mutation(
+    monkeypatch,
+    saved_initialized,
+    saved_count,
+    saved_states,
+    current_initialized,
+    current_count,
+):
+    state = capture_rng_state()
+    state["cuda_initialized"] = saved_initialized
+    state["cuda_device_count"] = saved_count
+    state["torch_cuda"] = saved_states
+    monkeypatch.setattr(torch.cuda, "is_initialized", lambda: current_initialized)
+    monkeypatch.setattr(torch.cuda, "device_count", lambda: current_count)
+    monkeypatch.setattr(
+        random,
+        "setstate",
+        lambda value: (_ for _ in ()).throw(AssertionError("Python RNG mutated")),
+    )
+    monkeypatch.setattr(
+        np.random,
+        "set_state",
+        lambda value: (_ for _ in ()).throw(AssertionError("NumPy RNG mutated")),
+    )
+    monkeypatch.setattr(
+        torch,
+        "set_rng_state",
+        lambda value: (_ for _ in ()).throw(AssertionError("Torch CPU RNG mutated")),
+    )
+
+    with pytest.raises((CheckpointFormatError, CheckpointRestoreError), match="CUDA|cuda|topology|count"):
+        restore_rng_state(state)
 
 
 def test_resume_requires_explicit_user_approval_flag():
@@ -212,6 +344,33 @@ def test_payload_has_complete_exact_schema_and_clones_all_mutable_state():
     assert all(torch.equal(value, torch.arange(2.0)) for value in cloned_tensors)
 
 
+def test_payload_converts_numeric_numpy_arrays_to_unaliased_safe_tensors():
+    source = np.arange(6, dtype=np.float64).reshape(2, 3)
+    payload = _payload(best_validation={"numeric_array": source})
+    saved = payload["best_validation"]["numeric_array"]
+
+    assert type(saved) is torch.Tensor
+    assert saved.dtype == torch.float64
+    assert torch.equal(saved, torch.arange(6, dtype=torch.float64).reshape(2, 3))
+    _assert_weights_only_safe(payload)
+
+    source[:] = -1
+    assert torch.equal(saved, torch.arange(6, dtype=torch.float64).reshape(2, 3))
+
+
+@pytest.mark.parametrize(
+    "unsafe_value",
+    [
+        np.array([object()], dtype=object),
+        [{"nested": np.array([object()], dtype=object)}],
+        {"custom": _UnsafeValue()},
+    ],
+)
+def test_payload_rejects_object_arrays_and_custom_objects_anywhere(unsafe_value):
+    with pytest.raises(CheckpointFormatError, match="object|unsafe|unsupported"):
+        _payload(best_validation={"value": unsafe_value})
+
+
 @pytest.mark.parametrize("bad_round", [-1, True, 1.5, "1"])
 def test_payload_rejects_invalid_round(bad_round):
     with pytest.raises(CheckpointFormatError):
@@ -268,12 +427,81 @@ def test_torch_save_failure_preserves_old_checkpoint_and_cleans_temp(tmp_path, m
     assert not list(tmp_path.glob(".last_complete.pt.*.tmp"))
 
 
+def test_directory_fsync_propagates_io_errors(monkeypatch, tmp_path):
+    import src.federated_learning.pcv.checkpoint as checkpoint_module
+
+    closed = []
+    monkeypatch.setattr(checkpoint_module, "_DIRECTORY_FSYNC_SUPPORTED", True, raising=False)
+    monkeypatch.setattr(checkpoint_module, "_DIRECTORY_OPEN_FLAGS", checkpoint_module.os.O_RDONLY, raising=False)
+    monkeypatch.setattr(checkpoint_module.os, "open", lambda path, flags: 123)
+    monkeypatch.setattr(
+        checkpoint_module.os,
+        "fsync",
+        lambda descriptor: (_ for _ in ()).throw(OSError(errno.EIO, "directory fsync failed")),
+    )
+    monkeypatch.setattr(checkpoint_module.os, "close", closed.append)
+
+    with pytest.raises(OSError) as failure:
+        checkpoint_module._fsync_directory(tmp_path)
+
+    assert failure.value.errno == errno.EIO
+    assert closed == [123]
+
+
+@pytest.mark.parametrize("unsupported_errno", sorted({errno.EINVAL, errno.ENOTSUP}))
+def test_directory_fsync_ignores_only_explicit_unsupported_errors(
+    monkeypatch,
+    tmp_path,
+    unsupported_errno,
+):
+    import src.federated_learning.pcv.checkpoint as checkpoint_module
+
+    closed = []
+    monkeypatch.setattr(checkpoint_module, "_DIRECTORY_FSYNC_SUPPORTED", True, raising=False)
+    monkeypatch.setattr(checkpoint_module, "_DIRECTORY_OPEN_FLAGS", checkpoint_module.os.O_RDONLY, raising=False)
+    monkeypatch.setattr(checkpoint_module.os, "open", lambda path, flags: 456)
+    monkeypatch.setattr(
+        checkpoint_module.os,
+        "fsync",
+        lambda descriptor: (_ for _ in ()).throw(OSError(unsupported_errno, "unsupported")),
+    )
+    monkeypatch.setattr(checkpoint_module.os, "close", closed.append)
+
+    checkpoint_module._fsync_directory(tmp_path)
+
+    assert closed == [456]
+
+
+def test_save_does_not_report_success_when_directory_fsync_fails(tmp_path, monkeypatch):
+    import src.federated_learning.pcv.checkpoint as checkpoint_module
+
+    monkeypatch.setattr(
+        checkpoint_module,
+        "_fsync_directory",
+        lambda directory: (_ for _ in ()).throw(OSError(errno.ENOSPC, "directory full")),
+    )
+    with pytest.raises(OSError) as failure:
+        save_checkpoint(tmp_path, _payload())
+    assert failure.value.errno == errno.ENOSPC
+
+
 @pytest.mark.parametrize("contents", [b"not a checkpoint", b"PK\x03\x04truncated"])
 def test_load_rejects_corrupt_or_truncated_checkpoint(tmp_path, contents):
     path = tmp_path / "broken.pt"
     path.write_bytes(contents)
     with pytest.raises(CheckpointFormatError):
         load_checkpoint(path)
+
+
+def test_weights_only_loader_rejects_pickle_gadget_without_executing_it(tmp_path):
+    marker = tmp_path / "pickle-side-effect.txt"
+    path = tmp_path / "malicious.pt"
+    torch.save(_MaliciousPickle(str(marker)), path)
+
+    with pytest.raises(CheckpointFormatError):
+        load_checkpoint(path)
+
+    assert not marker.exists()
 
 
 @pytest.mark.parametrize(
@@ -303,16 +531,36 @@ def test_load_uses_cpu_map_location_and_explicit_current_weights_only_semantics(
 
     path = save_checkpoint(tmp_path, _payload())
     original_load = torch.load
+    original_open = checkpoint_module.os.open
     observed = {}
+    opened = []
 
     def recording_load(*args, **kwargs):
         observed.update(kwargs)
+        observed["source"] = args[0]
         return original_load(*args, **kwargs)
 
+    def recording_open(candidate, flags, *args, **kwargs):
+        if checkpoint_module.os.fspath(candidate) == checkpoint_module.os.fspath(path):
+            opened.append(flags)
+        return original_open(candidate, flags, *args, **kwargs)
+
     monkeypatch.setattr(checkpoint_module.torch, "load", recording_load)
+    monkeypatch.setattr(checkpoint_module.os, "open", recording_open)
+    monkeypatch.setattr(
+        checkpoint_module.Path,
+        "is_file",
+        lambda self: (_ for _ in ()).throw(AssertionError("pre-open path check is TOCTOU-prone")),
+    )
     load_checkpoint(path)
     assert torch.device(observed["map_location"]).type == "cpu"
-    assert observed["weights_only"] is False
+    assert observed["weights_only"] is True
+    assert hasattr(observed["source"], "fileno")
+    assert len(opened) == 1
+    if hasattr(checkpoint_module.os, "O_BINARY"):
+        assert opened[0] & checkpoint_module.os.O_BINARY
+    if hasattr(checkpoint_module.os, "O_NOFOLLOW"):
+        assert opened[0] & checkpoint_module.os.O_NOFOLLOW
 
 
 def test_validate_resume_requires_an_existing_path_and_returns_next_round(tmp_path):
