@@ -16,7 +16,7 @@ _ANCHOR_DEGRADATION_TOLERANCE = 0.001
 
 
 def _identity(value: object, *, name: str) -> str:
-    if not isinstance(value, str) or not value.strip():
+    if type(value) is not str or not value.strip():
         raise ValueError(f"{name} must be a non-empty string")
     return value
 
@@ -68,13 +68,47 @@ def _validated_candidates(
         raise ValueError("candidates must not be empty")
     for candidate_id, candidate in copied.items():
         _identity(candidate_id, name="candidate mapping key")
-        if not isinstance(candidate, CandidateAction):
-            raise TypeError("candidate values must be CandidateAction records")
+        if type(candidate) is not CandidateAction:
+            raise TypeError(
+                "candidate values must be exact CandidateAction records"
+            )
         if candidate.candidate_id != candidate_id:
             raise ValueError(
                 "candidate mapping key must match CandidateAction.candidate_id"
             )
     return copied
+
+
+def _validated_votes(
+    votes: Iterable[LocalCandidateVote],
+    *,
+    candidate_ids: set[str],
+    client_ids: tuple[str, ...],
+) -> tuple[LocalCandidateVote, ...]:
+    if isinstance(votes, (str, bytes)):
+        raise TypeError("votes must be an iterable of LocalCandidateVote records")
+    records = tuple(votes)
+    clients_by_candidate = {
+        candidate_id: set() for candidate_id in candidate_ids
+    }
+    for vote in records:
+        if type(vote) is not LocalCandidateVote:
+            raise TypeError("votes must contain exact LocalCandidateVote records")
+        client_id = _identity(vote.client_id, name="vote client id")
+        candidate_id = _identity(vote.candidate_id, name="vote candidate id")
+        if candidate_id not in candidate_ids:
+            raise ValueError("vote candidate IDs must exactly match candidate IDs")
+        clients_by_candidate[candidate_id].add(client_id)
+
+    expected_clients = set(client_ids)
+    if any(
+        observed_clients != expected_clients
+        for observed_clients in clients_by_candidate.values()
+    ):
+        raise ValueError(
+            "vote client IDs must exactly match previous_weights client IDs"
+        )
+    return records
 
 
 def _validated_aggregate_mape(
@@ -146,7 +180,12 @@ def select_with_gate(
     except ValueError as exc:
         raise ValueError("stronger anchor must be legal") from exc
 
-    vote_summaries = aggregate_candidate_votes(votes)
+    vote_records = _validated_votes(
+        votes,
+        candidate_ids=set(candidate_map),
+        client_ids=client_ids,
+    )
+    vote_summaries = aggregate_candidate_votes(vote_records)
     if set(vote_summaries) != set(candidate_map):
         raise ValueError("vote candidate IDs must exactly match candidate IDs")
     scores = _validated_aggregate_mape(

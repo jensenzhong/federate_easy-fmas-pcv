@@ -381,15 +381,80 @@ def test_gate_validates_previous_weights(previous_weights):
         select_with_gate(**inputs)
 
 
-class _ExplodingCandidate(CandidateAction):
+class _ValueErrorCandidate(CandidateAction):
     def validate(self, client_ids):
-        raise RuntimeError("parser exploded")
+        raise ValueError("subclass schema error")
 
 
-def test_gate_does_not_convert_unexpected_validation_exception_to_anchor():
+class _RuntimeErrorCandidate(CandidateAction):
+    def validate(self, client_ids):
+        raise RuntimeError("subclass runtime error")
+
+
+@pytest.mark.parametrize(
+    "client_mode",
+    ["replaced", "missing", "extra"],
+)
+def test_gate_binds_every_candidate_vote_to_expected_clients(client_mode):
     inputs = _valid_inputs()
-    inputs["candidates"]["proposal"] = _ExplodingCandidate(
-        candidate_id="proposal",
+    if client_mode == "replaced":
+        replacements = {"c1": "x", "c2": "y", "c3": "z"}
+        inputs["votes"] = [
+            _vote(replacements[vote.client_id], vote.candidate_id)
+            for vote in inputs["votes"]
+        ]
+    elif client_mode == "missing":
+        inputs["votes"] = [
+            vote for vote in inputs["votes"] if vote.client_id != "c3"
+        ]
+    else:
+        inputs["votes"].extend(
+            _vote("c4", candidate_id)
+            for candidate_id in inputs["candidates"]
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="vote client IDs must exactly match previous_weights client IDs",
+    ):
+        select_with_gate(**inputs)
+
+
+class _ClientId(str):
+    pass
+
+
+def test_gate_requires_exact_string_vote_client_ids():
+    inputs = _valid_inputs()
+    inputs["votes"] = [
+        _vote(
+            _ClientId(vote.client_id)
+            if vote.client_id == "c1"
+            else vote.client_id,
+            vote.candidate_id,
+        )
+        for vote in inputs["votes"]
+    ]
+
+    with pytest.raises((TypeError, ValueError)):
+        select_with_gate(**inputs)
+
+
+@pytest.mark.parametrize(
+    "candidate_type",
+    [_ValueErrorCandidate, _RuntimeErrorCandidate],
+)
+@pytest.mark.parametrize(
+    "candidate_id",
+    ["anchor", "best", "proposal"],
+)
+def test_gate_rejects_action_subclasses_before_any_validation_catch(
+    candidate_type,
+    candidate_id,
+):
+    inputs = _valid_inputs()
+    inputs["candidates"][candidate_id] = candidate_type(
+        candidate_id=candidate_id,
         weights=PREVIOUS_WEIGHTS,
         server_optimizer="fedyogi",
         server_lr_scale=1.0,
@@ -398,5 +463,5 @@ def test_gate_does_not_convert_unexpected_validation_exception_to_anchor():
         rationale="test",
     )
 
-    with pytest.raises(RuntimeError, match="parser exploded"):
+    with pytest.raises(TypeError, match="exact CandidateAction"):
         select_with_gate(**inputs)
