@@ -11,6 +11,7 @@ from src.federated_learning.pcv import telemetry as telemetry_module
 from src.federated_learning.pcv.agents import (
     DeepSeekCallError,
     MultiAgentOrchestrator,
+    OrchestrationResult,
     StrictDeepSeekClient,
     load_prompt_hashes,
     validate_coordinator_response,
@@ -341,6 +342,21 @@ def test_diagnostic_validator_requires_exact_schema(value):
         validate_diagnostic_response(value)
 
 
+def test_diagnostic_validator_returns_a_deep_defensive_immutable_value():
+    source = {
+        "state_summary": "stable",
+        "risks": ["oscillation"],
+        "priorities": ["stability"],
+    }
+    result = validate_diagnostic_response(source)
+    source["risks"].append("source mutation")
+    assert result["risks"] == ("oscillation",)
+    with pytest.raises(TypeError):
+        result["state_summary"] = "mutated"
+    with pytest.raises(AttributeError):
+        result["risks"].append("direct mutation")
+
+
 def proposal(candidate_id="performance_01", **changes):
     value = {
         "candidate_id": candidate_id,
@@ -393,7 +409,9 @@ def test_critic_validator_requires_known_unique_candidate_ids():
         "accepted_candidate_ids": ["p1"],
         "rejected": [{"candidate_id": "p2", "reason": "duplicate action"}],
     }
-    assert validate_critic_response(valid, candidate_ids=("p1", "p2")) == valid
+    validated = validate_critic_response(valid, candidate_ids=("p1", "p2"))
+    assert validated["accepted_candidate_ids"] == ("p1",)
+    assert validated["rejected"][0]["candidate_id"] == "p2"
     bad_values = [
         {**valid, "extra": 1},
         {"accepted_candidate_ids": ["unknown"], "rejected": []},
@@ -418,6 +436,20 @@ def test_critic_validator_requires_known_unique_candidate_ids():
             validate_critic_response(bad, candidate_ids=("p1", "p2"))
 
 
+def test_critic_validator_returns_a_deep_defensive_immutable_value():
+    source = {
+        "accepted_candidate_ids": ["p1"],
+        "rejected": [{"candidate_id": "p2", "reason": "duplicate"}],
+    }
+    result = validate_critic_response(source, candidate_ids=("p1", "p2"))
+    source["accepted_candidate_ids"].append("p2")
+    source["rejected"][0]["reason"] = "source mutation"
+    assert result["accepted_candidate_ids"] == ("p1",)
+    assert result["rejected"][0]["reason"] == "duplicate"
+    with pytest.raises(TypeError):
+        result["rejected"][0]["reason"] = "direct mutation"
+
+
 def test_coordinator_validator_requires_known_admissible_id_and_exact_types():
     valid = {
         "selected_candidate_id": "p1",
@@ -436,9 +468,48 @@ def test_coordinator_validator_requires_known_admissible_id_and_exact_types():
             validate_coordinator_response(bad, candidate_ids=("p1",))
 
 
+def test_coordinator_validator_returns_a_defensive_immutable_value():
+    source = {
+        "selected_candidate_id": "p1",
+        "rationale": "best vote",
+        "risk_acknowledgement": "gate retains authority",
+    }
+    result = validate_coordinator_response(source, candidate_ids=("p1",))
+    source["rationale"] = "source mutation"
+    assert result["rationale"] == "best vote"
+    with pytest.raises(TypeError):
+        result["rationale"] = "direct mutation"
+
+
+def test_orchestration_result_deep_freezes_constructor_inputs():
+    diagnostic = {"state_summary": "ok", "risks": ["r"], "priorities": ["p"]}
+    critique = {"accepted_candidate_ids": ["p1"], "rejected": []}
+    coordination = {
+        "selected_candidate_id": "p1",
+        "rationale": "best",
+        "risk_acknowledgement": "gate",
+    }
+    result = OrchestrationResult(
+        diagnostic=diagnostic,
+        proposals=(),
+        critique=critique,
+        coordination=coordination,
+    )
+    diagnostic["risks"].append("source mutation")
+    critique["accepted_candidate_ids"].append("source mutation")
+    coordination["rationale"] = "source mutation"
+    assert result.diagnostic["risks"] == ("r",)
+    assert result.critique["accepted_candidate_ids"] == ("p1",)
+    assert result.coordination["rationale"] == "best"
+    with pytest.raises(TypeError):
+        result.diagnostic["state_summary"] = "direct mutation"
+
+
 class RecordingAgentClient:
-    def __init__(self):
+    def __init__(self, *, duplicate_mode=None):
         self.roles = []
+        self.payloads = []
+        self.duplicate_mode = duplicate_mode
 
     def generate_json(
         self,
@@ -449,6 +520,7 @@ class RecordingAgentClient:
         **kwargs,
     ):
         self.roles.append(role)
+        self.payloads.append((role, payload))
         if role == "diagnostic":
             value = {
                 "state_summary": "updates differ",
@@ -456,11 +528,34 @@ class RecordingAgentClient:
                 "priorities": ["stability"],
             }
         elif role.endswith("proposer"):
+            action_variants = {
+                "performance_proposer": {
+                    "weights": {"client-a": 0.6, "client-b": 0.4},
+                    "server_lr_scale": 1.0,
+                    "update_clip_norm": 1.0,
+                },
+                "stability_proposer": {
+                    "weights": {"client-a": 0.55, "client-b": 0.45},
+                    "server_lr_scale": 0.75,
+                    "update_clip_norm": 0.5,
+                },
+                "balance_proposer": {
+                    "weights": {"client-a": 0.5, "client-b": 0.5},
+                    "server_lr_scale": 1.25,
+                    "update_clip_norm": 2.0,
+                },
+            }
+            if self.duplicate_mode == "alias" and role == "stability_proposer":
+                action_variants[role] = action_variants["performance_proposer"]
+            candidate_id = f"{role}_01"
+            if self.duplicate_mode == "id" and role == "stability_proposer":
+                candidate_id = "performance_proposer_01"
             value = {
                 "candidates": [
                     proposal(
-                        candidate_id=f"{role}_01",
+                        candidate_id=candidate_id,
                         source=role,
+                        **action_variants[role],
                     )
                 ]
             }
@@ -469,9 +564,13 @@ class RecordingAgentClient:
                 "accepted_candidate_ids": [
                     "performance_proposer_01",
                     "stability_proposer_01",
-                    "balance_proposer_01",
                 ],
-                "rejected": [],
+                "rejected": [
+                    {
+                        "candidate_id": "balance_proposer_01",
+                        "reason": "client-b degradation risk",
+                    }
+                ],
             }
         else:
             value = {
@@ -482,6 +581,29 @@ class RecordingAgentClient:
         return response_validator(value)
 
 
+def vote_record(client_id, candidate_id):
+    return {
+        "client_id": client_id,
+        "candidate_id": candidate_id,
+        "sample_count": 10,
+        "val_mape": 0.3,
+        "val_rmse": 1.0,
+        "relative_mape": -0.01,
+        "relative_rmse": -0.01,
+        "rank": 1,
+        "confidence": 0.8,
+        "catastrophic_degradation": False,
+    }
+
+
+def complete_votes(candidate_ids):
+    return [
+        vote_record(client_id, candidate_id)
+        for client_id in ("client-a", "client-b")
+        for candidate_id in candidate_ids
+    ]
+
+
 def test_orchestrator_calls_all_six_real_roles_once_in_fixed_round_order(
     safe_payload,
 ):
@@ -490,13 +612,122 @@ def test_orchestrator_calls_all_six_real_roles_once_in_fixed_round_order(
     result = orchestrator.run_round(
         telemetry_payload=safe_payload,
         anchor_candidates=(),
-        client_votes=(),
+        client_votes=complete_votes(
+            ("performance_proposer_01", "stability_proposer_01")
+        ),
     )
     assert client.roles == list(ROLE_NAMES)
     assert result.coordination["selected_candidate_id"] == (
         "performance_proposer_01"
     )
     assert len(result.proposals) == 3
+    coordinator_payload = client.payloads[-1][1]
+    assert coordinator_payload["critique"] == {
+        "accepted_candidate_ids": [
+            "performance_proposer_01",
+            "stability_proposer_01",
+        ],
+        "rejected": [
+            {
+                "candidate_id": "balance_proposer_01",
+                "reason": "client-b degradation risk",
+            }
+        ],
+    }
+    assert coordinator_payload["anchor_candidate_ids"] == []
+
+
+def test_orchestrator_marks_anchors_separately_from_real_critic_evidence(
+    safe_payload,
+):
+    anchor = CandidateAction(
+        candidate_id="anchor_fedavg",
+        weights={"client-a": 0.5, "client-b": 0.5},
+        server_optimizer="fedavg",
+        server_lr_scale=1.0,
+        update_clip_norm=None,
+        source="anchor",
+        rationale="deterministic anchor",
+    )
+    client = RecordingAgentClient()
+    result = MultiAgentOrchestrator(client, PROMPT_DIR).run_round(
+        telemetry_payload=safe_payload,
+        anchor_candidates=(anchor,),
+        client_votes=complete_votes(
+            (
+                "anchor_fedavg",
+                "performance_proposer_01",
+                "stability_proposer_01",
+            )
+        ),
+    )
+    assert result.coordination["selected_candidate_id"] == "performance_proposer_01"
+    coordinator_payload = client.payloads[-1][1]
+    assert coordinator_payload["anchor_candidate_ids"] == ["anchor_fedavg"]
+    assert "anchor_fedavg" not in coordinator_payload["critique"][
+        "accepted_candidate_ids"
+    ]
+    assert coordinator_payload["critique"]["rejected"][0]["reason"] == (
+        "client-b degradation risk"
+    )
+
+
+@pytest.mark.parametrize(
+    "invalid_votes",
+    [
+        [],
+        complete_votes(
+            ("performance_proposer_01", "stability_proposer_01")
+        )[:-1],
+        complete_votes(
+            ("performance_proposer_01", "stability_proposer_01")
+        )
+        + [vote_record("client-a", "performance_proposer_01")],
+        complete_votes(
+            ("performance_proposer_01", "stability_proposer_01")
+        )
+        + [vote_record("unknown-client", "performance_proposer_01")],
+        complete_votes(
+            ("performance_proposer_01", "stability_proposer_01")
+        )
+        + [vote_record("client-a", "unknown-candidate")],
+    ],
+)
+def test_orchestrator_rejects_incomplete_extra_or_duplicate_vote_matrix(
+    safe_payload,
+    invalid_votes,
+):
+    client = RecordingAgentClient()
+    with pytest.raises(DeepSeekCallError) as error:
+        MultiAgentOrchestrator(client, PROMPT_DIR).run_round(
+            telemetry_payload=safe_payload,
+            anchor_candidates=(),
+            client_votes=invalid_votes,
+        )
+    assert error.value.category == "schema"
+    assert error.value.role == "orchestrator"
+    assert client.roles == list(ROLE_NAMES[:-1])
+
+
+@pytest.mark.parametrize("duplicate_mode", ["alias", "id"])
+def test_orchestrator_rejects_action_aliases_and_duplicate_ids_before_critic(
+    safe_payload,
+    duplicate_mode,
+):
+    client = RecordingAgentClient(duplicate_mode=duplicate_mode)
+    with pytest.raises(DeepSeekCallError) as error:
+        MultiAgentOrchestrator(client, PROMPT_DIR).run_round(
+            telemetry_payload=safe_payload,
+            anchor_candidates=(),
+            client_votes=(),
+        )
+    assert error.value.category == "schema"
+    assert error.value.role == "stability_proposer"
+    assert client.roles == [
+        "diagnostic",
+        "performance_proposer",
+        "stability_proposer",
+    ]
 
 
 def test_append_only_telemetry_explicitly_flushes_and_fsyncs(
@@ -523,6 +754,9 @@ def test_append_only_telemetry_explicitly_flushes_and_fsyncs(
         def __exit__(self, *args):
             return self.wrapped.__exit__(*args)
 
+        def __getattr__(self, name):
+            return getattr(self.wrapped, name)
+
         def write(self, value):
             return self.wrapped.write(value)
 
@@ -535,7 +769,7 @@ def test_append_only_telemetry_explicitly_flushes_and_fsyncs(
 
     def open_spy(file, mode="r", *args, **kwargs):
         stream = real_open(file, mode, *args, **kwargs)
-        if Path(file) == path and mode == "ab":
+        if Path(file) == path and mode == "a+b":
             spy = FlushSpy(stream)
             output_spies.append(spy)
             return spy
@@ -576,11 +810,122 @@ def test_telemetry_serialization_failure_cannot_leave_a_partial_line(tmp_path):
     assert not path.exists() or path.read_bytes() == b""
 
 
+def test_partial_os_write_rolls_back_to_last_complete_record(
+    tmp_path,
+    monkeypatch,
+):
+    path = tmp_path / "agent_calls.jsonl"
+    writer = AppendOnlyTelemetry(path)
+    writer.append({"index": "old"})
+    old_bytes = path.read_bytes()
+    real_write = telemetry_module.os.write
+
+    def partial_write(descriptor, value):
+        prefix = value[: max(1, len(value) // 3)]
+        real_write(descriptor, prefix)
+        return len(prefix)
+
+    monkeypatch.setattr(telemetry_module.os, "write", partial_write)
+    with pytest.raises(OSError):
+        writer.append({"index": "must-rollback", "padding": "x" * 100})
+    assert path.read_bytes() == old_bytes
+
+
+def test_flush_failure_rolls_back_to_last_complete_record(
+    tmp_path,
+    monkeypatch,
+):
+    path = tmp_path / "agent_calls.jsonl"
+    writer = AppendOnlyTelemetry(path)
+    writer.append({"index": "old"})
+    old_bytes = path.read_bytes()
+    real_open = builtins.open
+
+    class FlushFailure:
+        def __init__(self, wrapped):
+            self.wrapped = wrapped
+
+        def __enter__(self):
+            self.wrapped.__enter__()
+            return self
+
+        def __exit__(self, *args):
+            return self.wrapped.__exit__(*args)
+
+        def __getattr__(self, name):
+            return getattr(self.wrapped, name)
+
+        def flush(self):
+            raise OSError("simulated flush failure")
+
+    def failing_open(file, mode="r", *args, **kwargs):
+        stream = real_open(file, mode, *args, **kwargs)
+        if Path(file) == path and mode == "a+b":
+            return FlushFailure(stream)
+        return stream
+
+    monkeypatch.setattr(builtins, "open", failing_open)
+    with pytest.raises(OSError, match="flush"):
+        writer.append({"index": "must-rollback"})
+    assert path.read_bytes() == old_bytes
+
+
+def test_fsync_failure_rolls_back_to_last_complete_record(
+    tmp_path,
+    monkeypatch,
+):
+    path = tmp_path / "agent_calls.jsonl"
+    writer = AppendOnlyTelemetry(path)
+    writer.append({"index": "old"})
+    old_bytes = path.read_bytes()
+
+    def fail_fsync(_descriptor):
+        raise OSError("simulated fsync failure")
+
+    monkeypatch.setattr(telemetry_module.os, "fsync", fail_fsync)
+    with pytest.raises(OSError, match="fsync"):
+        writer.append({"index": "must-rollback"})
+    assert path.read_bytes() == old_bytes
+
+
+def test_next_append_recovers_a_crash_left_partial_suffix(tmp_path):
+    path = tmp_path / "agent_calls.jsonl"
+    writer = AppendOnlyTelemetry(path)
+    writer.append({"index": "old"})
+    with open(path, "ab") as stream:
+        stream.write(b'{"index":"crash-fragment"')
+        stream.flush()
+    writer.append({"index": "new"})
+    lines = path.read_text(encoding="utf-8").splitlines()
+    assert [json.loads(line)["index"] for line in lines] == ["old", "new"]
+
+
 def test_telemetry_refuses_secret_bearing_fields(tmp_path):
     writer = AppendOnlyTelemetry(tmp_path / "agent_calls.jsonl")
     for secret_field in ("api_key", "authorization", "headers", "payload"):
         with pytest.raises(ValueError):
             writer.append({secret_field: "secret"})
+
+
+@pytest.mark.parametrize(
+    "secret_field",
+    [
+        "request_headers_backup",
+        "client_secret_note",
+        "access_token_cache",
+        "nested_authorization_value",
+        "ＡＰＩ＿ＫＥＹ",
+    ],
+)
+def test_telemetry_rejects_normalized_sensitive_key_fragments(
+    tmp_path,
+    secret_field,
+):
+    path = tmp_path / "agent_calls.jsonl"
+    writer = AppendOnlyTelemetry(path)
+    with pytest.raises(ValueError):
+        writer.append({"safe": {secret_field: "must-not-write"}})
+    assert not path.exists()
 
 
 def test_telemetry_recursively_redacts_known_and_header_secrets(tmp_path):
@@ -611,6 +956,28 @@ def test_telemetry_recursively_redacts_known_and_header_secrets(tmp_path):
     assert "[REDACTED]" in raw
     record = json.loads(raw)
     assert record["parsed_response"]["nested"][0]["value"] == "[REDACTED]"
+
+
+def test_telemetry_removes_entire_basic_and_bearer_credentials(tmp_path):
+    path = tmp_path / "agent_calls.jsonl"
+    basic_value = "QWxhZGRpbjpvcGVuIHNlc2FtZQ=="
+    bearer_value = "header.payload.signature"
+    writer = AppendOnlyTelemetry(path)
+    writer.append(
+        {
+            "response_text": (
+                f"Authorization: Basic {basic_value}; "
+                f"Authorization: Bearer {bearer_value}; "
+                f"Basic {basic_value}; Bearer {bearer_value}"
+            )
+        }
+    )
+    raw = path.read_text(encoding="utf-8")
+    assert basic_value not in raw
+    assert bearer_value not in raw
+    assert "Basic" not in raw
+    assert "Bearer" not in raw
+    assert raw.count("[REDACTED]") >= 4
 
 
 def test_concurrent_telemetry_appends_never_interleave_lines(tmp_path):
@@ -722,6 +1089,38 @@ def test_http_exception_detail_is_logged_only_after_value_redaction(
     assert bearer_token not in raw
     assert header_value not in raw
     assert "[REDACTED]" in raw
+
+
+@pytest.mark.parametrize(
+    ("outcome", "expected_category"),
+    [
+        (ConnectionError("offline"), "connection"),
+        (FakeResponse(content="{}", status_code=500), "http"),
+        (FakeResponse(content="not json"), "schema"),
+    ],
+)
+def test_telemetry_failure_never_masks_primary_deepseek_failure(
+    safe_payload,
+    outcome,
+    expected_category,
+):
+    class BrokenTelemetry:
+        def register_secret(self, _secret):
+            return None
+
+        def append(self, _record):
+            raise OSError("disk failed with Bearer logger-secret")
+
+    session = FakeSession(outcome)
+    client = make_client(session, telemetry=BrokenTelemetry())
+    with pytest.raises(DeepSeekCallError) as error:
+        client.generate_json(
+            "critic", "Return JSON.", safe_payload, lambda value: value
+        )
+    assert session.calls == 1
+    assert error.value.category == expected_category
+    assert error.value.role == "critic"
+    assert "logger-secret" not in str(error.value)
 
 
 def test_prompt_files_are_complete_hashable_and_do_not_request_private_data():

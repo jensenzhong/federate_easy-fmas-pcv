@@ -9,6 +9,7 @@ import json
 import math
 from pathlib import Path
 import time
+from types import MappingProxyType
 from typing import Any
 
 import requests
@@ -88,6 +89,24 @@ def _string_list(value: Any, *, context: str) -> list[str]:
     return output
 
 
+def _deep_freeze_json(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return MappingProxyType(
+            {key: _deep_freeze_json(item) for key, item in value.items()}
+        )
+    if isinstance(value, (list, tuple)):
+        return tuple(_deep_freeze_json(item) for item in value)
+    return value
+
+
+def _thaw_json(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {key: _thaw_json(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_thaw_json(item) for item in value]
+    return value
+
+
 def _candidate_id_tuple(candidate_ids: Sequence[str]) -> tuple[str, ...]:
     if type(candidate_ids) not in (tuple, list):
         raise ValueError("candidate_ids must be an exact tuple or list")
@@ -106,16 +125,26 @@ def _client_id_tuple(client_ids: Sequence[str]) -> tuple[str, ...]:
     return values
 
 
-def validate_diagnostic_response(value: Any) -> dict[str, Any]:
+def validate_diagnostic_response(value: Any) -> Mapping[str, Any]:
     result = _exact_object(
         value,
         frozenset({"state_summary", "risks", "priorities"}),
         context="diagnostic response",
     )
-    _nonempty_string(result["state_summary"], context="state_summary")
-    _string_list(result["risks"], context="risks")
-    _string_list(result["priorities"], context="priorities")
-    return result
+    state_summary = _nonempty_string(
+        result["state_summary"], context="state_summary"
+    )
+    risks = tuple(_string_list(result["risks"], context="risks"))
+    priorities = tuple(
+        _string_list(result["priorities"], context="priorities")
+    )
+    return MappingProxyType(
+        {
+            "state_summary": state_summary,
+            "risks": risks,
+            "priorities": priorities,
+        }
+    )
 
 
 def _candidate_from_json(
@@ -181,7 +210,7 @@ def validate_critic_response(
     value: Any,
     *,
     candidate_ids: Sequence[str],
-) -> dict[str, Any]:
+) -> Mapping[str, Any]:
     known_ids = _candidate_id_tuple(candidate_ids)
     known_set = set(known_ids)
     result = _exact_object(
@@ -202,6 +231,7 @@ def validate_critic_response(
     if type(rejected_json) is not list:
         raise ValueError("rejected must be an exact JSON array")
     rejected_ids = []
+    rejected_values = []
     for index, rejected in enumerate(rejected_json):
         item = _exact_object(
             rejected,
@@ -212,8 +242,15 @@ def validate_critic_response(
             item["candidate_id"],
             context=f"rejected[{index}].candidate_id",
         )
-        _nonempty_string(item["reason"], context=f"rejected[{index}].reason")
+        reason = _nonempty_string(
+            item["reason"], context=f"rejected[{index}].reason"
+        )
         rejected_ids.append(rejected_id)
+        rejected_values.append(
+            MappingProxyType(
+                {"candidate_id": rejected_id, "reason": reason}
+            )
+        )
     if len(set(rejected_ids)) != len(rejected_ids):
         raise ValueError("rejected candidate IDs must be unique")
     if not set(rejected_ids) <= known_set:
@@ -222,14 +259,19 @@ def validate_critic_response(
         raise ValueError("a candidate cannot be both accepted and rejected")
     if set(accepted) | set(rejected_ids) != known_set:
         raise ValueError("critic must classify every provided candidate")
-    return result
+    return MappingProxyType(
+        {
+            "accepted_candidate_ids": tuple(accepted),
+            "rejected": tuple(rejected_values),
+        }
+    )
 
 
 def validate_coordinator_response(
     value: Any,
     *,
     candidate_ids: Sequence[str],
-) -> dict[str, str]:
+) -> Mapping[str, str]:
     known_ids = _candidate_id_tuple(candidate_ids)
     result = _exact_object(
         value,
@@ -248,12 +290,18 @@ def validate_coordinator_response(
     )
     if selected_id not in set(known_ids):
         raise ValueError("coordinator selected an unknown candidate ID")
-    _nonempty_string(result["rationale"], context="rationale")
-    _nonempty_string(
+    rationale = _nonempty_string(result["rationale"], context="rationale")
+    risk_acknowledgement = _nonempty_string(
         result["risk_acknowledgement"],
         context="risk_acknowledgement",
     )
-    return result
+    return MappingProxyType(
+        {
+            "selected_candidate_id": selected_id,
+            "rationale": rationale,
+            "risk_acknowledgement": risk_acknowledgement,
+        }
+    )
 
 
 def _strict_json_object(content: str) -> dict[str, Any]:
@@ -315,6 +363,7 @@ def _assert_context_payload_safe(role: str, payload: Any) -> None:
             "diagnostic",
             "candidates",
             "critique",
+            "anchor_candidate_ids",
             "client_votes",
         },
     }.get(role, {"round_index", "clients"})
@@ -335,10 +384,43 @@ def _assert_context_payload_safe(role: str, payload: Any) -> None:
                 expected_source=None,
             )
     if "critique" in payload:
-        candidate_ids = tuple(
+        admissible_candidate_ids = tuple(
             candidate["candidate_id"] for candidate in payload["candidates"]
         )
-        validate_critic_response(payload["critique"], candidate_ids=candidate_ids)
+        anchor_ids_json = payload.get("anchor_candidate_ids", [])
+        if type(anchor_ids_json) is not list:
+            raise ValueError("anchor_candidate_ids must be an exact JSON array")
+        anchor_ids = _candidate_id_tuple(anchor_ids_json)
+        if not set(anchor_ids) <= set(admissible_candidate_ids):
+            raise ValueError("anchor_candidate_ids must refer to candidates")
+        critique_json = _exact_object(
+            payload["critique"],
+            frozenset({"accepted_candidate_ids", "rejected"}),
+            context="critic context",
+        )
+        accepted_ids = _string_list(
+            critique_json["accepted_candidate_ids"],
+            context="critic context accepted_candidate_ids",
+        )
+        if type(critique_json["rejected"]) is not list:
+            raise ValueError("critic context rejected must be an exact JSON array")
+        rejected_ids = []
+        for index, rejected in enumerate(critique_json["rejected"]):
+            item = _exact_object(
+                rejected,
+                frozenset({"candidate_id", "reason"}),
+                context=f"critic context rejected[{index}]",
+            )
+            rejected_ids.append(item["candidate_id"])
+        critic_candidate_ids = tuple([*accepted_ids, *rejected_ids])
+        validate_critic_response(
+            payload["critique"],
+            candidate_ids=critic_candidate_ids,
+        )
+        if set(anchor_ids) & set(critic_candidate_ids):
+            raise ValueError("anchors must not be represented as critic evidence")
+        if set(accepted_ids) != set(admissible_candidate_ids) - set(anchor_ids):
+            raise ValueError("critic accepted IDs must match non-anchor candidates")
     if "client_votes" in payload:
         _validate_vote_context(
             payload["client_votes"],
@@ -391,6 +473,34 @@ def _validate_vote_context(
                 raise ValueError(f"vote {field} must be a positive exact integer")
         if type(item["catastrophic_degradation"]) is not bool:
             raise ValueError("vote catastrophic_degradation must be an exact boolean")
+
+
+def _validate_complete_vote_matrix(
+    votes: list[dict[str, Any]],
+    *,
+    client_ids: tuple[str, ...],
+    candidate_ids: tuple[str, ...],
+) -> None:
+    if not votes:
+        raise ValueError("client vote matrix must not be empty")
+    _validate_vote_context(
+        votes,
+        client_ids=client_ids,
+        candidate_ids=candidate_ids,
+    )
+    expected_pairs = {
+        (client_id, candidate_id)
+        for client_id in client_ids
+        for candidate_id in candidate_ids
+    }
+    actual_pairs = {
+        (vote["client_id"], vote["candidate_id"])
+        for vote in votes
+    }
+    if len(votes) != len(expected_pairs) or actual_pairs != expected_pairs:
+        raise ValueError(
+            "client votes must contain exactly one vote per client/candidate pair"
+        )
 
 
 class StrictDeepSeekClient:
@@ -483,16 +593,21 @@ class StrictDeepSeekClient:
         started: float,
         failure_detail: str | None = None,
     ) -> None:
-        self._record(
-            request_hash=request_hash,
-            prompt_hash=prompt_hash,
-            role=role,
-            response_text=response_text,
-            parsed_response=parsed_response,
-            started=started,
-            failure_category=category,
-            failure_detail=failure_detail,
-        )
+        try:
+            self._record(
+                request_hash=request_hash,
+                prompt_hash=prompt_hash,
+                role=role,
+                response_text=response_text,
+                parsed_response=parsed_response,
+                started=started,
+                failure_category=category,
+                failure_detail=failure_detail,
+            )
+        except Exception:
+            # Audit storage is best effort on the failure path. It must never
+            # replace or reclassify the primary provider/transport failure.
+            pass
         raise DeepSeekCallError(category, role, message) from None
 
     def generate_json(
@@ -667,6 +782,24 @@ def _candidate_to_json(candidate: CandidateAction) -> dict[str, Any]:
     }
 
 
+def _candidate_execution_signature(candidate: CandidateAction) -> tuple[Any, ...]:
+    return (
+        tuple(
+            sorted(
+                (client_id, round(float(weight), 12))
+                for client_id, weight in candidate.weights.items()
+            )
+        ),
+        candidate.server_optimizer,
+        round(float(candidate.server_lr_scale), 12),
+        (
+            None
+            if candidate.update_clip_norm is None
+            else round(float(candidate.update_clip_norm), 12)
+        ),
+    )
+
+
 def _vote_to_json(vote: LocalCandidateVote | Mapping[str, Any]) -> dict[str, Any]:
     if type(vote) is LocalCandidateVote:
         return {field: getattr(vote, field) for field in _VOTE_FIELDS}
@@ -692,6 +825,15 @@ class OrchestrationResult:
     proposals: tuple[CandidateAction, ...]
     critique: Mapping[str, Any]
     coordination: Mapping[str, str]
+
+    def __post_init__(self) -> None:
+        proposals = tuple(self.proposals)
+        if any(type(candidate) is not CandidateAction for candidate in proposals):
+            raise TypeError("proposals must contain exact CandidateAction values")
+        object.__setattr__(self, "diagnostic", _deep_freeze_json(self.diagnostic))
+        object.__setattr__(self, "proposals", proposals)
+        object.__setattr__(self, "critique", _deep_freeze_json(self.critique))
+        object.__setattr__(self, "coordination", _deep_freeze_json(self.coordination))
 
 
 class MultiAgentOrchestrator:
@@ -732,8 +874,10 @@ class MultiAgentOrchestrator:
         client_votes: Sequence[LocalCandidateVote | Mapping[str, Any]],
     ) -> OrchestrationResult:
         assert_prompt_payload_safe(telemetry_payload)
-        clients = tuple(
-            client["client_id"] for client in telemetry_payload["clients"]
+        clients = _client_id_tuple(
+            tuple(
+                client["client_id"] for client in telemetry_payload["clients"]
+            )
         )
         anchors = tuple(anchor_candidates)
         if len(anchors) > 2:
@@ -756,6 +900,14 @@ class MultiAgentOrchestrator:
             raise DeepSeekCallError(
                 "schema", "orchestrator", "duplicate anchor candidate IDs"
             )
+        seen_signatures: dict[tuple[Any, ...], str] = {}
+        for anchor in anchors:
+            signature = _candidate_execution_signature(anchor)
+            if signature in seen_signatures:
+                raise DeepSeekCallError(
+                    "schema", "orchestrator", "anchor action aliases another anchor"
+                )
+            seen_signatures[signature] = anchor.candidate_id
 
         base_payload = {
             "round_index": telemetry_payload["round_index"],
@@ -766,11 +918,12 @@ class MultiAgentOrchestrator:
             base_payload,
             validate_diagnostic_response,
         )
+        diagnostic_json = _thaw_json(diagnostic)
 
         proposals: list[CandidateAction] = []
         seen_ids = set(anchor_ids)
         for role in PROPOSER_ROLES:
-            role_payload = {**base_payload, "diagnostic": diagnostic}
+            role_payload = {**base_payload, "diagnostic": diagnostic_json}
             role_proposals = self._call(
                 role,
                 role_payload,
@@ -785,7 +938,15 @@ class MultiAgentOrchestrator:
                     raise DeepSeekCallError(
                         "schema", role, "duplicate candidate ID across round proposals"
                     )
+                signature = _candidate_execution_signature(candidate)
+                if signature in seen_signatures:
+                    raise DeepSeekCallError(
+                        "schema",
+                        role,
+                        "candidate action aliases an existing round action",
+                    )
                 seen_ids.add(candidate.candidate_id)
+                seen_signatures[signature] = candidate.candidate_id
                 proposals.append(candidate)
         if len(anchors) + len(proposals) > 8:
             raise DeepSeekCallError(
@@ -797,7 +958,7 @@ class MultiAgentOrchestrator:
             "critic",
             {
                 **base_payload,
-                "diagnostic": diagnostic,
+                "diagnostic": diagnostic_json,
                 "candidates": proposal_json,
             },
             lambda value: validate_critic_response(
@@ -820,26 +981,35 @@ class MultiAgentOrchestrator:
             )
 
         votes_json = [_vote_to_json(vote) for vote in client_votes]
+        admissible_ids = tuple(
+            candidate.candidate_id for candidate in admissible
+        )
+        try:
+            _validate_complete_vote_matrix(
+                votes_json,
+                client_ids=clients,
+                candidate_ids=admissible_ids,
+            )
+        except Exception:
+            raise DeepSeekCallError(
+                "schema",
+                "orchestrator",
+                "client vote matrix is incomplete or invalid",
+            ) from None
         all_candidate_json = [_candidate_to_json(candidate) for candidate in admissible]
         coordination = self._call(
             "coordinator",
             {
                 **base_payload,
-                "diagnostic": diagnostic,
+                "diagnostic": diagnostic_json,
                 "candidates": all_candidate_json,
-                "critique": {
-                    "accepted_candidate_ids": [
-                        candidate.candidate_id for candidate in admissible
-                    ],
-                    "rejected": [],
-                },
+                "critique": _thaw_json(critique),
+                "anchor_candidate_ids": list(anchor_ids),
                 "client_votes": votes_json,
             },
             lambda value: validate_coordinator_response(
                 value,
-                candidate_ids=tuple(
-                    candidate.candidate_id for candidate in admissible
-                ),
+                candidate_ids=admissible_ids,
             ),
         )
         return OrchestrationResult(

@@ -9,14 +9,21 @@ from pathlib import Path
 import re
 from threading import Lock
 from typing import Any
+import unicodedata
 
 
-_SENSITIVE_FIELD_NAMES = frozenset(
+_SENSITIVE_FIELD_FRAGMENTS = frozenset(
     {
         "apikey",
         "authorization",
         "authorizationheader",
         "headers",
+        "accesstoken",
+        "refreshtoken",
+        "secret",
+        "credential",
+        "password",
+        "privatekey",
         "payload",
         "requestbody",
         "requestheaders",
@@ -25,27 +32,35 @@ _SENSITIVE_FIELD_NAMES = frozenset(
 )
 _LOCKS_GUARD = Lock()
 _PATH_LOCKS: dict[str, Lock] = {}
-_BEARER_PATTERN = re.compile(
-    r"\bBearer\s+[A-Za-z0-9._~+/=-]+",
+_AUTHORIZATION_PATTERN = re.compile(
+    r"\bauthorization\b[\"']?\s*[:=]\s*[\"']?\s*"
+    r"(?:(?:Basic|Bearer)\s+)?[^\"'\s,;}\]]+",
     flags=re.IGNORECASE,
 )
-_AUTHORIZATION_VALUE_PATTERN = re.compile(
-    r"(\bauthorization\b[\"']?\s*[:=]\s*[\"']?)"
-    r"(?!\[REDACTED\])[^\"'\s,;}\]]+",
+_AUTH_CREDENTIAL_PATTERN = re.compile(
+    r"\b(?:Basic|Bearer)\s+[^\"'\s,;}\]]+",
     flags=re.IGNORECASE,
 )
 _REDACTION_MARKER = "[REDACTED]"
 
 
 def _normalized_field_name(value: str) -> str:
-    return "".join(character for character in value.casefold() if character.isalnum())
+    normalized = unicodedata.normalize("NFKC", value).casefold()
+    return "".join(character for character in normalized if character.isalnum())
 
 
 def _assert_no_sensitive_fields(value: Any) -> None:
     if isinstance(value, Mapping):
         for key, item in value.items():
-            if isinstance(key, str) and _normalized_field_name(key) in _SENSITIVE_FIELD_NAMES:
-                raise ValueError(f"sensitive telemetry field is forbidden: {key}")
+            if isinstance(key, str):
+                normalized_key = _normalized_field_name(key)
+                if any(
+                    fragment in normalized_key
+                    for fragment in _SENSITIVE_FIELD_FRAGMENTS
+                ):
+                    raise ValueError(
+                        f"sensitive telemetry field is forbidden: {key}"
+                    )
             _assert_no_sensitive_fields(item)
     elif isinstance(value, (list, tuple)):
         for item in value:
@@ -56,11 +71,8 @@ def _sanitize_string(value: str, known_secrets: tuple[str, ...]) -> str:
     sanitized = value
     for secret in sorted(known_secrets, key=len, reverse=True):
         sanitized = sanitized.replace(secret, _REDACTION_MARKER)
-    sanitized = _BEARER_PATTERN.sub(f"Bearer {_REDACTION_MARKER}", sanitized)
-    sanitized = _AUTHORIZATION_VALUE_PATTERN.sub(
-        rf"\1{_REDACTION_MARKER}",
-        sanitized,
-    )
+    sanitized = _AUTHORIZATION_PATTERN.sub(_REDACTION_MARKER, sanitized)
+    sanitized = _AUTH_CREDENTIAL_PATTERN.sub(_REDACTION_MARKER, sanitized)
     return sanitized
 
 
@@ -189,12 +201,62 @@ class AppendOnlyTelemetry:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         thread_lock = _thread_lock_for(self.path)
         with thread_lock, _ProcessFileLock(self._lock_path):
-            with open(self.path, "ab") as stream:
-                written = stream.write(encoded)
-                if written != len(encoded):
-                    raise OSError("telemetry append was incomplete")
-                stream.flush()
-                os.fsync(stream.fileno())
+            with open(self.path, "a+b", buffering=0) as stream:
+                descriptor = stream.fileno()
+                pre_append_offset = self._recover_partial_suffix(
+                    stream,
+                    descriptor,
+                )
+                try:
+                    written = os.write(descriptor, encoded)
+                    if written != len(encoded):
+                        raise OSError("telemetry append was incomplete")
+                    stream.flush()
+                    os.fsync(descriptor)
+                except Exception:
+                    self._rollback_failed_append(
+                        descriptor,
+                        pre_append_offset,
+                    )
+                    raise
+
+    @staticmethod
+    def _recover_partial_suffix(stream, descriptor: int) -> int:
+        stream.seek(0, os.SEEK_END)
+        end_offset = stream.tell()
+        if end_offset == 0:
+            return 0
+        stream.seek(end_offset - 1)
+        if stream.read(1) == b"\n":
+            return end_offset
+
+        scan_end = end_offset
+        complete_offset = 0
+        chunk_size = 64 * 1024
+        while scan_end > 0:
+            scan_start = max(0, scan_end - chunk_size)
+            stream.seek(scan_start)
+            chunk = stream.read(scan_end - scan_start)
+            newline_index = chunk.rfind(b"\n")
+            if newline_index >= 0:
+                complete_offset = scan_start + newline_index + 1
+                break
+            scan_end = scan_start
+        os.ftruncate(descriptor, complete_offset)
+        stream.flush()
+        os.fsync(descriptor)
+        stream.seek(complete_offset)
+        return complete_offset
+
+    @staticmethod
+    def _rollback_failed_append(descriptor: int, offset: int) -> None:
+        try:
+            os.ftruncate(descriptor, offset)
+            os.fsync(descriptor)
+        except Exception:
+            # Preserve the primary write/flush/fsync failure. The next append
+            # performs another locked suffix-recovery pass before writing.
+            pass
 
 
 __all__ = ["AppendOnlyTelemetry", "sanitize_telemetry_value"]

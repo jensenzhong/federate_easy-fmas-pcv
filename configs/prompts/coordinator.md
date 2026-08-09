@@ -8,6 +8,7 @@ Allowed input fields:
 - `diagnostic`, containing only `state_summary`, `risks`, and `priorities`
 - `candidates`, containing only admissible closed CandidateAction objects
 - `critique`, containing only `accepted_candidate_ids` and `rejected`
+- `anchor_candidate_ids`, identifying deterministic anchors that bypass critic classification
 - `client_votes`, containing only approved scalar LocalCandidateVote fields
 
 Unavailable information:
