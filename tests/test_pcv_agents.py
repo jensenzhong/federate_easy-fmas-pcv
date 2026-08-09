@@ -1,4 +1,5 @@
 import hashlib
+import builtins
 import json
 from pathlib import Path
 from threading import Thread
@@ -6,6 +7,7 @@ from threading import Thread
 import pytest
 import requests
 
+from src.federated_learning.pcv import telemetry as telemetry_module
 from src.federated_learning.pcv.agents import (
     DeepSeekCallError,
     MultiAgentOrchestrator,
@@ -62,9 +64,17 @@ def safe_payload():
 
 
 class FakeResponse:
-    def __init__(self, *, content=None, status_code=200, json_error=None):
+    def __init__(
+        self,
+        *,
+        content=None,
+        status_code=200,
+        json_error=None,
+        http_error_message="sensitive server error detail",
+    ):
         self.status_code = status_code
         self._json_error = json_error
+        self._http_error_message = http_error_message
         self._body = (
             {"choices": [{"message": {"content": content}}]}
             if content is not None
@@ -74,7 +84,7 @@ class FakeResponse:
     def raise_for_status(self):
         if self.status_code >= 400:
             error = requests.HTTPError(
-                "sensitive server error detail",
+                self._http_error_message,
                 response=self,
             )
             raise error
@@ -150,7 +160,7 @@ def test_connection_failure_has_one_attempt_and_preserves_role(
     "exception",
     [requests.Timeout("slow"), TimeoutError("slow")],
 )
-def test_timeout_failure_has_one_attempt_and_distinct_category(
+def test_timeout_failure_has_one_attempt_and_is_connection_category(
     safe_payload,
     exception,
 ):
@@ -164,7 +174,7 @@ def test_timeout_failure_has_one_attempt_and_distinct_category(
             lambda value: value,
         )
     assert session.calls == 1
-    assert error.value.category == "timeout"
+    assert error.value.category == "connection"
     assert error.value.role == "coordinator"
 
 
@@ -192,7 +202,7 @@ def test_other_http_failure_is_explicit(safe_payload):
     assert error.value.category == "http"
 
 
-def test_invalid_http_json_is_response_failure(safe_payload):
+def test_invalid_http_json_is_schema_failure(safe_payload):
     session = FakeSession(
         FakeResponse(json_error=ValueError("invalid HTTP response JSON"))
     )
@@ -202,7 +212,43 @@ def test_invalid_http_json_is_response_failure(safe_payload):
             "diagnostic", "Return JSON.", safe_payload, lambda value: value
         )
     assert session.calls == 1
-    assert error.value.category == "response"
+    assert error.value.category == "schema"
+
+
+@pytest.mark.parametrize(
+    "document",
+    [
+        [],
+        {},
+        {"choices": []},
+        {"choices": [None]},
+        {"choices": [{"message": None}]},
+        {"choices": [{"message": {}}]},
+        {"choices": [{"message": {"content": None}}]},
+    ],
+)
+def test_provider_envelope_and_content_failures_are_schema_with_one_post(
+    safe_payload,
+    document,
+):
+    class EnvelopeResponse:
+        status_code = 200
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return document
+
+    session = FakeSession(EnvelopeResponse())
+    client = make_client(session)
+    with pytest.raises(DeepSeekCallError) as error:
+        client.generate_json(
+            "diagnostic", "Return JSON.", safe_payload, lambda value: value
+        )
+    assert session.calls == 1
+    assert error.value.category == "schema"
+    assert error.value.role == "diagnostic"
 
 
 @pytest.mark.parametrize("content", ["not json", "[]", "NaN"])
@@ -453,9 +499,54 @@ def test_orchestrator_calls_all_six_real_roles_once_in_fixed_round_order(
     assert len(result.proposals) == 3
 
 
-def test_append_only_telemetry_is_valid_jsonl_and_fsynced_contract(tmp_path):
+def test_append_only_telemetry_explicitly_flushes_and_fsyncs(
+    tmp_path,
+    monkeypatch,
+):
     path = tmp_path / "agent_calls.jsonl"
     writer = AppendOnlyTelemetry(path)
+    real_open = builtins.open
+    real_fsync = telemetry_module.os.fsync
+    output_spies = []
+    fsynced_descriptors = []
+
+    class FlushSpy:
+        def __init__(self, wrapped):
+            self.wrapped = wrapped
+            self.descriptor = wrapped.fileno()
+            self.flush_calls = 0
+
+        def __enter__(self):
+            self.wrapped.__enter__()
+            return self
+
+        def __exit__(self, *args):
+            return self.wrapped.__exit__(*args)
+
+        def write(self, value):
+            return self.wrapped.write(value)
+
+        def flush(self):
+            self.flush_calls += 1
+            return self.wrapped.flush()
+
+        def fileno(self):
+            return self.wrapped.fileno()
+
+    def open_spy(file, mode="r", *args, **kwargs):
+        stream = real_open(file, mode, *args, **kwargs)
+        if Path(file) == path and mode == "ab":
+            spy = FlushSpy(stream)
+            output_spies.append(spy)
+            return spy
+        return stream
+
+    def fsync_spy(descriptor):
+        fsynced_descriptors.append(descriptor)
+        return real_fsync(descriptor)
+
+    monkeypatch.setattr(builtins, "open", open_spy)
+    monkeypatch.setattr(telemetry_module.os, "fsync", fsync_spy)
     writer.append(
         {
             "request_hash": "r",
@@ -472,6 +563,9 @@ def test_append_only_telemetry_is_valid_jsonl_and_fsynced_contract(tmp_path):
     lines = path.read_text(encoding="utf-8").splitlines()
     assert len(lines) == 1
     assert json.loads(lines[0])["role"] == "diagnostic"
+    assert len(output_spies) == 1
+    assert output_spies[0].flush_calls == 1
+    assert output_spies[0].descriptor in fsynced_descriptors
 
 
 def test_telemetry_serialization_failure_cannot_leave_a_partial_line(tmp_path):
@@ -487,6 +581,36 @@ def test_telemetry_refuses_secret_bearing_fields(tmp_path):
     for secret_field in ("api_key", "authorization", "headers", "payload"):
         with pytest.raises(ValueError):
             writer.append({secret_field: "secret"})
+
+
+def test_telemetry_recursively_redacts_known_and_header_secrets(tmp_path):
+    path = tmp_path / "agent_calls.jsonl"
+    known_secret = "fake-api-key-never-log"
+    bearer_secret = "standalone-bearer-token"
+    header_secret = "plain-authorization-value"
+    writer = AppendOnlyTelemetry(path, known_secrets=(known_secret,))
+    writer.append(
+        {
+            "response_text": (
+                f"echo={known_secret}; Bearer {bearer_secret}; "
+                f"Authorization: {header_secret}"
+            ),
+            "parsed_response": {
+                "nested": [
+                    {"value": known_secret},
+                    f"Bearer {bearer_secret}",
+                    f"authorization={header_secret}",
+                ]
+            },
+        }
+    )
+    raw = path.read_text(encoding="utf-8")
+    assert known_secret not in raw
+    assert bearer_secret not in raw
+    assert header_secret not in raw
+    assert "[REDACTED]" in raw
+    record = json.loads(raw)
+    assert record["parsed_response"]["nested"][0]["value"] == "[REDACTED]"
 
 
 def test_concurrent_telemetry_appends_never_interleave_lines(tmp_path):
@@ -532,6 +656,72 @@ def test_client_telemetry_records_call_without_secrets(tmp_path, safe_payload):
     assert "test-only-secret" not in serialized
     assert "Authorization" not in serialized
     assert "client-a" not in serialized
+
+
+def test_client_registers_key_and_redacts_response_text_and_nested_values(
+    tmp_path,
+    safe_payload,
+):
+    path = tmp_path / "agent_calls.jsonl"
+    api_key = "fake-client-key-never-log"
+    bearer_token = "fake-response-bearer"
+    response = {
+        "echo": api_key,
+        "nested": {"value": f"Bearer {bearer_token}"},
+    }
+    session = FakeSession(FakeResponse(content=json.dumps(response)))
+    client = make_client(
+        session,
+        api_key=api_key,
+        telemetry=AppendOnlyTelemetry(path),
+    )
+    assert client.generate_json(
+        "diagnostic", "Return JSON.", safe_payload, lambda value: value
+    ) == response
+    raw = path.read_text(encoding="utf-8")
+    assert api_key not in raw
+    assert bearer_token not in raw
+    assert "[REDACTED]" in raw
+    record = json.loads(raw)
+    assert "[REDACTED]" in record["response_text"]
+    assert record["parsed_response"]["echo"] == "[REDACTED]"
+
+
+def test_http_exception_detail_is_logged_only_after_value_redaction(
+    tmp_path,
+    safe_payload,
+):
+    path = tmp_path / "agent_calls.jsonl"
+    api_key = "fake-http-key-never-log"
+    bearer_token = "fake-http-bearer"
+    header_value = "fake-http-authorization"
+    session = FakeSession(
+        FakeResponse(
+            content="{}",
+            status_code=500,
+            http_error_message=(
+                f"key={api_key}; Bearer {bearer_token}; "
+                f"Authorization: {header_value}"
+            ),
+        )
+    )
+    client = make_client(
+        session,
+        api_key=api_key,
+        telemetry=AppendOnlyTelemetry(path),
+    )
+    with pytest.raises(DeepSeekCallError) as error:
+        client.generate_json(
+            "critic", "Return JSON.", safe_payload, lambda value: value
+        )
+    assert session.calls == 1
+    assert error.value.category == "http"
+    assert api_key not in str(error.value)
+    raw = path.read_text(encoding="utf-8")
+    assert api_key not in raw
+    assert bearer_token not in raw
+    assert header_value not in raw
+    assert "[REDACTED]" in raw
 
 
 def test_prompt_files_are_complete_hashable_and_do_not_request_private_data():

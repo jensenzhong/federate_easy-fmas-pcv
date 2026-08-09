@@ -15,6 +15,7 @@ import requests
 
 from .protocol import assert_prompt_payload_safe
 from .schemas import CandidateAction, LocalCandidateVote
+from .telemetry import sanitize_telemetry_value
 
 
 ROLE_NAMES = (
@@ -430,6 +431,10 @@ class StrictDeepSeekClient:
         self.timeout_seconds = timeout_seconds
         self.session = session
         self.telemetry = telemetry
+        if self.telemetry is not None:
+            register_secret = getattr(self.telemetry, "register_secret", None)
+            if callable(register_secret):
+                register_secret(api_key)
 
     def _record(
         self,
@@ -441,13 +446,14 @@ class StrictDeepSeekClient:
         parsed_response: dict[str, Any] | None,
         started: float,
         failure_category: str | None,
+        failure_detail: str | None,
     ) -> None:
         if self.telemetry is None:
             return
         candidate_decision = None
         if parsed_response is not None and "selected_candidate_id" in parsed_response:
             candidate_decision = parsed_response["selected_candidate_id"]
-        self.telemetry.append(
+        record = sanitize_telemetry_value(
             {
                 "request_hash": request_hash,
                 "prompt_hash": prompt_hash,
@@ -458,8 +464,11 @@ class StrictDeepSeekClient:
                 "timing_seconds": max(0.0, time.perf_counter() - started),
                 "candidate_decision": candidate_decision,
                 "failure_category": failure_category,
-            }
+                "failure_detail": failure_detail,
+            },
+            known_secrets=(self._api_key,),
         )
+        self.telemetry.append(record)
 
     def _fail(
         self,
@@ -472,6 +481,7 @@ class StrictDeepSeekClient:
         response_text: str | None,
         parsed_response: dict[str, Any] | None,
         started: float,
+        failure_detail: str | None = None,
     ) -> None:
         self._record(
             request_hash=request_hash,
@@ -481,6 +491,7 @@ class StrictDeepSeekClient:
             parsed_response=parsed_response,
             started=started,
             failure_category=category,
+            failure_detail=failure_detail,
         )
         raise DeepSeekCallError(category, role, message) from None
 
@@ -535,9 +546,9 @@ class StrictDeepSeekClient:
                 timeout=self.timeout_seconds,
             )
             response.raise_for_status()
-        except (requests.Timeout, TimeoutError):
+        except (requests.Timeout, TimeoutError) as error:
             self._fail(
-                "timeout",
+                "connection",
                 role,
                 "request timed out",
                 request_hash=request_hash,
@@ -545,6 +556,7 @@ class StrictDeepSeekClient:
                 response_text=None,
                 parsed_response=None,
                 started=started,
+                failure_detail=str(error),
             )
         except requests.HTTPError as error:
             status = getattr(getattr(error, "response", None), "status_code", None)
@@ -558,8 +570,9 @@ class StrictDeepSeekClient:
                 response_text=None,
                 parsed_response=None,
                 started=started,
+                failure_detail=str(error),
             )
-        except (requests.RequestException, ConnectionError, OSError):
+        except (requests.RequestException, ConnectionError, OSError) as error:
             self._fail(
                 "connection",
                 role,
@@ -569,8 +582,9 @@ class StrictDeepSeekClient:
                 response_text=None,
                 parsed_response=None,
                 started=started,
+                failure_detail=str(error),
             )
-        except Exception:
+        except Exception as error:
             self._fail(
                 "connection",
                 role,
@@ -580,6 +594,7 @@ class StrictDeepSeekClient:
                 response_text=None,
                 parsed_response=None,
                 started=started,
+                failure_detail=str(error),
             )
 
         try:
@@ -598,9 +613,9 @@ class StrictDeepSeekClient:
             response_text = message["content"]
             if type(response_text) is not str:
                 raise ValueError("HTTP response content must be a string")
-        except Exception:
+        except Exception as error:
             self._fail(
-                "response",
+                "schema",
                 role,
                 "provider response envelope is invalid",
                 request_hash=request_hash,
@@ -608,12 +623,13 @@ class StrictDeepSeekClient:
                 response_text=None,
                 parsed_response=None,
                 started=started,
+                failure_detail=str(error),
             )
 
         try:
             parsed_response = _strict_json_object(response_text)
             validated = response_validator(parsed_response)
-        except Exception:
+        except Exception as error:
             self._fail(
                 "schema",
                 role,
@@ -623,6 +639,7 @@ class StrictDeepSeekClient:
                 response_text=response_text,
                 parsed_response=parsed_response,
                 started=started,
+                failure_detail=str(error),
             )
 
         self._record(
@@ -633,6 +650,7 @@ class StrictDeepSeekClient:
             parsed_response=parsed_response,
             started=started,
             failure_category=None,
+            failure_detail=None,
         )
         return validated
 

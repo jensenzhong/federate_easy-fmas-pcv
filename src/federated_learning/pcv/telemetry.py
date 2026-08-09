@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 import json
 import os
 from pathlib import Path
+import re
 from threading import Lock
 from typing import Any
 
@@ -24,6 +25,16 @@ _SENSITIVE_FIELD_NAMES = frozenset(
 )
 _LOCKS_GUARD = Lock()
 _PATH_LOCKS: dict[str, Lock] = {}
+_BEARER_PATTERN = re.compile(
+    r"\bBearer\s+[A-Za-z0-9._~+/=-]+",
+    flags=re.IGNORECASE,
+)
+_AUTHORIZATION_VALUE_PATTERN = re.compile(
+    r"(\bauthorization\b[\"']?\s*[:=]\s*[\"']?)"
+    r"(?!\[REDACTED\])[^\"'\s,;}\]]+",
+    flags=re.IGNORECASE,
+)
+_REDACTION_MARKER = "[REDACTED]"
 
 
 def _normalized_field_name(value: str) -> str:
@@ -39,6 +50,44 @@ def _assert_no_sensitive_fields(value: Any) -> None:
     elif isinstance(value, (list, tuple)):
         for item in value:
             _assert_no_sensitive_fields(item)
+
+
+def _sanitize_string(value: str, known_secrets: tuple[str, ...]) -> str:
+    sanitized = value
+    for secret in sorted(known_secrets, key=len, reverse=True):
+        sanitized = sanitized.replace(secret, _REDACTION_MARKER)
+    sanitized = _BEARER_PATTERN.sub(f"Bearer {_REDACTION_MARKER}", sanitized)
+    sanitized = _AUTHORIZATION_VALUE_PATTERN.sub(
+        rf"\1{_REDACTION_MARKER}",
+        sanitized,
+    )
+    return sanitized
+
+
+def sanitize_telemetry_value(
+    value: Any,
+    *,
+    known_secrets: Sequence[str] = (),
+) -> Any:
+    """Return a recursively value-sanitized, JSON-compatible copy."""
+    secrets = tuple(
+        secret
+        for secret in known_secrets
+        if type(secret) is str and secret
+    )
+    if isinstance(value, Mapping):
+        return {
+            key: sanitize_telemetry_value(item, known_secrets=secrets)
+            for key, item in value.items()
+        }
+    if isinstance(value, (list, tuple)):
+        return [
+            sanitize_telemetry_value(item, known_secrets=secrets)
+            for item in value
+        ]
+    if type(value) is str:
+        return _sanitize_string(value, secrets)
+    return value
 
 
 def _thread_lock_for(path: Path) -> Lock:
@@ -98,16 +147,38 @@ class AppendOnlyTelemetry:
     interleaving records.
     """
 
-    def __init__(self, path: str | os.PathLike[str]):
+    def __init__(
+        self,
+        path: str | os.PathLike[str],
+        *,
+        known_secrets: Sequence[str] = (),
+    ):
         self.path = Path(path)
         self._lock_path = self.path.with_name(f".{self.path.name}.lock")
+        self._secrets_lock = Lock()
+        self._known_secrets: set[str] = set()
+        for secret in known_secrets:
+            self.register_secret(secret)
+
+    def register_secret(self, secret: str) -> None:
+        """Register a value that must be redacted from every future record."""
+        if type(secret) is not str or not secret:
+            raise ValueError("telemetry secrets must be non-empty exact strings")
+        with self._secrets_lock:
+            self._known_secrets.add(secret)
 
     def append(self, record: Mapping[str, Any]) -> None:
         if type(record) is not dict:
             raise TypeError("telemetry record must be an exact dictionary")
         _assert_no_sensitive_fields(record)
-        serialized = json.dumps(
+        with self._secrets_lock:
+            known_secrets = tuple(self._known_secrets)
+        sanitized_record = sanitize_telemetry_value(
             record,
+            known_secrets=known_secrets,
+        )
+        serialized = json.dumps(
+            sanitized_record,
             ensure_ascii=False,
             sort_keys=True,
             separators=(",", ":"),
@@ -118,21 +189,12 @@ class AppendOnlyTelemetry:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         thread_lock = _thread_lock_for(self.path)
         with thread_lock, _ProcessFileLock(self._lock_path):
-            descriptor = os.open(
-                self.path,
-                os.O_APPEND | os.O_CREAT | os.O_WRONLY | getattr(os, "O_BINARY", 0),
-                0o600,
-            )
-            try:
-                view = memoryview(encoded)
-                while view:
-                    written = os.write(descriptor, view)
-                    if written <= 0:
-                        raise OSError("telemetry append made no progress")
-                    view = view[written:]
-                os.fsync(descriptor)
-            finally:
-                os.close(descriptor)
+            with open(self.path, "ab") as stream:
+                written = stream.write(encoded)
+                if written != len(encoded):
+                    raise OSError("telemetry append was incomplete")
+                stream.flush()
+                os.fsync(stream.fileno())
 
 
-__all__ = ["AppendOnlyTelemetry"]
+__all__ = ["AppendOnlyTelemetry", "sanitize_telemetry_value"]
