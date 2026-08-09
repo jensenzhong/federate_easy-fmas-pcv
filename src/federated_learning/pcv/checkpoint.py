@@ -382,10 +382,40 @@ def _metadata_equal(checkpoint_value: Any, requested_value: Any) -> bool:
     return type(checkpoint_value) is type(requested_value) and checkpoint_value == requested_value
 
 
+def _load_validated_resume_payload(
+    *,
+    resume_checkpoint: os.PathLike[str] | str,
+    requested_freeze_id: str | None,
+    requested_method: str | None,
+    requested_training_seed: int | None,
+    requested_llm_rep: int | None,
+    requested_partition_sha256: str | None,
+    requested_config_sha256: str | None,
+    requested_prompt_hashes: Mapping[str, str] | None,
+) -> tuple[dict[str, Any], int]:
+    requested = {
+        "requested_freeze_id": requested_freeze_id,
+        "requested_method": requested_method,
+        "requested_training_seed": requested_training_seed,
+        "requested_llm_rep": requested_llm_rep,
+        "requested_partition_sha256": requested_partition_sha256,
+        "requested_config_sha256": requested_config_sha256,
+        "requested_prompt_hashes": requested_prompt_hashes,
+    }
+    missing = [name for name, value in requested.items() if value is None]
+    if missing:
+        raise CheckpointFormatError(f"full resume requires {', '.join(missing)}")
+
+    payload = load_checkpoint(resume_checkpoint)
+    for requested_name, checkpoint_name in _EXPECTED_METADATA.items():
+        if not _metadata_equal(payload[checkpoint_name], requested[requested_name]):
+            raise ResumeMismatchError(f"resume mismatch for {checkpoint_name}")
+    return payload, payload["last_complete_round"] + 1
+
+
 def validate_resume(
     *,
     user_approved_resume: bool,
-    checkpoint: Mapping[str, Any] | None = None,
     resume_checkpoint: os.PathLike[str] | str | None = None,
     checkpoint_freeze_id: str | None = None,
     requested_freeze_id: str | None = None,
@@ -401,10 +431,9 @@ def validate_resume(
     if user_approved_resume is not True:
         raise ResumeApprovalRequired("resume requires user_approved_resume=True")
 
-    full_inputs = checkpoint is not None or resume_checkpoint is not None
     legacy_inputs = checkpoint_freeze_id is not None
     if legacy_inputs:
-        if full_inputs or any(
+        if resume_checkpoint is not None or any(
             value is not None
             for value in (
                 requested_method,
@@ -422,28 +451,19 @@ def validate_resume(
             raise ResumeMismatchError("resume mismatch for freeze_id")
         return None
 
-    if (checkpoint is None) == (resume_checkpoint is None):
-        raise CheckpointFormatError("provide exactly one of checkpoint and resume_checkpoint")
-
-    requested = {
-        "requested_freeze_id": requested_freeze_id,
-        "requested_method": requested_method,
-        "requested_training_seed": requested_training_seed,
-        "requested_llm_rep": requested_llm_rep,
-        "requested_partition_sha256": requested_partition_sha256,
-        "requested_config_sha256": requested_config_sha256,
-        "requested_prompt_hashes": requested_prompt_hashes,
-    }
-    missing = [name for name, value in requested.items() if value is None]
-    if missing:
-        raise CheckpointFormatError(f"full resume requires {', '.join(missing)}")
-
-    payload = load_checkpoint(resume_checkpoint) if resume_checkpoint is not None else checkpoint
-    _validate_payload(payload)
-    for requested_name, checkpoint_name in _EXPECTED_METADATA.items():
-        if not _metadata_equal(payload[checkpoint_name], requested[requested_name]):
-            raise ResumeMismatchError(f"resume mismatch for {checkpoint_name}")
-    return payload["last_complete_round"] + 1
+    if resume_checkpoint is None:
+        raise CheckpointFormatError("resume_checkpoint path is required for full resume")
+    _, start_round = _load_validated_resume_payload(
+        resume_checkpoint=resume_checkpoint,
+        requested_freeze_id=requested_freeze_id,
+        requested_method=requested_method,
+        requested_training_seed=requested_training_seed,
+        requested_llm_rep=requested_llm_rep,
+        requested_partition_sha256=requested_partition_sha256,
+        requested_config_sha256=requested_config_sha256,
+        requested_prompt_hashes=requested_prompt_hashes,
+    )
+    return start_round
 
 
 def restore_checkpoint(
@@ -451,8 +471,7 @@ def restore_checkpoint(
     model: Any,
     server_optimizer: Any,
     user_approved_resume: bool,
-    checkpoint: Mapping[str, Any] | None = None,
-    resume_checkpoint: os.PathLike[str] | str | None = None,
+    resume_checkpoint: os.PathLike[str] | str,
     requested_freeze_id: str,
     requested_method: str,
     requested_training_seed: int,
@@ -465,12 +484,8 @@ def restore_checkpoint(
 
     if user_approved_resume is not True:
         raise ResumeApprovalRequired("resume requires user_approved_resume=True")
-    if (checkpoint is None) == (resume_checkpoint is None):
-        raise CheckpointFormatError("provide exactly one of checkpoint and resume_checkpoint")
-    payload = load_checkpoint(resume_checkpoint) if resume_checkpoint is not None else checkpoint
-    start_round = validate_resume(
-        user_approved_resume=user_approved_resume,
-        checkpoint=payload,
+    payload, start_round = _load_validated_resume_payload(
+        resume_checkpoint=resume_checkpoint,
         requested_freeze_id=requested_freeze_id,
         requested_method=requested_method,
         requested_training_seed=requested_training_seed,

@@ -340,37 +340,88 @@ def test_validate_resume_requires_an_existing_path_and_returns_next_round(tmp_pa
         ),
     ],
 )
-def test_validate_resume_requires_exact_metadata_and_hash_mapping(requested_field, bad_value):
+def test_validate_resume_requires_exact_metadata_and_hash_mapping(tmp_path, requested_field, bad_value):
     kwargs = _resume_kwargs(**{requested_field: bad_value})
+    target = save_checkpoint(tmp_path, _payload())
     with pytest.raises(ResumeMismatchError):
-        validate_resume(checkpoint=_payload(), **kwargs)
+        validate_resume(resume_checkpoint=target, **kwargs)
 
 
-def test_validate_resume_requires_all_expected_metadata():
+def test_validate_resume_requires_all_expected_metadata(tmp_path):
     kwargs = _resume_kwargs()
     del kwargs["requested_config_sha256"]
+    target = save_checkpoint(tmp_path, _payload())
     with pytest.raises(CheckpointFormatError, match="requested_config_sha256"):
-        validate_resume(checkpoint=_payload(), **kwargs)
+        validate_resume(resume_checkpoint=target, **kwargs)
 
 
-def test_validate_resume_rejects_ambiguous_or_mixed_input_modes(tmp_path):
+def test_full_validate_resume_rejects_in_memory_checkpoint_bypass(tmp_path):
     payload = _payload()
     target = save_checkpoint(tmp_path, payload)
-    with pytest.raises(CheckpointFormatError, match="exactly one"):
+    with pytest.raises(TypeError, match="checkpoint"):
+        validate_resume(checkpoint=payload, **_resume_kwargs())
+    with pytest.raises(TypeError, match="checkpoint"):
         validate_resume(checkpoint=payload, resume_checkpoint=target, **_resume_kwargs())
-    with pytest.raises(CheckpointFormatError, match="legacy"):
-        validate_resume(
+
+
+def test_full_validate_resume_requires_a_checkpoint_path():
+    with pytest.raises(CheckpointFormatError, match="resume_checkpoint"):
+        validate_resume(**_resume_kwargs())
+
+
+def test_restore_checkpoint_rejects_missing_path_and_in_memory_bypass():
+    payload = _payload()
+    active_model = torch.nn.Linear(2, 1)
+    active_optimizer = _Optimizer()
+    with pytest.raises(TypeError, match="resume_checkpoint"):
+        restore_checkpoint(
+            model=active_model,
+            server_optimizer=active_optimizer,
+            **_resume_kwargs(),
+        )
+    with pytest.raises(TypeError, match="checkpoint"):
+        restore_checkpoint(
             checkpoint=payload,
-            checkpoint_freeze_id="freeze-a",
+            model=active_model,
+            server_optimizer=active_optimizer,
             **_resume_kwargs(),
         )
 
 
-def test_mismatch_fails_before_model_optimizer_or_rng_are_modified(monkeypatch):
+def test_corrupt_resume_path_fails_before_restore(tmp_path, monkeypatch):
+    import src.federated_learning.pcv.checkpoint as checkpoint_module
+
+    path = tmp_path / "corrupt.pt"
+    path.write_bytes(b"not a checkpoint")
+    active_model = torch.nn.Linear(2, 1)
+    active_optimizer = _Optimizer()
+    model_before = copy.deepcopy(active_model.state_dict())
+    optimizer_before = copy.deepcopy(active_optimizer.state)
+    monkeypatch.setattr(
+        checkpoint_module,
+        "restore_rng_state",
+        lambda state: (_ for _ in ()).throw(AssertionError("RNG restoration must not run")),
+    )
+
+    with pytest.raises(CheckpointFormatError):
+        restore_checkpoint(
+            resume_checkpoint=path,
+            model=active_model,
+            server_optimizer=active_optimizer,
+            **_resume_kwargs(),
+        )
+
+    assert all(torch.equal(active_model.state_dict()[key], value) for key, value in model_before.items())
+    assert active_optimizer.state["name"] == optimizer_before["name"]
+    assert torch.equal(active_optimizer.state["momentum"], optimizer_before["momentum"])
+
+
+def test_mismatch_fails_before_model_optimizer_or_rng_are_modified(tmp_path, monkeypatch):
     import src.federated_learning.pcv.checkpoint as checkpoint_module
 
     saved_model = torch.nn.Linear(2, 1)
     payload = _payload(model=saved_model)
+    target = save_checkpoint(tmp_path, payload)
     active_model = torch.nn.Linear(2, 1)
     active_optimizer = _Optimizer({"name": "active", "momentum": torch.tensor([9.0])})
     model_before = copy.deepcopy(active_model.state_dict())
@@ -384,7 +435,7 @@ def test_mismatch_fails_before_model_optimizer_or_rng_are_modified(monkeypatch):
 
     with pytest.raises(ResumeMismatchError):
         restore_checkpoint(
-            checkpoint=payload,
+            resume_checkpoint=target,
             model=active_model,
             server_optimizer=active_optimizer,
             **_resume_kwargs(requested_method="wrong"),
@@ -396,12 +447,13 @@ def test_mismatch_fails_before_model_optimizer_or_rng_are_modified(monkeypatch):
     _assert_rng_states_equal(capture_rng_state(), rng_before)
 
 
-def test_restore_checkpoint_restores_model_optimizer_and_rng_exactly():
+def test_restore_checkpoint_restores_model_optimizer_and_rng_exactly(tmp_path):
     random.seed(99)
     np.random.seed(99)
     torch.manual_seed(99)
     saved_model = torch.nn.Linear(2, 1)
     payload = _payload(model=saved_model)
+    target = save_checkpoint(tmp_path, payload)
     expected_random = (random.random(), np.random.rand(), torch.rand(1).item())
 
     active_model = torch.nn.Linear(2, 1)
@@ -414,7 +466,7 @@ def test_restore_checkpoint_restores_model_optimizer_and_rng_exactly():
     torch.manual_seed(1)
 
     start_round = restore_checkpoint(
-        checkpoint=payload,
+        resume_checkpoint=target,
         model=active_model,
         server_optimizer=active_optimizer,
         **_resume_kwargs(),
@@ -430,10 +482,11 @@ def test_restore_checkpoint_restores_model_optimizer_and_rng_exactly():
     assert (random.random(), np.random.rand(), torch.rand(1).item()) == expected_random
 
 
-def test_rng_restore_failure_rolls_back_model_optimizer_and_rng(monkeypatch):
+def test_rng_restore_failure_rolls_back_model_optimizer_and_rng(tmp_path, monkeypatch):
     import src.federated_learning.pcv.checkpoint as checkpoint_module
 
     payload = _payload()
+    target = save_checkpoint(tmp_path, payload)
     active_model = torch.nn.Linear(2, 1)
     active_optimizer = _Optimizer({"name": "active", "momentum": torch.tensor([9.0])})
     model_before = copy.deepcopy(active_model.state_dict())
@@ -441,15 +494,19 @@ def test_rng_restore_failure_rolls_back_model_optimizer_and_rng(monkeypatch):
     rng_before = capture_rng_state()
     real_restore = checkpoint_module.restore_rng_state
 
-    def fail_only_checkpoint_state(state):
-        if state is payload["rng_state"]:
+    restore_calls = 0
+
+    def fail_first_restore(state):
+        nonlocal restore_calls
+        restore_calls += 1
+        if restore_calls == 1:
             raise RuntimeError("rng restore failed")
         real_restore(state)
 
-    monkeypatch.setattr(checkpoint_module, "restore_rng_state", fail_only_checkpoint_state)
+    monkeypatch.setattr(checkpoint_module, "restore_rng_state", fail_first_restore)
     with pytest.raises(CheckpointRestoreError, match="rng restore failed"):
         restore_checkpoint(
-            checkpoint=payload,
+            resume_checkpoint=target,
             model=active_model,
             server_optimizer=active_optimizer,
             **_resume_kwargs(),
