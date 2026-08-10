@@ -183,6 +183,34 @@ def _engine(tmp_path, method="FMAS_PCV_FEDYOGI", **overrides):
     return PCVEngine(**values)
 
 
+def test_checkpoint_writer_requires_one_transactionally_managed_path(tmp_path):
+    with pytest.raises(ValueError, match="checkpoint_path"):
+        _engine(tmp_path, checkpoint_writer=lambda payload: None)
+
+
+def test_checkpoint_writer_must_report_the_managed_checkpoint_path(tmp_path):
+    checkpoint_path = tmp_path / "last_complete.pt"
+    checkpoint_path.write_bytes(b"old-checkpoint")
+
+    def writer(path, payload):
+        del payload
+        path.write_bytes(b"new-checkpoint")
+        return tmp_path / "unmanaged.pt"
+
+    engine = _engine(
+        tmp_path,
+        checkpoint_path=checkpoint_path,
+        checkpoint_writer=writer,
+    )
+
+    with pytest.raises(ExperimentPaused) as paused:
+        engine.run_round(3)
+
+    assert paused.value.failure.exception_type == "ValueError"
+    assert checkpoint_path.read_bytes() == b"old-checkpoint"
+    assert engine.last_complete_round == 2
+
+
 @pytest.mark.parametrize(
     ("method", "calls", "candidate_min", "candidate_max"),
     [

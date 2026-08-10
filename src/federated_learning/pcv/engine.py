@@ -331,6 +331,13 @@ class PCVEngine:
         self.single_agent = single_agent
         self.gate_selector = gate_selector
         self.checkpoint_path = None if checkpoint_path is None else Path(checkpoint_path)
+        if checkpoint_writer is not None and not callable(checkpoint_writer):
+            raise TypeError("checkpoint_writer must be callable")
+        if checkpoint_writer is not None and self.checkpoint_path is None:
+            raise ValueError(
+                "checkpoint_writer requires checkpoint_path so its durable output "
+                "belongs to the round transaction"
+            )
         self.checkpoint_writer = checkpoint_writer
         if pause_report_writer is not None and not callable(pause_report_writer):
             raise TypeError("pause_report_writer must be callable")
@@ -916,11 +923,16 @@ class PCVEngine:
             return None
         payload = self._checkpoint_payload(round_index)
         if self.checkpoint_writer is not None:
-            if self.checkpoint_path is None:
-                result = self.checkpoint_writer(payload)
-            else:
-                result = self.checkpoint_writer(self.checkpoint_path, payload)
-            return self.checkpoint_path if result is None else Path(result)
+            result = self.checkpoint_writer(self.checkpoint_path, payload)
+            reported_path = self.checkpoint_path if result is None else Path(result)
+            if reported_path.resolve(strict=False) != self.checkpoint_path.resolve(
+                strict=False
+            ):
+                raise ValueError(
+                    "checkpoint_writer must report the transactionally managed "
+                    "checkpoint_path"
+                )
+            return self.checkpoint_path
         return save_checkpoint(self.checkpoint_path, payload)
 
     def _commit_round(
