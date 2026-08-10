@@ -674,6 +674,22 @@ def restore_checkpoint(
         requested_prompt_hashes=requested_prompt_hashes,
     )
 
+    _restore_loaded_payload(
+        payload=payload,
+        model=model,
+        server_optimizer=server_optimizer,
+    )
+    return int(start_round)
+
+
+def _restore_loaded_payload(
+    *,
+    payload: Mapping[str, Any],
+    model: Any,
+    server_optimizer: Any,
+) -> None:
+    """Restore one already validated payload with rollback on any mutation failure."""
+
     model_loader = getattr(model, "load_state_dict", None)
     optimizer_loader = getattr(server_optimizer, "load_optimizer_state", None)
     if not callable(model_loader) or not callable(optimizer_loader):
@@ -700,7 +716,47 @@ def restore_checkpoint(
         if rollback_failures:
             detail += f"; rollback failures: {', '.join(rollback_failures)}"
         raise CheckpointRestoreError(detail) from exc
-    return int(start_round)
+
+
+def restore_training_checkpoint(
+    *,
+    model: Any,
+    server_optimizer: Any,
+    user_approved_resume: bool,
+    resume_checkpoint: os.PathLike[str] | str,
+    requested_freeze_id: str,
+    requested_method: str,
+    requested_training_seed: int,
+    requested_llm_rep: int,
+    requested_partition_sha256: str,
+    requested_config_sha256: str,
+    requested_prompt_hashes: Mapping[str, str],
+) -> tuple[int, dict[str, Any]]:
+    """Restore once and return the remaining engine state from that same safe load."""
+
+    if user_approved_resume is not True:
+        raise ResumeApprovalRequired("resume requires user_approved_resume=True")
+    payload, start_round = _load_validated_resume_payload(
+        resume_checkpoint=resume_checkpoint,
+        requested_freeze_id=requested_freeze_id,
+        requested_method=requested_method,
+        requested_training_seed=requested_training_seed,
+        requested_llm_rep=requested_llm_rep,
+        requested_partition_sha256=requested_partition_sha256,
+        requested_config_sha256=requested_config_sha256,
+        requested_prompt_hashes=requested_prompt_hashes,
+    )
+    _restore_loaded_payload(
+        payload=payload,
+        model=model,
+        server_optimizer=server_optimizer,
+    )
+    return int(start_round), {
+        "previous_weights": _deep_clone(payload["previous_weights"]),
+        "best_validation": _deep_clone(payload["best_validation"]),
+        "best_model_state": _deep_clone(payload["best_model_state"]),
+        "last_complete_round": int(payload["last_complete_round"]),
+    }
 
 
 __all__ = [
@@ -715,6 +771,7 @@ __all__ = [
     "capture_rng_state",
     "load_checkpoint",
     "restore_checkpoint",
+    "restore_training_checkpoint",
     "restore_rng_state",
     "save_checkpoint",
     "validate_resume",

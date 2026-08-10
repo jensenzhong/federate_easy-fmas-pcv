@@ -300,6 +300,7 @@ def test_client_data_vault_has_no_public_partition_or_tensor_accessors():
     public_names = {name for name in dir(vault) if not name.startswith("_")}
     assert public_names == {
         "client_id",
+        "controller_metric_sums",
         "controller_telemetry",
         "evaluate_candidates",
         "final_test_sums",

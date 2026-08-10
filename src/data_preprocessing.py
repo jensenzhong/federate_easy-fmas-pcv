@@ -324,19 +324,39 @@ class StrictPartitionFrames:
 def load_strict_partition_frames(
     config: dict,
     partition_manifest_path: str,
+    *,
+    allowed_partitions=None,
+    sealed_data_directory=None,
 ) -> StrictPartitionFrames:
-    """Load fixed client partitions and fit feature statistics on train only."""
+    """Load only approved fixed partitions and fit statistics on train rows."""
 
     data_cfg = config["scene_c"]["data"]
     raw_path = Path(data_cfg["raw_csv"])
-    raw_bytes = raw_path.read_bytes()
-    dataset_sha256 = hashlib.sha256(raw_bytes).hexdigest()
-    frame = pd.read_csv(raw_path).rename(columns=data_cfg.get("rename_map", {}))
-    frame = frame[
-        data_cfg["feature_columns"]
-        + [data_cfg["target_column"], data_cfg["client_column"]]
-    ].copy()
-    frame["source_index"] = frame.index.astype(int)
+    sealed_directory = (
+        None if sealed_data_directory is None else Path(sealed_data_directory)
+    )
+    sealed_metadata = None
+    if sealed_directory is None:
+        raw_bytes = raw_path.read_bytes()
+        dataset_sha256 = hashlib.sha256(raw_bytes).hexdigest()
+    else:
+        try:
+            sealed_metadata = json.loads(
+                (sealed_directory / "metadata.json").read_text(encoding="utf-8")
+            )
+        except (FileNotFoundError, json.JSONDecodeError, OSError) as exc:
+            raise ValueError("sealed partition metadata is missing or invalid") from exc
+        if (
+            type(sealed_metadata) is not dict
+            or sealed_metadata.get("publication_protocol")
+            != "strict_partition_physical_seal_v1"
+            or sealed_metadata.get("publication_schema") != 1
+            or type(sealed_metadata.get("dataset_sha256")) is not str
+            or type(sealed_metadata.get("partition_sha256")) is not str
+            or type(sealed_metadata.get("files")) is not dict
+        ):
+            raise ValueError("sealed partition metadata is missing or invalid")
+        dataset_sha256 = sealed_metadata["dataset_sha256"]
 
     manifest_path = Path(partition_manifest_path)
     manifest_bytes = manifest_path.read_bytes()
@@ -373,6 +393,14 @@ def load_strict_partition_frames(
         raise ValueError("metadata dataset_sha256 mismatch")
     if metadata["partition_sha256"] != partition_sha256:
         raise ValueError("metadata partition_sha256 mismatch")
+    if sealed_metadata is not None and (
+        sealed_metadata.get("manifest_name") != manifest_path.name
+        or sealed_metadata["dataset_sha256"] != dataset_sha256
+        or sealed_metadata["partition_sha256"] != partition_sha256
+        or set(sealed_metadata["files"])
+        != {"train", "controller_validation", "locked_test"}
+    ):
+        raise ValueError("sealed partition identity mismatch")
 
     manifest = pd.read_csv(manifest_path)
     required_manifest_columns = {
@@ -396,7 +424,7 @@ def load_strict_partition_frames(
         raise ValueError(
             "partition manifest dataset hash does not match canonical data"
         )
-    allowed_partitions = {
+    partition_names = {
         "train",
         "controller_validation",
         "locked_test",
@@ -404,17 +432,33 @@ def load_strict_partition_frames(
     actual_partitions = set(manifest["partition"].dropna().astype(str))
     if (
         manifest["partition"].isna().any()
-        or not actual_partitions <= allowed_partitions
+        or not actual_partitions <= partition_names
     ):
-        invalid_partitions = sorted(actual_partitions - allowed_partitions)
+        invalid_partitions = sorted(actual_partitions - partition_names)
         raise ValueError(
             f"partition manifest contains invalid partition: {invalid_partitions}"
         )
 
-    canonical_source_indices = set(frame["source_index"].tolist())
+    if allowed_partitions is None:
+        requested_partitions = partition_names
+    else:
+        if isinstance(allowed_partitions, (str, bytes)):
+            raise TypeError("allowed_partitions must be a collection of names")
+        requested_partitions = set(allowed_partitions)
+        if (
+            not requested_partitions
+            or any(type(name) is not str for name in requested_partitions)
+            or not requested_partitions <= partition_names
+            or "train" not in requested_partitions
+        ):
+            raise ValueError(
+                "allowed_partitions must contain train and only protocol partitions"
+            )
+
+    canonical_source_indices = set(range(int(metadata["rows"])))
     manifest_source_indices = manifest["source_index"]
     if (
-        len(manifest_source_indices) != len(frame)
+        len(manifest_source_indices) != int(metadata["rows"])
         or not manifest_source_indices.is_unique
         or set(manifest_source_indices.tolist()) != canonical_source_indices
     ):
@@ -429,15 +473,68 @@ def load_strict_partition_frames(
     if not manifest["row_id"].astype(str).equals(expected_row_ids):
         raise ValueError("partition manifest row_id mismatch")
 
+    selected_manifest = manifest[manifest["partition"].isin(requested_partitions)].copy()
+    selected_indices = sorted(selected_manifest["source_index"].astype(int).tolist())
+    if sealed_directory is None:
+        selected_index_set = set(selected_indices)
+        frame = pd.read_csv(
+            raw_path,
+            skiprows=lambda line_number: (
+                line_number > 0 and line_number - 1 not in selected_index_set
+            ),
+        ).rename(columns=data_cfg.get("rename_map", {}))
+        frame = frame[
+            data_cfg["feature_columns"]
+            + [data_cfg["target_column"], data_cfg["client_column"]]
+        ].copy()
+        frame["source_index"] = selected_indices
+    else:
+        frames = []
+        for partition in sorted(requested_partitions):
+            file_record = sealed_metadata["files"].get(partition)
+            if (
+                type(file_record) is not dict
+                or set(file_record) != {"filename", "rows", "sha256"}
+                or file_record.get("filename") != f"{partition}.csv"
+                or type(file_record.get("rows")) is not int
+                or type(file_record.get("sha256")) is not str
+            ):
+                raise ValueError("sealed partition file metadata mismatch")
+            sealed_path = sealed_directory / file_record["filename"]
+            sealed_bytes = sealed_path.read_bytes()
+            if hashlib.sha256(sealed_bytes).hexdigest() != file_record["sha256"]:
+                raise ValueError("sealed partition file hash mismatch")
+            partition_frame = pd.read_csv(sealed_path)
+            if len(partition_frame) != file_record["rows"]:
+                raise ValueError("sealed partition row count mismatch")
+            frames.append(partition_frame)
+        frame = pd.concat(frames, ignore_index=True).sort_values(
+            "source_index", kind="stable"
+        ).reset_index(drop=True)
+        expected_columns = set(
+            data_cfg["feature_columns"]
+            + [
+                data_cfg["target_column"],
+                data_cfg["client_column"],
+                "source_index",
+            ]
+        )
+        if set(frame) != expected_columns:
+            raise ValueError("sealed partition columns mismatch")
+    if len(frame) != len(selected_indices):
+        raise ValueError("selected partition rows do not match the canonical data")
+    if frame["source_index"].astype(int).tolist() != selected_indices:
+        raise ValueError("sealed partition source indices mismatch")
+
     merged = frame.merge(
-        manifest[["source_index", "client_id", "partition"]],
+        selected_manifest[["source_index", "client_id", "partition"]],
         on="source_index",
         how="inner",
         validate="one_to_one",
     )
     if len(merged) != len(frame):
         raise ValueError(
-            "partition manifest does not cover the canonical dataset exactly"
+            "selected partition rows do not match the canonical manifest"
         )
     client_column = data_cfg["client_column"]
     ownership_mismatch = (

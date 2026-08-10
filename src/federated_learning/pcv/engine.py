@@ -68,7 +68,7 @@ _SAFE_AGENT_ROLES = frozenset(
         "balance_proposer",
         "critic",
         "coordinator",
-        "single_agent",
+        "single_proposer",
         "orchestrator",
     }
 )
@@ -210,6 +210,7 @@ class _RoundWork:
     telemetry_records: list[dict[str, Any]] = field(default_factory=list)
     diagnostic: Mapping[str, Any] = field(default_factory=dict)
     critique: Mapping[str, Any] = field(default_factory=dict)
+    telemetry_payload: Mapping[str, Any] = field(default_factory=dict)
     candidates: tuple[CandidateAction, ...] = ()
     previews: dict[str, _Preview] = field(default_factory=dict)
     votes: tuple[LocalCandidateVote, ...] = ()
@@ -601,6 +602,33 @@ class PCVEngine:
         }
 
     @staticmethod
+    def _candidate_prompt_dict(candidate: CandidateAction) -> dict[str, Any]:
+        return {
+            "candidate_id": candidate.candidate_id,
+            "weights": dict(candidate.weights),
+            "server_optimizer": candidate.server_optimizer,
+            "server_lr_scale": candidate.server_lr_scale,
+            "update_clip_norm": candidate.update_clip_norm,
+            "source": candidate.source,
+            "rationale": candidate.rationale,
+        }
+
+    @staticmethod
+    def _vote_prompt_dict(vote: LocalCandidateVote) -> dict[str, Any]:
+        return {
+            "client_id": vote.client_id,
+            "candidate_id": vote.candidate_id,
+            "sample_count": vote.sample_count,
+            "val_mape": vote.val_mape,
+            "val_rmse": vote.val_rmse,
+            "relative_mape": vote.relative_mape,
+            "relative_rmse": vote.relative_rmse,
+            "rank": vote.rank,
+            "confidence": vote.confidence,
+            "catastrophic_degradation": vote.catastrophic_degradation,
+        }
+
+    @staticmethod
     def _role_callable(dependency: Any, *, dependency_name: str) -> Callable[..., Any]:
         caller = getattr(dependency, "call", None)
         if callable(caller):
@@ -647,13 +675,14 @@ class PCVEngine:
         if self.method in {"FEDAVG_STRICT", "FEDYOGI_STRICT", "DPCV_FEDYOGI"}:
             return []
         payload = self._telemetry_payload(round_index, client_telemetry)
+        self._active_work.telemetry_payload = _clone(payload)
         if self.method == "SA_PCV_FEDYOGI":
             if self.single_agent is None:
                 raise TypeError("SA_PCV_FEDYOGI requires an explicit single_agent dependency")
-            response = self._call_role(self.single_agent, "single_agent", payload)
+            response = self._call_role(self.single_agent, "single_proposer", payload)
             if isinstance(response, Mapping) and "diagnostic" in response:
                 self._active_work.diagnostic = _clone(response["diagnostic"])
-            return self._validated_proposals(response, role="single_agent")
+            return self._validated_proposals(response, role="single_proposer")
 
         if self.agent_orchestrator is None:
             raise TypeError("FMAS_PCV_FEDYOGI requires a staged six-role agent_orchestrator")
@@ -678,7 +707,10 @@ class PCVEngine:
             {
                 **payload,
                 "diagnostic": _clone(diagnostic),
-                "candidate_ids": ids,
+                "candidates": [
+                    self._candidate_prompt_dict(candidate)
+                    for candidate in proposals
+                ],
             },
         )
         if not isinstance(critique, Mapping):
@@ -689,6 +721,29 @@ class PCVEngine:
             raise TypeError("critic accepted_candidate_ids must be a string sequence")
         if not set(accepted).issubset(ids):
             raise ValueError("critic accepted an unknown candidate")
+        rejected = critique.get("rejected", [])
+        if type(rejected) not in (list, tuple):
+            raise TypeError("critic rejected evidence must be a sequence")
+        rejected_ids = []
+        for item in rejected:
+            if (
+                not isinstance(item, Mapping)
+                or set(item) != {"candidate_id", "reason"}
+                or type(item["candidate_id"]) is not str
+                or type(item["reason"]) is not str
+                or not item["reason"].strip()
+            ):
+                raise TypeError("critic rejected evidence is invalid")
+            rejected_ids.append(item["candidate_id"])
+        if (
+            set(accepted) & set(rejected_ids)
+            or set(accepted) | set(rejected_ids) != set(ids)
+        ):
+            raise ValueError("critic must classify every proposed candidate exactly once")
+        self._active_work.critique = {
+            "accepted_candidate_ids": list(accepted),
+            "rejected": [dict(item) for item in rejected],
+        }
         accepted_set = set(accepted)
         return [candidate for candidate in proposals if candidate.candidate_id in accepted_set]
 
@@ -830,17 +885,37 @@ class PCVEngine:
                 ),
             )
         dependency = self.single_agent if self.method == "SA_PCV_FEDYOGI" else self.agent_orchestrator
+        anchor_ids = [
+            candidate.candidate_id
+            for candidate in candidates
+            if candidate.source == "anchor"
+        ]
+        non_anchor_ids = [
+            candidate.candidate_id
+            for candidate in candidates
+            if candidate.source != "anchor"
+        ]
+        critique = (
+            {
+                "accepted_candidate_ids": non_anchor_ids,
+                "rejected": [],
+            }
+            if self.method == "SA_PCV_FEDYOGI"
+            else _clone(self._active_work.critique)
+        )
         response = self._call_role(
             dependency,
             "coordinator",
             {
-                "round_index": round_index,
-                "candidate_ids": [candidate.candidate_id for candidate in candidates],
-                "stronger_anchor_id": self._active_work.stronger_anchor_id,
-                "aggregate_mape": _clone(self._active_work.aggregate_mape),
-                "votes": [vars(vote) for vote in votes],
+                **_clone(self._active_work.telemetry_payload),
                 "diagnostic": _clone(self._active_work.diagnostic),
-                "critique": _clone(self._active_work.critique),
+                "candidates": [
+                    self._candidate_prompt_dict(candidate)
+                    for candidate in candidates
+                ],
+                "critique": critique,
+                "anchor_candidate_ids": anchor_ids,
+                "client_votes": [self._vote_prompt_dict(vote) for vote in votes],
             },
         )
         if isinstance(response, Mapping):

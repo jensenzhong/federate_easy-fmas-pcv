@@ -1,5 +1,6 @@
 import copy
 import errno
+from pathlib import Path
 import random
 
 import numpy as np
@@ -15,6 +16,7 @@ from src.federated_learning.pcv.checkpoint import (
     capture_rng_state,
     load_checkpoint,
     restore_checkpoint,
+    restore_training_checkpoint,
     restore_rng_state,
     save_checkpoint,
     validate_resume,
@@ -799,6 +801,47 @@ def test_restore_checkpoint_restores_model_optimizer_and_rng_exactly(tmp_path):
     assert active_optimizer.state["name"] == "test"
     assert torch.equal(active_optimizer.state["momentum"], torch.tensor([2.0]))
     assert (random.random(), np.random.rand(), torch.rand(1).item()) == expected_random
+
+
+def test_restore_training_checkpoint_loads_once_and_returns_engine_state(
+    tmp_path, monkeypatch
+):
+    import src.federated_learning.pcv.checkpoint as checkpoint_module
+
+    payload = _payload()
+    target = save_checkpoint(tmp_path, payload)
+    active_model = torch.nn.Linear(2, 1)
+    active_optimizer = _Optimizer({"name": "active", "momentum": torch.tensor([9.0])})
+    real_load = checkpoint_module.load_checkpoint
+    load_calls = []
+
+    def counted_load(path):
+        load_calls.append(Path(path))
+        return real_load(path)
+
+    monkeypatch.setattr(checkpoint_module, "load_checkpoint", counted_load)
+    start_round, engine_state = restore_training_checkpoint(
+        resume_checkpoint=target,
+        model=active_model,
+        server_optimizer=active_optimizer,
+        **_resume_kwargs(),
+    )
+
+    assert load_calls == [target]
+    assert start_round == 4
+    assert set(engine_state) == {
+        "previous_weights",
+        "best_validation",
+        "best_model_state",
+        "last_complete_round",
+    }
+    assert engine_state["last_complete_round"] == 3
+    assert engine_state["previous_weights"] == payload["previous_weights"]
+    assert engine_state["best_validation"] == payload["best_validation"]
+    assert all(
+        torch.equal(engine_state["best_model_state"][key], value)
+        for key, value in payload["best_model_state"].items()
+    )
 
 
 def test_rng_restore_failure_rolls_back_model_optimizer_and_rng(tmp_path, monkeypatch):

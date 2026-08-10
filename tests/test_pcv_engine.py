@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 import torch
 
+from src.federated_learning.pcv import agents as agents_module
 from src.federated_learning.pcv.agents import DeepSeekCallError
 from src.federated_learning.pcv.checkpoint import capture_rng_state
 from src.federated_learning.pcv.engine import (
@@ -70,14 +71,20 @@ def _proposal(candidate_id, weights, source="agent"):
 class FakeAgent:
     def __init__(self, fail_role=None):
         self.roles = []
+        self.payloads = []
         self.fail_role = fail_role
 
     def __call__(self, *, role, payload):
         self.roles.append(role)
+        self.payloads.append((role, payload))
         if role == self.fail_role:
             raise DeepSeekCallError("connection", role, "Bearer never-log-me")
         if role == "diagnostic":
-            return {"summary": "fake"}
+            return {
+                "state_summary": "fake",
+                "risks": ["none"],
+                "priorities": ["validation"],
+            }
         if role == "performance_proposer":
             return [_proposal("performance_01", {"client_01": 0.21, "client_02": 0.29, "client_03": 0.50})]
         if role == "stability_proposer":
@@ -85,10 +92,19 @@ class FakeAgent:
         if role == "balance_proposer":
             return [_proposal("balance_01", {"client_01": 0.20, "client_02": 0.31, "client_03": 0.49})]
         if role == "critic":
-            return {"accepted_candidate_ids": list(payload["candidate_ids"])}
-        if role == "single_agent":
             return {
-                "diagnostic": {"summary": "single fake"},
+                "accepted_candidate_ids": [
+                    candidate["candidate_id"] for candidate in payload["candidates"]
+                ],
+                "rejected": [],
+            }
+        if role == "single_proposer":
+            return {
+                "diagnostic": {
+                    "state_summary": "single fake",
+                    "risks": ["none"],
+                    "priorities": ["validation"],
+                },
                 "proposals": [
                     _proposal("single_01", {"client_01": 0.21, "client_02": 0.30, "client_03": 0.49})
                 ],
@@ -243,7 +259,7 @@ def test_method_call_counts_candidate_budgets_and_common_round_contract(
     assert engine.last_complete_round == 3
     assert engine.best_validation == {"mape": result.aggregate_mape[result.selected_candidate_id], "round": 3}
     if method == "SA_PCV_FEDYOGI":
-        assert single.roles == ["single_agent", "coordinator"]
+        assert single.roles == ["single_proposer", "coordinator"]
         assert orchestrator.roles == []
     elif method == "FMAS_PCV_FEDYOGI":
         assert orchestrator.roles == [
@@ -257,6 +273,57 @@ def test_method_call_counts_candidate_budgets_and_common_round_contract(
         assert single.roles == []
     else:
         assert orchestrator.roles == single.roles == []
+
+
+def test_fmas_staged_calls_use_the_strict_agent_payload_contract(tmp_path):
+    agent = FakeAgent()
+    engine = _engine(tmp_path, agent_orchestrator=agent)
+
+    engine.run_round(3)
+
+    payloads = dict(agent.payloads)
+    base = {"round_index", "clients"}
+    assert set(payloads["diagnostic"]) == base
+    for role in ("performance_proposer", "stability_proposer", "balance_proposer"):
+        assert set(payloads[role]) == base | {"diagnostic"}
+    assert set(payloads["critic"]) == base | {"diagnostic", "candidates"}
+    assert set(payloads["coordinator"]) == base | {
+        "diagnostic",
+        "candidates",
+        "critique",
+        "anchor_candidate_ids",
+        "client_votes",
+    }
+    assert all(type(candidate) is dict for candidate in payloads["critic"]["candidates"])
+    assert len(payloads["coordinator"]["client_votes"]) == (
+        len(CLIENTS) * len(payloads["coordinator"]["candidates"])
+    )
+    for role, payload in agent.payloads:
+        agents_module._assert_context_payload_safe(role, payload)
+
+
+def test_single_agent_coordinator_uses_strict_evidence_shape(tmp_path):
+    single = FakeAgent()
+    engine = _engine(tmp_path, method="SA_PCV_FEDYOGI", single_agent=single)
+
+    engine.run_round(3)
+
+    payloads = dict(single.payloads)
+    assert set(payloads["single_proposer"]) == {"round_index", "clients"}
+    assert set(payloads["coordinator"]) == {
+        "round_index",
+        "clients",
+        "diagnostic",
+        "candidates",
+        "critique",
+        "anchor_candidate_ids",
+        "client_votes",
+    }
+    assert payloads["coordinator"]["critique"] == {
+        "accepted_candidate_ids": ["single_01"],
+        "rejected": [],
+    }
+    agents_module._assert_context_payload_safe("coordinator", payloads["coordinator"])
 
 
 def test_agent_failure_does_not_commit_incomplete_round(tmp_path):

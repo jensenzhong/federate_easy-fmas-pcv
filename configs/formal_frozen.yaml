@@ -1,0 +1,15 @@
+schema_version: 1
+formal_frozen: false
+freeze_id: null
+formal_seeds: [314, 2718, 2025, 3407, 9001]
+partition_manifest: results/manifests/strict_partition_v1.csv
+partition_sha256: null
+sealed_partition_metadata_sha256: null
+config_sha256: null
+prompt_hashes: {}
+git_commit: null
+deepseek:
+  model: deepseek-chat
+  base_url: https://api.deepseek.com
+  temperature: 0.8
+  timeout_seconds: 60

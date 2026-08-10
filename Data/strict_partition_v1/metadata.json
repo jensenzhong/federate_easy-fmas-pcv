@@ -1,0 +1,24 @@
+{
+  "dataset_sha256": "2bd607881e0355c54aa723f9d95b82d375b92ee85e37a9196b71b0d7f851ae8d",
+  "files": {
+    "controller_validation": {
+      "filename": "controller_validation.csv",
+      "rows": 103,
+      "sha256": "3cbc89b8dffe98fc9e8190ad4653a3ceffab3c20f463f3c265067acf4d4ed25a"
+    },
+    "locked_test": {
+      "filename": "locked_test.csv",
+      "rows": 105,
+      "sha256": "388de623a1837bdd737171bc8d42084efe3dacdbe2224caee22dbcdf4b22244a"
+    },
+    "train": {
+      "filename": "train.csv",
+      "rows": 480,
+      "sha256": "ddf76e75ce19e34b26ec347ebf9777ff63a07084b14d950c91b53fc587b06c00"
+    }
+  },
+  "manifest_name": "strict_partition_v1.csv",
+  "partition_sha256": "eb527a597c43ef8ef45ec24788c88aedcd13b413115a80a9db5aceb519151935",
+  "publication_protocol": "strict_partition_physical_seal_v1",
+  "publication_schema": 1
+}

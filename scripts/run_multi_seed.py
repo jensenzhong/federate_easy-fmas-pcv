@@ -30,12 +30,35 @@ from src.experiment_names import (
 )
 from src.utils import load_config
 
+# Historical compatibility only. New strict-paper methods have one canonical
+# entry point: experiments/run_strict_federated.py.
+NEW_FORMAL_METHODS = frozenset(
+    {
+        "FEDAVG_STRICT",
+        "FEDYOGI_STRICT",
+        "DPCV_FEDYOGI",
+        "SA_PCV_FEDYOGI",
+        "FMAS_PCV_FEDYOGI",
+    }
+)
+
+
+def reject_new_formal_methods(scenarios) -> None:
+    requested = set(scenarios)
+    forbidden = sorted(requested & NEW_FORMAL_METHODS)
+    if forbidden:
+        raise RuntimeError(
+            "FMAS formal methods must use experiments/run_strict_federated.py "
+            "and study_manifest.yaml"
+        )
+
+
 DEFAULT_SEEDS = [42, 123, 456, 789, 2024]
 DEFAULT_SCENARIOS = [
     "A",
     "A_prime",
     "B_STRICT",
-    "FEDYOGI_STRICT",
+    "FEDYOGI",
     "STRICT_COHERENCE_FEDYOGI_TR",
     "LLM_STRICT_GCA_FEDYOGI_TR",
 ]
@@ -661,6 +684,12 @@ def main():
 
     seeds = args.seeds or DEFAULT_SEEDS
     scenarios = args.scenarios or DEFAULT_SCENARIOS
+
+    print(
+        "WARNING: scripts/run_multi_seed.py is a historical non-formal runner; "
+        "it cannot create FMAS paper evidence."
+    )
+    reject_new_formal_methods(scenarios)
 
     print("=" * 70)
     print("MULTI-SEED EXPERIMENT RUNNER")

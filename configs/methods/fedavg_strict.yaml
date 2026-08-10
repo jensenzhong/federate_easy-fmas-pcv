@@ -1,0 +1,16 @@
+method: FEDAVG_STRICT
+num_rounds: 20
+local_epochs: 20
+batch_size: 32
+client_learning_rate: 0.0005
+checkpoint_metric: aggregated_client_val_mape
+candidate_budget: 8
+min_client_weight: 0.05
+max_client_weight: 0.80
+weight_l1_limit: 0.35
+best_candidate_tolerance: 0.002
+anchor_mape_tolerance: 0.001
+catastrophic_client_relative_mape: 0.05
+server_optimizer: fedavg
+proposal_mode: anchor_only
+deepseek_roles: []

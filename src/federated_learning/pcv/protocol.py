@@ -388,10 +388,22 @@ class ClientDataVault:
             for rank, candidate_id in enumerate(ranked_ids, start=1)
         ]
 
+    def controller_metric_sums(self, model_state) -> MetricSums:
+        """Return only additive validation statistics, never rows or predictions."""
+
+        return self._validated_metric_sums(
+            self.__controller_validation_dataset,
+            model_state,
+        )
+
     def final_test_sums(self, model_state, unlock_context) -> MetricSums:
         if not isinstance(unlock_context, dict):
             raise TypeError("unlock_context must be a dictionary")
         require_test_unlock(**unlock_context)
+        if self.__locked_test_dataset is None:
+            raise TestPartitionLocked(
+                "locked test was not loaded into this training-phase vault"
+            )
         return self._validated_metric_sums(self.__locked_test_dataset, model_state)
 
 

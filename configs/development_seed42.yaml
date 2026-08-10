@@ -1,0 +1,10 @@
+schema_version: 1
+phase: development
+training_seed: 42
+partition_manifest: results/manifests/strict_partition_v1.csv
+base_config: configs/config.yaml
+output_root: results/development/seed42
+deepseek:
+  model: deepseek-chat
+  base_url: https://api.deepseek.com
+  timeout_seconds: 60

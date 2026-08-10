@@ -39,10 +39,10 @@ class MultiSeedConfigTests(unittest.TestCase):
 
         self.assertEqual(
             DEFAULT_SCENARIOS,
-            ["A", "A_prime", "B_STRICT", "FEDYOGI_STRICT", "STRICT_COHERENCE_FEDYOGI_TR", "LLM_STRICT_GCA_FEDYOGI_TR"],
+            ["A", "A_prime", "B_STRICT", "FEDYOGI", "STRICT_COHERENCE_FEDYOGI_TR", "LLM_STRICT_GCA_FEDYOGI_TR"],
         )
         self.assertNotIn("B", DEFAULT_SCENARIOS)
-        self.assertNotIn("FEDYOGI", DEFAULT_SCENARIOS)
+        self.assertNotIn("FEDYOGI_STRICT", DEFAULT_SCENARIOS)
         self.assertNotIn("C", DEFAULT_SCENARIOS)
         self.assertNotIn("LLM_VP_GCA_FEDYOGI_TR", DEFAULT_SCENARIOS)
         self.assertNotIn("VP_GCA_FEDYOGI_TR", DEFAULT_SCENARIOS)

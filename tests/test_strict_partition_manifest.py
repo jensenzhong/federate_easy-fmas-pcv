@@ -9,6 +9,7 @@ import pandas as pd
 import pytest
 
 import scripts.create_strict_partition_manifest as manifest_script
+from scripts.create_strict_partition_data import seal_partition_data
 from src.data_preprocessing import load_strict_partition_frames
 from src.federated_learning.pcv.protocol import (
     PartitionRatios,
@@ -269,6 +270,47 @@ def test_strict_loader_fits_feature_stats_on_train_partition_only(tmp_path):
         .iloc[0]
         == 1000.0
     )
+
+
+def test_training_loader_does_not_materialize_locked_test_rows(tmp_path):
+    config, manifest_path, _, _ = _strict_loader_fixture(tmp_path)
+
+    result = load_strict_partition_frames(
+        config,
+        str(manifest_path),
+        allowed_partitions={"train", "controller_validation"},
+    )
+
+    assert result.client_frames
+    assert all(
+        set(partitions) == {"train", "controller_validation"}
+        for partitions in result.client_frames.values()
+    )
+
+
+def test_sealed_training_loader_never_opens_locked_test_file(tmp_path, monkeypatch):
+    config, manifest_path, _, _ = _strict_loader_fixture(tmp_path)
+    sealed = seal_partition_data(
+        config=config,
+        manifest_path=manifest_path,
+        output_directory=tmp_path / "sealed",
+    )
+    original_read_bytes = Path.read_bytes
+
+    def guarded_read_bytes(path):
+        if path.name == "locked_test.csv":
+            raise AssertionError("training opened the physically sealed locked test")
+        return original_read_bytes(path)
+
+    monkeypatch.setattr(Path, "read_bytes", guarded_read_bytes)
+    result = load_strict_partition_frames(
+        config,
+        str(manifest_path),
+        allowed_partitions={"train", "controller_validation"},
+        sealed_data_directory=sealed,
+    )
+
+    assert all("locked_test" not in parts for parts in result.client_frames.values())
 
 
 def test_manifest_generator_is_directly_executable_from_repository_root():
