@@ -1,78 +1,84 @@
-# Project Status
+# FMAS-PCV Project Status
 
-> Last updated: 2026-06-18
+> Last verified: 2026-08-10
 
 ## Current State
 
-The codebase has been aligned to the new formal mainline:
+The strict-federated FMAS-PCV implementation and canonical runner are complete.
+Development remains deliberately single-seed, and the formal protocol is not frozen yet.
+No development or formal performance claim has been made.
 
-- `A`
-- `A_prime`
-- `B`
-- `FEDYOGI`
-- `VG_FEDYOGI_TR`
-- `MAS_VG_FEDYOGI_TR`
+The only paper-line methods are:
 
-Legacy `C` and `MAS_ADAPTIVE` are now historical/manual only.
+- `FEDAVG_STRICT`: federated baseline
+- `FEDYOGI_STRICT`: federated baseline
+- `DPCV_FEDYOGI`: deterministic PCV ablation
+- `SA_PCV_FEDYOGI`: single-agent PCV ablation
+- `FMAS_PCV_FEDYOGI`: proposed six-role multi-agent method
 
-## Formal Output Contract
+Historical VG/MAS/LLM-GCA methods remain available only as legacy code and are not
+accepted by the canonical formal runner.
 
-The formal release path is expected to produce:
+## Strict Data Protocol
 
-- `results/adaptive_pilot/pilot_recommendation.csv`
-- `results/multi_seed/all_results.csv`
-- `results/multi_seed/statistical_summary.csv`
-- `results/multi_seed/significance_tests.csv`
-- `results/ablation_summary.csv`
-- `results/stratified_evaluation.csv`
-- `results/paper_tables.md`
-- `results/figures/fig1_*` through `fig9_*`
+- Federation is client-local: raw rows, labels, predictions, and private partitions are
+  never exposed to the server or DeepSeek.
+- The fixed split contains 480 training rows, 103 controller-validation rows, and 105
+  locked-test rows.
+- The three partitions are physically separated under `Data/strict_partition_v1/`.
+- Development and formal training cannot open the locked-test file.
+- Locked-test evaluation requires the formal phase, a frozen study, and explicit unlock.
+- Preprocessing is fitted only on each client's training partition.
 
-## Pipeline Behavior
+## Verified Runtime Guarantees
 
-- `scripts/run_multi_seed.py` defaults to the six formal mainline scenarios.
-- Adaptive formal scenarios require frozen pilot parameters and fail fast if `pilot_recommendation.csv` is missing required fields.
-- `scripts/run_ablation.py` defaults to the four-line mainline ablation.
-- `scripts/stratified_evaluation.py` now loads the new mainline prediction family:
-  - `fedavg_predictions.csv`
-  - `fedyogi_predictions.csv`
-  - `vg_fedyogi_tr_predictions.csv`
-  - `mas_vg_fedyogi_tr_predictions.csv`
-- `scripts/generate_paper_figures.py` now treats Fig.3 as the MAS-VG candidate selection and gate timeline, not the old Scene C strategy timeline.
+- Five methods share the same client training, data split, metric, checkpoint, and
+  provenance path.
+- DeepSeek methods use real calls with no retry, fallback model, fake response, or hidden
+  heuristic.
+- Authentication, connection, HTTP, timeout, schema, parsing, or agent-runtime failures
+  stop the run and preserve an immutable numbered `PAUSED*.json` incident.
+- Checkpoints restore model, optimizer, RNG, weighting, best-validation, and round state
+  only after exact provenance checks.
+- Formal evaluation cannot retrain and binds locked-test evidence to the completed
+  checkpoint and evaluation provenance hashes.
 
-## Verification
+## Verification Evidence
 
-Current code verification baseline:
+Offline verification completed before the first network request:
 
-```bash
-python -m pytest -q
+- Full repository: `641 passed`, plus 69 existing SciPy precision-loss warnings.
+- Focused privacy/API/partition/runner checks: `247 passed`.
+- Plaintext API-key scans: no matches.
+- Independent specification review: compliant.
+- Independent quality review: no remaining Critical or Important findings.
+
+The user-approved real DeepSeek preflight then completed successfully:
+
+- date: 2026-08-10
+- model: `deepseek-chat`
+- endpoint: `https://api.deepseek.com/chat/completions`
+- role: `preflight`
+- real request count: exactly one
+- validated response: `{"status":"ready","model":"deepseek-chat"}`
+- training/test execution: none
+- credential material in telemetry: none detected
+
+The immutable preflight provenance and sanitized call telemetry are stored under
+`results/development/seed42/deepseek-preflight/`.
+
+## Active Gate
+
+`study_manifest.yaml` still has `formal_frozen: false`. The next permitted operation is
+the approved seed-42 development matrix across the five methods. After comparing those
+development results, the formal multi-seed protocol may be frozen; locked-test evaluation
+remains prohibited until that later gate.
+
+## Offline Verification Command
+
+```powershell
+python -m pytest -q --basetemp=.pytest_release
 ```
 
-Status on 2026-06-18:
-
-- `74 passed`
-- Mainline tests now reflect the new six-scenario closure plan.
-
-## Remaining Execution Work
-
-Code and tests are aligned to the new mainline contract. The remaining delivery work is operational:
-
-1. Archive old mixed outputs before the final rerun.
-2. Run the expanded adaptive pilot with seeds `777 888`.
-3. Freeze `results/adaptive_pilot/pilot_recommendation.csv`.
-4. Rerun the formal six-scenario five-seed main experiment.
-5. Rerun the four-line five-seed ablation.
-6. Regenerate statistics, stratified outputs, tables, and Fig.1 to Fig.9.
-
-## Reproduction Commands
-
-```bash
-python -m pytest -q
-python scripts/run_adaptive_pilot.py --seeds 777 888 --server_lrs 0.2 0.3 0.4 0.5 --max_coordinate_step_ratios 0.75 1.0 --clip_norms none 2.0
-python scripts/run_multi_seed.py --scenarios A A_prime B FEDYOGI VG_FEDYOGI_TR MAS_VG_FEDYOGI_TR --seeds 42 123 456 789 2024
-python scripts/run_ablation.py --seeds 42 123 456 789 2024
-python scripts/statistical_analysis.py
-python scripts/stratified_evaluation.py
-python scripts/generate_paper_tables.py
-python scripts/generate_paper_figures.py
-```
+The real preflight is an auditable one-time operation and should not be repeated merely
+to increase API-call counts.

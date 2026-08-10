@@ -1,0 +1,33 @@
+{
+  "base_config_sha256": "72e184db6e9fe616df93909cb28f1f173e8a238cc804767df74052f9aeb4239a",
+  "deepseek": {
+    "base_url": "https://api.deepseek.com",
+    "enabled": true,
+    "model": "deepseek-chat",
+    "temperature": 0.8,
+    "timeout_seconds": 60
+  },
+  "effective_config_sha256": "098b9c5e2357b84167246ffeba643b499ad589f62fc9a008c43b26581b7288d5",
+  "freeze_id": null,
+  "git_commit": "1a39947134c9fa9068d45ad9fcadc8514950aff7",
+  "git_dirty": false,
+  "llm_rep": 0,
+  "locked_test_unlocked": false,
+  "method": "FMAS_PCV_FEDYOGI",
+  "method_config_sha256": "4f3623b0db7242578a3db758cfade06b1e563f05588ed7413f6921101742aa11",
+  "partition_sha256": "eb527a597c43ef8ef45ec24788c88aedcd13b413115a80a9db5aceb519151935",
+  "phase": "development",
+  "prompt_hashes": {
+    "balance_proposer": "fe9cba887737077ba82200b3acfd854df157166719ef91e364c38ab1c7c781f8",
+    "coordinator": "b75a96054867c684b3bfa62414b5e4df58c07a9184c031498c6d709f4aed30e9",
+    "critic": "cf474ab590c3d5f8a986a7f6b77ed96888188d32e6bf949dcf0b8a39eca3ff32",
+    "diagnostic": "f6607dcbbf9bc35534395efb746dfe9a9bcd2d0e65455832391de1dcc41f4b34",
+    "performance_proposer": "8acad2843cd33a18fc7bb9e963da88d9812e4902945f134b7e41ef849db913ec",
+    "stability_proposer": "e87eadf14bfa7094b49c0b237c126ca6bc1dc1670b4d6903b6e9999987218a7d"
+  },
+  "resume_requested": false,
+  "run_id": "deepseek-preflight",
+  "schema_version": 1,
+  "sealed_partition_metadata_sha256": "5623f91cbc76248db927d413e49774b6cbc62782bd55f684d0153875c1d3c455",
+  "training_seed": 42
+}
