@@ -69,10 +69,19 @@ The immutable preflight provenance and sanitized call telemetry are stored under
 
 ## Active Gate
 
-`study_manifest.yaml` still has `formal_frozen: false`. The next permitted operation is
-the approved seed-42 development matrix across the five methods. After comparing those
-development results, the formal multi-seed protocol may be frozen; locked-test evaluation
-remains prohibited until that later gate.
+`study_manifest.yaml` still has `formal_frozen: false`. The seed-42 launcher and
+validation-only development gate are implemented and independently reviewed, but the
+nine-run matrix has not started yet. Its fixed order is three non-LLM runs, three
+`SA_PCV_FEDYOGI` repetitions, and three `FMAS_PCV_FEDYOGI` repetitions.
+
+The predeclared trajectory gate requires validation MAPE not to degrade relative to the
+strongest strict baseline, RMSE increase at most 5%, and R2 difference at least -0.02.
+At least two of the three FMAS repetitions must pass. These are development screening
+criteria, not statistical-significance or equivalence claims.
+
+Real training requires one final approval after displaying the exact matrix, clean Git
+commit, development-config hash, partition hash, prompt hashes, and output root. Locked-test
+evaluation remains prohibited until a later formal-freeze gate.
 
 ## Offline Verification Command
 
@@ -80,5 +89,6 @@ remains prohibited until that later gate.
 python -m pytest -q --basetemp=.pytest_release
 ```
 
+The current offline baseline is `669 passed` plus the same 69 existing SciPy warnings.
 The real preflight is an auditable one-time operation and should not be repeated merely
 to increase API-call counts.

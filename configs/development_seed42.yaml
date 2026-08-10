@@ -8,3 +8,9 @@ deepseek:
   model: deepseek-chat
   base_url: https://api.deepseek.com
   timeout_seconds: 60
+development_gate:
+  baseline_selection: lowest_mape_of_strict_baselines
+  relative_mape_improvement_min: 0.0
+  rmse_increase_ratio_max: 0.05
+  r2_difference_min: -0.02
+  required_passing_fmas_repetitions: 2
