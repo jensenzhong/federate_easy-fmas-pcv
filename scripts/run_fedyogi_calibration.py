@@ -9,17 +9,21 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 from types import SimpleNamespace
 from typing import Any, Mapping
 
 import yaml
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from experiments.run_strict_federated import load_method_config
 from src.federated_learning.pcv.runtime import execute_strict_training
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = Path("configs/fedyogi_calibration_seed42.yaml")
 _APPROVED = {
     "schema_version": 1,

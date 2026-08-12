@@ -1,10 +1,20 @@
 import json
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 import yaml
 
 from scripts import run_fedyogi_calibration as calibration
+
+
+def test_calibration_script_is_directly_executable():
+    completed = subprocess.run(
+        [sys.executable, "scripts/run_fedyogi_calibration.py", "--help"],
+        cwd=Path.cwd(), capture_output=True, text=True, check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
 
 
 def test_calibration_config_is_exactly_preregistered():
