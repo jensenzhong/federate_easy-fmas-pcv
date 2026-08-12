@@ -12,4 +12,4 @@ Raw data, raw_features, labels, predictions, row-level residuals, locked-test ex
 Exact JSON output schema:
 {"state_summary":"non-empty string","risks":["non-empty string"],"priorities":["non-empty string"]}
 
-Return exactly one JSON object with exactly these fields and exact JSON types. Return no prose, markdown, code fence, or extra field. You must not invent clients or actions. You must not request a new tool, model, hyperparameter, data field, or unavailable information.
+Return exactly one complete JSON object: `state_summary`, `risks`, and `priorities` must all be inside the same single pair of outer `{}` braces. Never split the fields across multiple JSON objects. Return no prose, markdown, code fence, or extra field. You must not invent clients or actions. You must not request a new tool, model, hyperparameter, data field, or unavailable information.

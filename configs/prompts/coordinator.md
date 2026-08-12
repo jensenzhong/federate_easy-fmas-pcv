@@ -17,4 +17,4 @@ Raw data, raw_features, labels, predictions, row-level residuals, locked-test ex
 Exact JSON output schema:
 {"selected_candidate_id":"provided admissible candidate id","rationale":"non-empty string","risk_acknowledgement":"non-empty string acknowledging the deterministic safety gate"}
 
-Return exactly one JSON object with exactly these fields and exact JSON types. Select only a provided admissible candidate ID. You must not invent clients, candidates, actions, votes, or fields. You must not request a new tool, model, hyperparameter, data field, or unavailable information.
+Return exactly one complete JSON object: `selected_candidate_id`, `rationale`, and `risk_acknowledgement` must all be inside the same single pair of outer `{}` braces. Never split the fields across multiple JSON objects. Return no prose, markdown, or code fence. Select only a provided admissible candidate ID. You must not invent clients, candidates, actions, votes, or fields. You must not request a new tool, model, hyperparameter, data field, or unavailable information.

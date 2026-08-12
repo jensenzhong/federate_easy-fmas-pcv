@@ -11,6 +11,7 @@ from pathlib import Path
 import time
 from types import MappingProxyType
 from typing import Any
+import unicodedata
 
 import requests
 
@@ -27,6 +28,7 @@ ROLE_NAMES = (
     "critic",
     "coordinator",
 )
+_CANONICALIZATION_RULE = "complementary-json-objects-v1"
 PROPOSER_ROLES = ROLE_NAMES[1:4]
 _ACTION_FIELDS = frozenset(
     {
@@ -399,26 +401,75 @@ def validate_coordinator_response(
     )
 
 
-def _strict_json_object(content: str) -> dict[str, Any]:
-    def reject_constant(value: str):
-        raise ValueError(f"non-standard JSON constant: {value}")
+def _reject_json_constant(value: str):
+    raise ValueError(f"non-standard JSON constant: {value}")
 
-    def reject_duplicate_keys(pairs):
-        result = {}
-        for key, value in pairs:
-            if key in result:
-                raise ValueError(f"duplicate JSON key: {key}")
-            result[key] = value
-        return result
+
+def _exact_json_object_pairs(pairs):
+    result = {}
+    normalized_keys = set()
+    for key, value in pairs:
+        if type(key) is not str:
+            raise ValueError("JSON object keys must be exact strings")
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        normalized = unicodedata.normalize("NFKC", key).casefold()
+        if normalized in normalized_keys:
+            raise ValueError(f"colliding normalized JSON key: {key}")
+        normalized_keys.add(normalized)
+        result[key] = value
+    return result
+
+
+def _strict_json_object(content: str) -> dict[str, Any]:
 
     parsed = json.loads(
         content,
-        parse_constant=reject_constant,
-        object_pairs_hook=reject_duplicate_keys,
+        parse_constant=_reject_json_constant,
+        object_pairs_hook=_exact_json_object_pairs,
     )
     if type(parsed) is not dict:
         raise ValueError("agent content must be exactly one JSON object")
     return parsed
+
+
+def _parse_agent_json(content: str) -> tuple[dict[str, Any], bool]:
+    """Parse one object, or mechanically merge complementary object fragments."""
+
+    try:
+        return _strict_json_object(content), False
+    except json.JSONDecodeError as error:
+        if error.msg != "Extra data":
+            raise
+
+    decoder = json.JSONDecoder(
+        parse_constant=_reject_json_constant,
+        object_pairs_hook=_exact_json_object_pairs,
+    )
+    merged: dict[str, Any] = {}
+    normalized_keys: set[str] = set()
+    position = 0
+    fragments = 0
+    while True:
+        while position < len(content) and content[position] in " \t\r\n":
+            position += 1
+        if position == len(content):
+            break
+        fragment, position = decoder.raw_decode(content, position)
+        if type(fragment) is not dict:
+            raise ValueError("canonical JSON fragments must be exact objects")
+        fragments += 1
+        for key, value in fragment.items():
+            if type(key) is not str:
+                raise ValueError("canonical JSON fragment keys must be exact strings")
+            normalized = unicodedata.normalize("NFKC", key).casefold()
+            if key in merged or normalized in normalized_keys:
+                raise ValueError(f"duplicate or colliding JSON fragment key: {key}")
+            normalized_keys.add(normalized)
+            merged[key] = value
+    if fragments < 2:
+        raise ValueError("canonicalization requires multiple JSON objects")
+    return merged, True
 
 
 def _canonical_json_hash(value: Any) -> str:
@@ -652,6 +703,7 @@ class StrictDeepSeekClient:
         started: float,
         failure_category: str | None,
         failure_detail: str | None,
+        canonicalization_applied: bool = False,
     ) -> None:
         if self.telemetry is None:
             return
@@ -670,6 +722,10 @@ class StrictDeepSeekClient:
                 "candidate_decision": candidate_decision,
                 "failure_category": failure_category,
                 "failure_detail": failure_detail,
+                "canonicalization_applied": canonicalization_applied,
+                "canonicalization_rule": (
+                    _CANONICALIZATION_RULE if canonicalization_applied else None
+                ),
             },
             known_secrets=(self._api_key,),
         )
@@ -687,6 +743,7 @@ class StrictDeepSeekClient:
         parsed_response: dict[str, Any] | None,
         started: float,
         failure_detail: str | None = None,
+        canonicalization_applied: bool = False,
     ) -> None:
         try:
             self._record(
@@ -698,6 +755,7 @@ class StrictDeepSeekClient:
                 started=started,
                 failure_category=category,
                 failure_detail=failure_detail,
+                canonicalization_applied=canonicalization_applied,
             )
         except Exception:
             # Audit storage is best effort on the failure path. It must never
@@ -733,6 +791,7 @@ class StrictDeepSeekClient:
         started = time.perf_counter()
         response_text = None
         parsed_response = None
+        canonicalization_applied = False
         request_body = {
             "model": self.model_name,
             "messages": [
@@ -843,7 +902,10 @@ class StrictDeepSeekClient:
             )
 
         try:
-            parsed_response = _strict_json_object(response_text)
+            parsed_response, parsed_with_canonicalization = _parse_agent_json(
+                response_text
+            )
+            canonicalization_applied = parsed_with_canonicalization
             validated = response_validator(parsed_response)
         except Exception as error:
             self._fail(
@@ -856,6 +918,7 @@ class StrictDeepSeekClient:
                 parsed_response=parsed_response,
                 started=started,
                 failure_detail=str(error),
+                canonicalization_applied=canonicalization_applied,
             )
 
         self._record(
@@ -867,6 +930,7 @@ class StrictDeepSeekClient:
             started=started,
             failure_category=None,
             failure_detail=None,
+            canonicalization_applied=canonicalization_applied,
         )
         return validated
 

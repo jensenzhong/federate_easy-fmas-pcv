@@ -542,6 +542,154 @@ def test_success_makes_exactly_one_post_and_uses_strict_request(safe_payload):
     assert len(request["json"]["messages"]) == 2
 
 
+def test_complementary_json_objects_are_canonicalized_once_and_audited(
+    tmp_path,
+    safe_payload,
+):
+    response_text = (
+        '{"state_summary":"Round 11 aggregate telemetry is unstable."}\n\n'
+        '{"risks":["directional disagreement"]}\n\n'
+        '{"priorities":["stabilize aggregation"]}'
+    )
+    path = tmp_path / "agent_calls.jsonl"
+    session = FakeSession(FakeResponse(content=response_text))
+
+    result = make_client(
+        session,
+        telemetry=AppendOnlyTelemetry(path),
+    ).generate_json(
+        "diagnostic",
+        "Return JSON.",
+        safe_payload,
+        validate_diagnostic_response,
+    )
+
+    assert session.calls == 1
+    assert result["risks"] == ("directional disagreement",)
+    record = json.loads(path.read_text(encoding="utf-8"))
+    assert record["response_text"] == response_text
+    assert record["parsed_response"] == {
+        "state_summary": "Round 11 aggregate telemetry is unstable.",
+        "risks": ["directional disagreement"],
+        "priorities": ["stabilize aggregation"],
+    }
+    assert record["canonicalization_applied"] is True
+    assert record["canonicalization_rule"] == "complementary-json-objects-v1"
+
+
+def test_strict_single_json_records_no_canonicalization(tmp_path, safe_payload):
+    path = tmp_path / "agent_calls.jsonl"
+    response = {
+        "state_summary": "stable",
+        "risks": ["bounded"],
+        "priorities": ["monitor"],
+    }
+    session = FakeSession(FakeResponse(content=json.dumps(response)))
+
+    make_client(session, telemetry=AppendOnlyTelemetry(path)).generate_json(
+        "diagnostic",
+        "Return JSON.",
+        safe_payload,
+        validate_diagnostic_response,
+    )
+
+    record = json.loads(path.read_text(encoding="utf-8"))
+    assert record["canonicalization_applied"] is False
+    assert record["canonicalization_rule"] is None
+
+
+def test_canonicalized_object_that_fails_schema_is_audited_truthfully(
+    tmp_path,
+    safe_payload,
+):
+    response_text = '{"state_summary":"ok"}\n{"risks":[]}\n{"unknown":1}'
+    path = tmp_path / "agent_calls.jsonl"
+    session = FakeSession(FakeResponse(content=response_text))
+
+    with pytest.raises(DeepSeekCallError) as error:
+        make_client(session, telemetry=AppendOnlyTelemetry(path)).generate_json(
+            "diagnostic",
+            "Return JSON.",
+            safe_payload,
+            validate_diagnostic_response,
+        )
+
+    assert session.calls == 1
+    assert error.value.category == "schema"
+    record = json.loads(path.read_text(encoding="utf-8"))
+    assert record["response_text"] == response_text
+    assert record["parsed_response"] == {
+        "state_summary": "ok",
+        "risks": [],
+        "unknown": 1,
+    }
+    assert record["canonicalization_applied"] is True
+    assert record["canonicalization_rule"] == "complementary-json-objects-v1"
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        '{"state_summary":"ok","STATE_SUMMARY":"again",'
+        '"risks":[],"priorities":[]}',
+        '{"state_summary":"ok"}\n'
+        '{"risks":[],"RISKS":["again"]}\n'
+        '{"priorities":[]}',
+    ],
+)
+def test_normalized_key_collisions_fail_closed_in_strict_and_fragment_objects(
+    safe_payload,
+    content,
+):
+    session = FakeSession(FakeResponse(content=content))
+
+    with pytest.raises(DeepSeekCallError) as error:
+        make_client(session).generate_json(
+            "diagnostic",
+            "Return JSON.",
+            safe_payload,
+            validate_diagnostic_response,
+        )
+
+    assert session.calls == 1
+    assert error.value.category == "schema"
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        '{"state_summary":"ok"}\n["not an object"]\n'
+        '{"risks":[]}\n{"priorities":[]}',
+        '{"state_summary":"ok"}\ntrue\n{"risks":[]}\n{"priorities":[]}',
+        '{"state_summary":"ok"}\ngarbage\n{"risks":[]}\n{"priorities":[]}',
+        '{"state_summary":"ok"}\n{"state_summary":"again"}\n'
+        '{"risks":[]}\n{"priorities":[]}',
+        '{"state_summary":"ok","state_summary":"again"}\n'
+        '{"risks":[]}\n{"priorities":[]}',
+        '{"state_summary":"ok"}\n{"STATE_SUMMARY":"again"}\n'
+        '{"risks":[]}\n{"priorities":[]}',
+        '{"state_summary":"ok"}\n{"risks":[]}\n{"unknown":1}',
+        '{"state_summary":"ok"}\n{"risks":"wrong"}\n{"priorities":[]}',
+    ],
+)
+def test_json_object_canonicalization_fails_closed_without_retry(
+    safe_payload,
+    content,
+):
+    session = FakeSession(FakeResponse(content=content))
+
+    with pytest.raises(DeepSeekCallError) as error:
+        make_client(session).generate_json(
+            "diagnostic",
+            "Return JSON.",
+            safe_payload,
+            validate_diagnostic_response,
+        )
+
+    assert session.calls == 1
+    assert error.value.category == "schema"
+
+
 def test_failures_never_disclose_key_headers_or_payload(safe_payload):
     secret = "key-that-must-never-appear"
     session = FakeSession(FakeResponse(content="not json"))
@@ -1461,6 +1609,9 @@ def test_prompt_files_are_complete_hashable_and_do_not_request_private_data():
         assert len(digest) == 64
         assert "Allowed input fields:" in content
         assert "Exact JSON output schema:" in content
+        assert "exactly one complete JSON object" in content
+        assert "Never split" in content
+        assert "no prose, markdown" in content
         assert "must not invent" in content.casefold()
         assert "must not request" in content.casefold()
         allowed_section = content.split("Allowed input fields:", 1)[1].split(
