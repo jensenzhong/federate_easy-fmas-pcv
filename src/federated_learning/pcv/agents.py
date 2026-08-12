@@ -28,7 +28,8 @@ ROLE_NAMES = (
     "critic",
     "coordinator",
 )
-_CANONICALIZATION_RULE = "complementary-json-objects-v1"
+_FRAGMENT_CANONICALIZATION_RULE = "complementary-json-objects-v1"
+_DUPLICATE_KEY_CANONICALIZATION_RULE = "identical-duplicate-key-v1"
 PROPOSER_ROLES = ROLE_NAMES[1:4]
 _ACTION_FIELDS = frozenset(
     {
@@ -405,14 +406,55 @@ def _reject_json_constant(value: str):
     raise ValueError(f"non-standard JSON constant: {value}")
 
 
-def _exact_json_object_pairs(pairs):
+def _exact_json_equal(left: Any, right: Any) -> bool:
+    """Compare parsed JSON values without Python's bool/number coercion."""
+
+    if type(left) is not type(right):
+        return False
+    if type(left) is dict:
+        return left.keys() == right.keys() and all(
+            _exact_json_equal(left[key], right[key]) for key in left
+        )
+    if type(left) is list:
+        return len(left) == len(right) and all(
+            _exact_json_equal(left_item, right_item)
+            for left_item, right_item in zip(left, right)
+        )
+    if type(left) is float and left == 0.0 and right == 0.0:
+        return math.copysign(1.0, left) == math.copysign(1.0, right)
+    return left == right
+
+
+def _assert_finite_json_numbers(value: Any) -> None:
+    if type(value) is float:
+        if not math.isfinite(value):
+            raise ValueError("JSON numbers must be finite")
+        return
+    if type(value) is list:
+        for item in value:
+            _assert_finite_json_numbers(item)
+        return
+    if type(value) is dict:
+        for item in value.values():
+            _assert_finite_json_numbers(item)
+
+
+def _exact_json_object_pairs(pairs, *, applied_rules: list[str] | None = None):
     result = {}
     normalized_keys = set()
     for key, value in pairs:
         if type(key) is not str:
             raise ValueError("JSON object keys must be exact strings")
+        _assert_finite_json_numbers(value)
         if key in result:
-            raise ValueError(f"duplicate JSON key: {key}")
+            if not _exact_json_equal(result[key], value):
+                raise ValueError(f"conflicting duplicate JSON key: {key}")
+            if (
+                applied_rules is not None
+                and _DUPLICATE_KEY_CANONICALIZATION_RULE not in applied_rules
+            ):
+                applied_rules.append(_DUPLICATE_KEY_CANONICALIZATION_RULE)
+            continue
         normalized = unicodedata.normalize("NFKC", key).casefold()
         if normalized in normalized_keys:
             raise ValueError(f"colliding normalized JSON key: {key}")
@@ -421,31 +463,40 @@ def _exact_json_object_pairs(pairs):
     return result
 
 
-def _strict_json_object(content: str) -> dict[str, Any]:
-
-    parsed = json.loads(
-        content,
+def _json_decoder(applied_rules: list[str]) -> json.JSONDecoder:
+    return json.JSONDecoder(
         parse_constant=_reject_json_constant,
-        object_pairs_hook=_exact_json_object_pairs,
+        object_pairs_hook=lambda pairs: _exact_json_object_pairs(
+            pairs,
+            applied_rules=applied_rules,
+        ),
     )
+
+
+def _strict_json_object(
+    content: str,
+    applied_rules: list[str],
+) -> dict[str, Any]:
+
+    parsed = _json_decoder(applied_rules).decode(content)
     if type(parsed) is not dict:
         raise ValueError("agent content must be exactly one JSON object")
     return parsed
 
 
-def _parse_agent_json(content: str) -> tuple[dict[str, Any], bool]:
+def _parse_agent_json(
+    content: str,
+    applied_rules: list[str],
+) -> dict[str, Any]:
     """Parse one object, or mechanically merge complementary object fragments."""
 
     try:
-        return _strict_json_object(content), False
+        return _strict_json_object(content, applied_rules)
     except json.JSONDecodeError as error:
         if error.msg != "Extra data":
             raise
 
-    decoder = json.JSONDecoder(
-        parse_constant=_reject_json_constant,
-        object_pairs_hook=_exact_json_object_pairs,
-    )
+    decoder = _json_decoder(applied_rules)
     merged: dict[str, Any] = {}
     normalized_keys: set[str] = set()
     position = 0
@@ -456,6 +507,7 @@ def _parse_agent_json(content: str) -> tuple[dict[str, Any], bool]:
         if position == len(content):
             break
         fragment, position = decoder.raw_decode(content, position)
+        _assert_finite_json_numbers(fragment)
         if type(fragment) is not dict:
             raise ValueError("canonical JSON fragments must be exact objects")
         fragments += 1
@@ -463,13 +515,34 @@ def _parse_agent_json(content: str) -> tuple[dict[str, Any], bool]:
             if type(key) is not str:
                 raise ValueError("canonical JSON fragment keys must be exact strings")
             normalized = unicodedata.normalize("NFKC", key).casefold()
-            if key in merged or normalized in normalized_keys:
-                raise ValueError(f"duplicate or colliding JSON fragment key: {key}")
+            if key in merged:
+                if not _exact_json_equal(merged[key], value):
+                    raise ValueError(f"conflicting duplicate JSON fragment key: {key}")
+                if _DUPLICATE_KEY_CANONICALIZATION_RULE not in applied_rules:
+                    applied_rules.append(_DUPLICATE_KEY_CANONICALIZATION_RULE)
+                continue
+            if normalized in normalized_keys:
+                raise ValueError(f"colliding JSON fragment key: {key}")
             normalized_keys.add(normalized)
             merged[key] = value
     if fragments < 2:
         raise ValueError("canonicalization requires multiple JSON objects")
-    return merged, True
+    applied_rules.insert(0, _FRAGMENT_CANONICALIZATION_RULE)
+    return merged
+
+
+def _canonicalization_label(applied_rules: Sequence[str]) -> str | None:
+    if not applied_rules:
+        return None
+    ordered = tuple(
+        rule
+        for rule in (
+            _FRAGMENT_CANONICALIZATION_RULE,
+            _DUPLICATE_KEY_CANONICALIZATION_RULE,
+        )
+        if rule in applied_rules
+    )
+    return "+".join(ordered)
 
 
 def _canonical_json_hash(value: Any) -> str:
@@ -703,7 +776,7 @@ class StrictDeepSeekClient:
         started: float,
         failure_category: str | None,
         failure_detail: str | None,
-        canonicalization_applied: bool = False,
+        canonicalization_rule: str | None = None,
     ) -> None:
         if self.telemetry is None:
             return
@@ -722,10 +795,8 @@ class StrictDeepSeekClient:
                 "candidate_decision": candidate_decision,
                 "failure_category": failure_category,
                 "failure_detail": failure_detail,
-                "canonicalization_applied": canonicalization_applied,
-                "canonicalization_rule": (
-                    _CANONICALIZATION_RULE if canonicalization_applied else None
-                ),
+                "canonicalization_applied": canonicalization_rule is not None,
+                "canonicalization_rule": canonicalization_rule,
             },
             known_secrets=(self._api_key,),
         )
@@ -743,7 +814,7 @@ class StrictDeepSeekClient:
         parsed_response: dict[str, Any] | None,
         started: float,
         failure_detail: str | None = None,
-        canonicalization_applied: bool = False,
+        canonicalization_rule: str | None = None,
     ) -> None:
         try:
             self._record(
@@ -755,7 +826,7 @@ class StrictDeepSeekClient:
                 started=started,
                 failure_category=category,
                 failure_detail=failure_detail,
-                canonicalization_applied=canonicalization_applied,
+                canonicalization_rule=canonicalization_rule,
             )
         except Exception:
             # Audit storage is best effort on the failure path. It must never
@@ -791,7 +862,7 @@ class StrictDeepSeekClient:
         started = time.perf_counter()
         response_text = None
         parsed_response = None
-        canonicalization_applied = False
+        applied_canonicalization_rules: list[str] = []
         request_body = {
             "model": self.model_name,
             "messages": [
@@ -902,10 +973,10 @@ class StrictDeepSeekClient:
             )
 
         try:
-            parsed_response, parsed_with_canonicalization = _parse_agent_json(
-                response_text
+            parsed_response = _parse_agent_json(
+                response_text,
+                applied_canonicalization_rules,
             )
-            canonicalization_applied = parsed_with_canonicalization
             validated = response_validator(parsed_response)
         except Exception as error:
             self._fail(
@@ -918,7 +989,9 @@ class StrictDeepSeekClient:
                 parsed_response=parsed_response,
                 started=started,
                 failure_detail=str(error),
-                canonicalization_applied=canonicalization_applied,
+                canonicalization_rule=_canonicalization_label(
+                    applied_canonicalization_rules
+                ),
             )
 
         self._record(
@@ -930,7 +1003,9 @@ class StrictDeepSeekClient:
             started=started,
             failure_category=None,
             failure_detail=None,
-            canonicalization_applied=canonicalization_applied,
+            canonicalization_rule=_canonicalization_label(
+                applied_canonicalization_rules
+            ),
         )
         return validated
 

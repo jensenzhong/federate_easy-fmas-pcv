@@ -598,6 +598,196 @@ def test_strict_single_json_records_no_canonicalization(tmp_path, safe_payload):
     assert record["canonicalization_rule"] is None
 
 
+def test_real_identical_coordinator_key_is_collapsed_once_and_audited(
+    tmp_path,
+    safe_payload,
+):
+    response_text = (
+        '{"selected_candidate_id":"perf_fedavg_balanced",'
+        '"rationale":"The aggregate client votes rank perf_fedavg_balanced first '
+        'on all three clients, with consistent small relative improvements in both '
+        'val_mape and val_rmse over anchor_fedavg. It uses balanced aggregation with '
+        'moderate clipping, reducing sensitivity to any single client while '
+        'maintaining standard FedAvg stability. The accepted critique includes this '
+        'candidate, and the safety gate retains final authority.",'
+        '"risk_acknowledgement":"I acknowledge that the deterministic safety gate '
+        'is the final authority and may override this selection if it detects any '
+        'risk not captured in the aggregate client votes or diagnostic information.",'
+        '"selected_candidate_id":"perf_fedavg_balanced"}'
+    )
+    path = tmp_path / "agent_calls.jsonl"
+    session = FakeSession(FakeResponse(content=response_text))
+
+    result = make_client(
+        session,
+        telemetry=AppendOnlyTelemetry(path),
+    ).generate_json(
+        "coordinator",
+        "Return JSON.",
+        safe_payload,
+        lambda value: validate_coordinator_response(
+            value,
+            candidate_ids=("perf_fedavg_balanced",),
+        ),
+    )
+
+    assert session.calls == 1
+    assert result["selected_candidate_id"] == "perf_fedavg_balanced"
+    record = json.loads(path.read_text(encoding="utf-8"))
+    assert record["response_text"] == response_text
+    assert record["parsed_response"]["selected_candidate_id"] == (
+        "perf_fedavg_balanced"
+    )
+    assert record["canonicalization_applied"] is True
+    assert record["canonicalization_rule"] == "identical-duplicate-key-v1"
+
+
+def test_fragment_and_identical_duplicate_rules_are_composed_deterministically(
+    tmp_path,
+    safe_payload,
+):
+    response_text = (
+        '{"state_summary":"ok"}\n'
+        '{"state_summary":"ok","risks":[]}\n'
+        '{"priorities":[]}'
+    )
+    path = tmp_path / "agent_calls.jsonl"
+    session = FakeSession(FakeResponse(content=response_text))
+
+    make_client(session, telemetry=AppendOnlyTelemetry(path)).generate_json(
+        "diagnostic",
+        "Return JSON.",
+        safe_payload,
+        validate_diagnostic_response,
+    )
+
+    record = json.loads(path.read_text(encoding="utf-8"))
+    assert record["canonicalization_applied"] is True
+    assert record["canonicalization_rule"] == (
+        "complementary-json-objects-v1+identical-duplicate-key-v1"
+    )
+
+
+def test_identical_duplicate_is_audited_when_canonical_object_fails_schema(
+    tmp_path,
+    safe_payload,
+):
+    response_text = (
+        '{"state_summary":"ok","risks":[],"priorities":[],'
+        '"unknown":{"nested":[1,true]},'
+        '"unknown":{"nested":[1,true]}}'
+    )
+    path = tmp_path / "agent_calls.jsonl"
+    session = FakeSession(FakeResponse(content=response_text))
+
+    with pytest.raises(DeepSeekCallError):
+        make_client(session, telemetry=AppendOnlyTelemetry(path)).generate_json(
+            "diagnostic",
+            "Return JSON.",
+            safe_payload,
+            validate_diagnostic_response,
+        )
+
+    record = json.loads(path.read_text(encoding="utf-8"))
+    assert record["response_text"] == response_text
+    assert record["parsed_response"]["state_summary"] == "ok"
+    assert record["parsed_response"]["unknown"] == {"nested": [1, True]}
+    assert record["failure_category"] == "schema"
+    assert record["canonicalization_applied"] is True
+    assert record["canonicalization_rule"] == "identical-duplicate-key-v1"
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        '{"state_summary":"ok","state_summary":"different",'
+        '"risks":[],"priorities":[]}',
+        '{"state_summary":"ok","risks":[1],"risks":[true],'
+        '"priorities":[]}',
+        '{"state_summary":"ok","risks":[1],"risks":[1.0],'
+        '"priorities":[]}',
+        '{"state_summary":"ok","risks":[{"x":1}],'
+        '"risks":[{"x":2}],"priorities":[]}',
+        '{"state_summary":"ok","STATE_SUMMARY":"ok",'
+        '"risks":[],"priorities":[]}',
+        '{"state_summary":"ok","risks":[NaN],"risks":[NaN],'
+        '"priorities":[]}',
+    ],
+)
+def test_duplicate_key_canonicalization_rejects_nonidentical_or_unsafe_values(
+    safe_payload,
+    content,
+):
+    session = FakeSession(FakeResponse(content=content))
+
+    with pytest.raises(DeepSeekCallError) as error:
+        make_client(session).generate_json(
+            "diagnostic",
+            "Return JSON.",
+            safe_payload,
+            validate_diagnostic_response,
+        )
+
+    assert session.calls == 1
+    assert error.value.category == "schema"
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        '{"state_summary":"ok","risks":[-0.0],"risks":[0.0],'
+        '"priorities":[]}',
+        '{"state_summary":"ok"}\n{"risks":[-0.0]}\n'
+        '{"risks":[0.0]}\n{"priorities":[]}',
+    ],
+)
+def test_signed_zero_duplicate_values_are_not_exactly_identical(
+    safe_payload,
+    content,
+):
+    session = FakeSession(FakeResponse(content=content))
+
+    with pytest.raises(DeepSeekCallError) as error:
+        make_client(session).generate_json(
+            "diagnostic",
+            "Return JSON.",
+            safe_payload,
+            lambda value: value,
+        )
+
+    assert session.calls == 1
+    assert error.value.category == "schema"
+
+
+def test_exponent_overflow_fails_schema_and_audit_remains_serializable(
+    tmp_path,
+    safe_payload,
+):
+    response_text = (
+        '{"state_summary":"ok","risks":[1e400],"risks":[1e400],'
+        '"priorities":[]}'
+    )
+    path = tmp_path / "agent_calls.jsonl"
+    session = FakeSession(FakeResponse(content=response_text))
+
+    with pytest.raises(DeepSeekCallError) as error:
+        make_client(session, telemetry=AppendOnlyTelemetry(path)).generate_json(
+            "diagnostic",
+            "Return JSON.",
+            safe_payload,
+            validate_diagnostic_response,
+        )
+
+    assert session.calls == 1
+    assert error.value.category == "schema"
+    record = json.loads(path.read_text(encoding="utf-8"))
+    assert record["response_text"] == response_text
+    assert record["parsed_response"] is None
+    assert record["failure_category"] == "schema"
+    assert record["canonicalization_applied"] is False
+    assert record["canonicalization_rule"] is None
+
+
 def test_canonicalized_object_that_fails_schema_is_audited_truthfully(
     tmp_path,
     safe_payload,
