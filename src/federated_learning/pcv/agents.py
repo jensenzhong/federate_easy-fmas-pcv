@@ -30,7 +30,7 @@ ROLE_NAMES = (
 )
 _FRAGMENT_CANONICALIZATION_RULE = "complementary-json-objects-v1"
 _DUPLICATE_KEY_CANONICALIZATION_RULE = "identical-duplicate-key-v1"
-_SINGLE_PROPOSER_SOURCE_RULE = "single-proposer-fixed-source-v1"
+_PROPOSER_SOURCE_RULE = "fixed-proposer-source-v1"
 PROPOSER_ROLES = ROLE_NAMES[1:4]
 _ACTION_FIELDS = frozenset(
     {
@@ -532,11 +532,21 @@ def _parse_agent_json(
     return merged
 
 
-def _canonicalize_single_proposer_source(
+def _canonicalize_proposer_source(
     value: dict[str, Any],
+    role: str,
     applied_rules: list[str],
 ) -> None:
-    if set(value) != {"diagnostic", "candidates"}:
+    expected_source = (
+        "performance_proposer" if role == "single_proposer" else role
+    )
+    if role == "single_proposer":
+        expected_fields = {"diagnostic", "candidates"}
+    elif role in PROPOSER_ROLES:
+        expected_fields = {"candidates"}
+    else:
+        return
+    if set(value) != expected_fields:
         return
     candidates = value.get("candidates")
     if type(candidates) is not list:
@@ -546,10 +556,10 @@ def _canonicalize_single_proposer_source(
     applied = False
     for candidate in candidates:
         if type(candidate) is dict and set(candidate) == missing_source_fields:
-            candidate["source"] = "performance_proposer"
+            candidate["source"] = expected_source
             applied = True
     if applied:
-        applied_rules.append(_SINGLE_PROPOSER_SOURCE_RULE)
+        applied_rules.append(_PROPOSER_SOURCE_RULE)
 
 
 def _canonicalization_label(applied_rules: Sequence[str]) -> str | None:
@@ -560,7 +570,7 @@ def _canonicalization_label(applied_rules: Sequence[str]) -> str | None:
         for rule in (
             _FRAGMENT_CANONICALIZATION_RULE,
             _DUPLICATE_KEY_CANONICALIZATION_RULE,
-            _SINGLE_PROPOSER_SOURCE_RULE,
+            _PROPOSER_SOURCE_RULE,
         )
         if rule in applied_rules
     )
@@ -1000,9 +1010,10 @@ class StrictDeepSeekClient:
                 response_text,
                 applied_canonicalization_rules,
             )
-            if role == "single_proposer":
-                _canonicalize_single_proposer_source(
+            if role == "single_proposer" or role in PROPOSER_ROLES:
+                _canonicalize_proposer_source(
                     parsed_response,
+                    role,
                     applied_canonicalization_rules,
                 )
             validated = response_validator(parsed_response)

@@ -688,7 +688,39 @@ def test_single_proposer_missing_only_fixed_source_is_canonicalized_and_audited(
         "performance_proposer"
     )
     assert record["canonicalization_applied"] is True
-    assert record["canonicalization_rule"] == "single-proposer-fixed-source-v1"
+    assert record["canonicalization_rule"] == "fixed-proposer-source-v1"
+
+
+@pytest.mark.parametrize(
+    "role",
+    ["performance_proposer", "stability_proposer", "balance_proposer"],
+)
+def test_fmas_proposer_missing_only_its_fixed_source_is_canonicalized(
+    tmp_path,
+    safe_payload,
+    role,
+):
+    first = _candidate_context()
+    first["source"] = role
+    second = {key: value for key, value in first.items() if key != "source"}
+    second["candidate_id"] = f"{role}_02"
+    response = {"candidates": [first, second]}
+    path = tmp_path / "agent_calls.jsonl"
+    session = FakeSession(FakeResponse(content=json.dumps(response)))
+    agent = StagedDeepSeekAgent(
+        make_client(session, telemetry=AppendOnlyTelemetry(path)),
+        PROMPT_DIR,
+    )
+
+    proposals = agent.call(role=role, payload=safe_payload)
+
+    assert session.calls == 1
+    assert tuple(candidate.source for candidate in proposals) == (role, role)
+    record = json.loads(path.read_text(encoding="utf-8"))
+    assert record["response_text"] == json.dumps(response)
+    assert record["parsed_response"]["candidates"][1]["source"] == role
+    assert record["canonicalization_applied"] is True
+    assert record["canonicalization_rule"] == "fixed-proposer-source-v1"
 
 
 @pytest.mark.parametrize("missing_field", ["weights", "server_optimizer", "rationale"])
