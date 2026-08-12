@@ -274,6 +274,22 @@ def test_method_call_counts_candidate_budgets_and_common_round_contract(
     else:
         assert orchestrator.roles == single.roles == []
 
+    record = engine.telemetry_records[-1]
+    assert record["candidate_scores"] == {
+        candidate_id: result.aggregate_mape[candidate_id]
+        for candidate_id in sorted(result.candidate_ids)
+    }
+    assert record["selected_action"]["candidate_id"] == result.selected_candidate_id
+    assert record["selected_action"]["server_optimizer"] in {"fedavg", "fedyogi"}
+    assert set(record["selected_action"]) == {
+        "candidate_id",
+        "source",
+        "server_optimizer",
+        "server_lr_scale",
+        "update_clip_norm",
+        "weights",
+    }
+
 
 def test_fmas_staged_calls_use_the_strict_agent_payload_contract(tmp_path):
     agent = FakeAgent()
@@ -535,6 +551,15 @@ def test_fedyogi_commit_uses_selected_preview_without_polluting_optimizer_config
     assert optimizer.update_clip_norm == 2.0
     assert optimizer.m and optimizer.v
     assert result.optimizer_telemetry["server_lr_scale"] == 1.0
+
+
+def test_strict_fedyogi_anchor_has_no_implicit_update_clip(tmp_path):
+    engine = _engine(tmp_path, "FEDYOGI_STRICT")
+
+    result = engine.run_round(3)
+
+    assert result.optimizer_telemetry["update_clipped"] is False
+    assert engine.fedyogi_clip_norm is None
     assert result.optimizer_telemetry["update_norm"] <= 1.0
 
 

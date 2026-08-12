@@ -11,6 +11,12 @@ weight_l1_limit: 0.35
 best_candidate_tolerance: 0.002
 anchor_mape_tolerance: 0.001
 catastrophic_client_relative_mape: 0.05
+fedyogi_server_lr: 0.01
+fedyogi_beta1: 0.9
+fedyogi_beta2: 0.99
+fedyogi_tau: 0.001
+fedyogi_max_coordinate_step_ratio: null
+fedyogi_anchor_clip_norm: null
 server_optimizer: fedyogi
 proposal_mode: multi_agent
 deepseek_roles:

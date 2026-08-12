@@ -263,7 +263,7 @@ class PCVEngine:
         training_config: Mapping[str, Any] | None = None,
         training_seed: int = 0,
         fedyogi_lr_scale: float = 1.0,
-        fedyogi_clip_norm: float | None = 1.0,
+        fedyogi_clip_norm: float | None = None,
         previous_weights: Mapping[str, float] | None = None,
         best_validation: Mapping[str, Any] | None = None,
         best_model_state: Mapping[str, torch.Tensor] | None = None,
@@ -970,6 +970,21 @@ class PCVEngine:
             "agent_call_count": len(self._active_work.agent_calls),
             "stronger_anchor_id": self._active_work.stronger_anchor_id,
             "selected_mape": self._active_work.aggregate_mape[selected.candidate_id],
+            "candidate_scores": {
+                candidate_id: self._active_work.aggregate_mape[candidate_id]
+                for candidate_id in sorted(self._active_work.aggregate_mape)
+            },
+            "selected_action": {
+                "candidate_id": selected.candidate_id,
+                "source": selected.source,
+                "server_optimizer": selected.server_optimizer,
+                "server_lr_scale": selected.server_lr_scale,
+                "update_clip_norm": selected.update_clip_norm,
+                "weights": {
+                    client_id: selected.weights[client_id]
+                    for client_id in sorted(selected.weights)
+                },
+            },
             "server_optimizer": selected.server_optimizer,
             "fedyogi_moments_reset": selected.server_optimizer == "fedavg",
             "optimizer": _clone(preview.telemetry),

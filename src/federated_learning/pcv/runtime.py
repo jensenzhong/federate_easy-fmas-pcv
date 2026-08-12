@@ -696,7 +696,15 @@ def execute_strict_training(context) -> dict[str, Any]:
         phase=context.args.phase,
     )
     model = _model_factory(base_config)
-    server_optimizer = FedYogiServerOptimizer()
+    server_optimizer = FedYogiServerOptimizer(
+        server_lr=float(context.method_config["fedyogi_server_lr"]),
+        beta1=float(context.method_config["fedyogi_beta1"]),
+        beta2=float(context.method_config["fedyogi_beta2"]),
+        tau=float(context.method_config["fedyogi_tau"]),
+        max_coordinate_step_ratio=context.method_config[
+            "fedyogi_max_coordinate_step_ratio"
+        ],
+    )
     train_clients, collect_telemetry, evaluate_candidates = _training_callbacks(bundle)
 
     agent = None
@@ -739,6 +747,7 @@ def execute_strict_training(context) -> dict[str, Any]:
             "client_learning_rate": context.method_config["client_learning_rate"],
         },
         training_seed=context.args.training_seed,
+        fedyogi_clip_norm=context.method_config["fedyogi_anchor_clip_norm"],
         agent_orchestrator=agent,
         single_agent=agent,
         telemetry_sink=AppendOnlyTelemetry(context.run_directory / "rounds.jsonl"),

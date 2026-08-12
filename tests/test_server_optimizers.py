@@ -94,7 +94,7 @@ class ServerOptimizerTests(unittest.TestCase):
         self.assertAlmostEqual(info["server_lr_scale"], 0.5)
         self.assertTrue(info["update_clipped"])
 
-    def test_fedyogi_default_step_does_not_overshoot_weighted_average_target(self):
+    def test_fedyogi_default_step_is_the_unmodified_yogi_formula(self):
         from src.federated_learning.server_optimizers import FedYogiServerOptimizer
 
         optimizer = FedYogiServerOptimizer(
@@ -108,10 +108,17 @@ class ServerOptimizerTests(unittest.TestCase):
 
         updated, info = optimizer.step(current, target)
 
-        torch.testing.assert_close(updated["w"], target["w"])
-        self.assertTrue(info["coordinate_step_clipped"])
+        expected_m = target["w"] - current["w"]
+        expected_v = 0.01 * expected_m.pow(2)
+        expected = current["w"] + 0.1 * expected_m / (
+            torch.sqrt(expected_v) + 1e-3
+        )
 
-    def test_fedyogi_default_step_does_not_move_against_weighted_average_direction(self):
+        torch.testing.assert_close(updated["w"], expected)
+        self.assertIsNone(optimizer.max_coordinate_step_ratio)
+        self.assertFalse(info["coordinate_step_clipped"])
+
+    def test_fedyogi_standard_momentum_is_not_silently_direction_clamped(self):
         from src.federated_learning.server_optimizers import FedYogiServerOptimizer
 
         optimizer = FedYogiServerOptimizer(
@@ -128,8 +135,8 @@ class ServerOptimizerTests(unittest.TestCase):
         reversed_target = {"w": torch.tensor([-0.001])}
         updated, info = optimizer.step(current_before_reversal, reversed_target)
 
-        self.assertLessEqual(float(updated["w"][0]), float(current_before_reversal["w"][0]))
-        self.assertTrue(info["coordinate_direction_rejected"])
+        self.assertGreater(float(updated["w"][0]), float(current_before_reversal["w"][0]))
+        self.assertFalse(info["coordinate_direction_rejected"])
 
     def test_fedyogi_preview_step_does_not_mutate_optimizer_state(self):
         from src.federated_learning.server_optimizers import FedYogiServerOptimizer

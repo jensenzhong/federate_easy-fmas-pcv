@@ -103,7 +103,7 @@ class FedYogiServerOptimizer:
         beta2: float = 0.99,
         tau: float = 1e-3,
         update_clip_norm: float | None = None,
-        max_coordinate_step_ratio: float | None = 1.0,
+        max_coordinate_step_ratio: float | None = None,
     ):
         self.server_lr = float(server_lr)
         self.beta1 = float(beta1)
@@ -246,7 +246,7 @@ def build_server_optimizer(
     beta2: float = 0.99,
     tau: float = 1e-3,
     update_clip_norm: float | None = None,
-    max_coordinate_step_ratio: float | None = 1.0,
+    max_coordinate_step_ratio: float | None = None,
 ):
     normalized = (name or "fedavg").lower()
     if normalized == "fedavg":

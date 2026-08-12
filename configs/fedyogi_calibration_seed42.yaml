@@ -1,0 +1,23 @@
+schema_version: 1
+phase: development
+method: FEDYOGI_STRICT
+training_seed: 42
+num_rounds: 20
+partition_manifest: results/manifests/strict_partition_v1.csv
+selection_partition: controller_validation
+output_root: results/development/seed42/baseline_calibration
+selection_rule:
+  - mape
+  - rmse
+  - mae
+  - server_lr
+grid:
+  server_lr:
+    - 0.01
+    - 0.1
+    - 0.5
+  beta1: 0.9
+  beta2: 0.99
+  tau: 0.001
+  max_coordinate_step_ratio: null
+  clip: null
