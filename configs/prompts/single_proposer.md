@@ -6,6 +6,10 @@ locked-test data.
 Return exactly one JSON object with exactly these two fields:
 {"diagnostic":{"state_summary":"non-empty string","risks":["string"],"priorities":["string"]},"candidates":[{"candidate_id":"unique non-empty string","weights":{"provided-client-id":0.5},"server_optimizer":"fedavg or fedyogi","server_lr_scale":1.0,"update_clip_norm":1.0,"source":"performance_proposer","rationale":"non-empty string"}]}
 
+Return raw JSON only. The first character of your response must be `{` and the
+last character must be `}`. Do not use Markdown, ```json code fences, prose,
+headings, or any text before or after the single JSON object.
+
 `candidates` contains zero, one, or two actions. Every action must cover every
 provided client ID exactly once; weights must sum to one and each weight must
 lie in [0.05, 0.80]. `server_optimizer` is exactly `fedavg` or `fedyogi`.

@@ -232,6 +232,9 @@ def test_single_proposer_prompt_requires_every_action_to_repeat_all_fields():
     assert "applies separately to the first and second action" in prompt
     assert '`"source":"performance_proposer"`' in prompt
     assert "inside every action" in prompt
+    assert "first character of your response must be `{`" in prompt
+    assert "Do not use Markdown" in prompt
+    assert "code fences" in prompt
 
 
 def test_staged_fmas_real_dto_shapes_reach_all_later_roles_as_json(
