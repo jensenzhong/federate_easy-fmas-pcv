@@ -302,6 +302,73 @@ def test_fmas_staged_calls_use_the_strict_agent_payload_contract(tmp_path):
         agents_module._assert_context_payload_safe(role, payload)
 
 
+@pytest.mark.parametrize(
+    ("action_alias", "critic_candidate_count", "coordinator_candidate_count"),
+    [(True, 5, 7), (False, 6, 8)],
+)
+def test_fmas_deduplicates_action_aliases_before_critic(
+    tmp_path, action_alias, critic_candidate_count, coordinator_candidate_count
+):
+    class RoundEightAgent(FakeAgent):
+        def __call__(self, *, role, payload):
+            if role == "performance_proposer":
+                self.roles.append(role)
+                self.payloads.append((role, payload))
+                first = _proposal(
+                    "perf_c1_equal" if action_alias else "perf_c1_unique",
+                    (
+                        {"client_01": 0.20, "client_02": 0.31, "client_03": 0.49}
+                        if action_alias
+                        else {"client_01": 0.22, "client_02": 0.29, "client_03": 0.49}
+                    ),
+                    source="performance_proposer",
+                )
+                return [
+                    first,
+                    _proposal("perf_c2", {"client_01": 0.21, "client_02": 0.30, "client_03": 0.49}),
+                ]
+            if role == "stability_proposer":
+                self.roles.append(role)
+                self.payloads.append((role, payload))
+                return [
+                    _proposal("stability_c1", {"client_01": 0.19, "client_02": 0.31, "client_03": 0.50}),
+                    _proposal("stability_c2", {"client_01": 0.18, "client_02": 0.32, "client_03": 0.50}),
+                ]
+            if role == "balance_proposer":
+                self.roles.append(role)
+                self.payloads.append((role, payload))
+                return [
+                    _proposal("balance_round8_equal", {"client_01": 0.20, "client_02": 0.31, "client_03": 0.49}),
+                    _proposal("balance_c2", {"client_01": 0.20, "client_02": 0.32, "client_03": 0.48}),
+                ]
+            return super().__call__(role=role, payload=payload)
+
+    agent = RoundEightAgent()
+    engine = _engine(tmp_path, agent_orchestrator=agent)
+
+    result = engine.run_round(3)
+
+    payloads = dict(agent.payloads)
+    critic_ids = [candidate["candidate_id"] for candidate in payloads["critic"]["candidates"]]
+    coordinator_ids = [
+        candidate["candidate_id"] for candidate in payloads["coordinator"]["candidates"]
+    ]
+    assert len(critic_ids) == critic_candidate_count
+    assert len(coordinator_ids) == coordinator_candidate_count
+    assert set(payloads["coordinator"]["critique"]["accepted_candidate_ids"]) == set(critic_ids)
+    assert set(critic_ids) == set(coordinator_ids) - {"anchor_fedavg", "anchor_fedyogi"}
+    assert agent.roles == [
+        "diagnostic",
+        "performance_proposer",
+        "stability_proposer",
+        "balance_proposer",
+        "critic",
+        "coordinator",
+    ]
+    assert result.agent_call_count == 6
+    assert engine.last_complete_round == 3
+
+
 def test_single_agent_coordinator_uses_strict_evidence_shape(tmp_path):
     single = FakeAgent()
     engine = _engine(tmp_path, method="SA_PCV_FEDYOGI", single_agent=single)

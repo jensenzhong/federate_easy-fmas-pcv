@@ -701,6 +701,12 @@ class PCVEngine:
         ids = [candidate.candidate_id for candidate in proposals]
         if len(ids) != len(set(ids)):
             raise ValueError("agent proposal candidate IDs must be unique")
+        proposals = [
+            candidate
+            for candidate in deduplicate_candidates([*anchors, *proposals], budget=8)
+            if candidate.source != "anchor"
+        ]
+        ids = [candidate.candidate_id for candidate in proposals]
         critique = self._call_role(
             self.agent_orchestrator,
             "critic",
