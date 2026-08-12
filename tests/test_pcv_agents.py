@@ -648,6 +648,74 @@ def test_json_output_mode_still_fails_closed_if_provider_returns_outer_text(
     assert error.value.category == "schema"
 
 
+def test_single_proposer_missing_only_fixed_source_is_canonicalized_and_audited(
+    tmp_path,
+    safe_payload,
+):
+    response = {
+        "diagnostic": {
+            "state_summary": "bounded aggregate telemetry",
+            "risks": ["high error"],
+            "priorities": ["stability"],
+        },
+        "candidates": [
+            _candidate_context(),
+            {
+                key: value
+                for key, value in _candidate_context().items()
+                if key != "source"
+            },
+        ],
+    }
+    response["candidates"][1]["candidate_id"] = "performance_02"
+    path = tmp_path / "agent_calls.jsonl"
+    session = FakeSession(FakeResponse(content=json.dumps(response)))
+    agent = StagedDeepSeekAgent(
+        make_client(session, telemetry=AppendOnlyTelemetry(path)),
+        PROMPT_DIR,
+    )
+
+    result = agent.call(role="single_proposer", payload=safe_payload)
+
+    assert session.calls == 1
+    assert tuple(candidate.source for candidate in result["proposals"]) == (
+        "performance_proposer",
+        "performance_proposer",
+    )
+    record = json.loads(path.read_text(encoding="utf-8"))
+    assert record["response_text"] == json.dumps(response)
+    assert record["parsed_response"]["candidates"][1]["source"] == (
+        "performance_proposer"
+    )
+    assert record["canonicalization_applied"] is True
+    assert record["canonicalization_rule"] == "single-proposer-fixed-source-v1"
+
+
+@pytest.mark.parametrize("missing_field", ["weights", "server_optimizer", "rationale"])
+def test_single_proposer_never_fills_any_semantic_action_field(
+    safe_payload,
+    missing_field,
+):
+    candidate = _candidate_context()
+    del candidate[missing_field]
+    response = {
+        "diagnostic": {
+            "state_summary": "bounded aggregate telemetry",
+            "risks": [],
+            "priorities": [],
+        },
+        "candidates": [candidate],
+    }
+    session = FakeSession(FakeResponse(content=json.dumps(response)))
+    agent = StagedDeepSeekAgent(make_client(session), PROMPT_DIR)
+
+    with pytest.raises(DeepSeekCallError) as error:
+        agent.call(role="single_proposer", payload=safe_payload)
+
+    assert session.calls == 1
+    assert error.value.category == "schema"
+
+
 def test_real_identical_coordinator_key_is_collapsed_once_and_audited(
     tmp_path,
     safe_payload,
