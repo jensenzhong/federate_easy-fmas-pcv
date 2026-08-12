@@ -20,6 +20,7 @@ from src.federated_learning.pcv.agents import (
     validate_proposer_response,
 )
 from src.federated_learning.pcv.protocol import PrivacyViolation
+from src.federated_learning.pcv.runtime import StagedDeepSeekAgent
 from src.federated_learning.pcv.schemas import CandidateAction
 from src.federated_learning.pcv.telemetry import AppendOnlyTelemetry
 
@@ -112,6 +113,21 @@ class FakeSession:
         return self.outcome
 
 
+class SequenceSession:
+    def __init__(self, responses):
+        self.responses = list(responses)
+        self.calls = 0
+        self.payloads = []
+
+    def post(self, *args, **kwargs):
+        del args
+        self.calls += 1
+        self.payloads.append(
+            json.loads(kwargs["json"]["messages"][1]["content"])
+        )
+        return FakeResponse(content=self.responses.pop(0))
+
+
 def make_client(session, *, api_key="test-only-secret", telemetry=None):
     return StrictDeepSeekClient(
         api_key=api_key,
@@ -121,6 +137,217 @@ def make_client(session, *, api_key="test-only-secret", telemetry=None):
         session=session,
         telemetry=telemetry,
     )
+
+
+def _candidate_context():
+    return {
+        "candidate_id": "performance_01",
+        "weights": {"client-a": 0.6, "client-b": 0.4},
+        "server_optimizer": "fedyogi",
+        "server_lr_scale": 1.0,
+        "update_clip_norm": None,
+        "source": "performance_proposer",
+        "rationale": "bounded aggregate-only evidence",
+    }
+
+
+def _vote_context(client_id):
+    return {
+        "client_id": client_id,
+        "candidate_id": "performance_01",
+        "sample_count": 1,
+        "val_mape": 0.2,
+        "val_rmse": 0.3,
+        "relative_mape": 0.0,
+        "relative_rmse": 0.0,
+        "rank": 1,
+        "confidence": 1.0,
+        "catastrophic_degradation": False,
+    }
+
+
+def test_staged_sa_real_response_shape_reaches_coordinator_without_mutating_dto(
+    safe_payload,
+):
+    single_response = json.dumps(
+        {
+            "diagnostic": {
+                "state_summary": "heterogeneous but bounded",
+                "risks": ["large relative update"],
+                "priorities": ["validation gate"],
+            },
+            "candidates": [_candidate_context()],
+        }
+    )
+    coordinator_response = json.dumps(
+        {
+            "selected_candidate_id": "performance_01",
+            "rationale": "best local vote",
+            "risk_acknowledgement": "gate retains authority",
+        }
+    )
+    session = SequenceSession([single_response, coordinator_response])
+    agent = StagedDeepSeekAgent(make_client(session), PROMPT_DIR)
+
+    single = agent.call(role="single_proposer", payload=safe_payload)
+    diagnostic = single["diagnostic"]
+    agent.call(
+        role="coordinator",
+        payload={
+            **safe_payload,
+            "diagnostic": diagnostic,
+            "candidates": [_candidate_context()],
+            "critique": {
+                "accepted_candidate_ids": ["performance_01"],
+                "rejected": [],
+            },
+            "anchor_candidate_ids": [],
+            "client_votes": [
+                _vote_context("client-a"),
+                _vote_context("client-b"),
+            ],
+        },
+    )
+
+    assert session.calls == 2
+    assert type(session.payloads[1]["diagnostic"]["risks"]) is list
+    assert type(diagnostic["risks"]) is tuple
+    assert diagnostic["risks"] == ("large relative update",)
+
+
+def test_staged_fmas_real_dto_shapes_reach_all_later_roles_as_json(
+    safe_payload,
+):
+    candidate = _candidate_context()
+    session = SequenceSession(
+        [
+            json.dumps(
+                {
+                    "state_summary": "heterogeneous but bounded",
+                    "risks": ["large relative update"],
+                    "priorities": ["validation gate"],
+                }
+            ),
+            json.dumps(
+                {
+                    "candidates": [candidate],
+                }
+            ),
+            json.dumps(
+                {
+                    "accepted_candidate_ids": ["performance_01"],
+                    "rejected": [],
+                }
+            ),
+            json.dumps(
+                {
+                    "selected_candidate_id": "performance_01",
+                    "rationale": "best local vote",
+                    "risk_acknowledgement": "gate retains authority",
+                }
+            ),
+        ]
+    )
+    agent = StagedDeepSeekAgent(make_client(session), PROMPT_DIR)
+
+    diagnostic = agent.call(role="diagnostic", payload=safe_payload)
+    proposals = agent.call(
+        role="performance_proposer",
+        payload={**safe_payload, "diagnostic": diagnostic},
+    )
+    assert proposals[0].candidate_id == "performance_01"
+    critique = agent.call(
+        role="critic",
+        payload={
+            **safe_payload,
+            "diagnostic": diagnostic,
+            "candidates": [candidate],
+        },
+    )
+    agent.call(
+        role="coordinator",
+        payload={
+            **safe_payload,
+            "diagnostic": diagnostic,
+            "candidates": [candidate],
+            "critique": critique,
+            "anchor_candidate_ids": [],
+            "client_votes": [
+                _vote_context("client-a"),
+                _vote_context("client-b"),
+            ],
+        },
+    )
+
+    assert session.calls == 4
+    assert type(session.payloads[1]["diagnostic"]["risks"]) is list
+    assert type(session.payloads[2]["diagnostic"]["risks"]) is list
+    assert type(session.payloads[3]["diagnostic"]["risks"]) is list
+    assert type(session.payloads[3]["critique"]["accepted_candidate_ids"]) is list
+    assert type(diagnostic["risks"]) is tuple
+    assert type(critique["accepted_candidate_ids"]) is tuple
+
+
+@pytest.mark.parametrize(
+    "case",
+    ["bytes", "set", "custom", "nan", "positive_inf", "negative_inf", "key", "cycle"],
+)
+def test_outbound_json_boundary_fails_closed_before_post(safe_payload, case):
+    session = FakeSession(AssertionError("post must not run"))
+    invalid_values = {
+        "bytes": b"private bytes",
+        "set": {"not", "json"},
+        "custom": object(),
+        "nan": float("nan"),
+        "positive_inf": float("inf"),
+        "negative_inf": -float("inf"),
+    }
+    risks = []
+    if case == "cycle":
+        risks.append(risks)
+    elif case == "key":
+        risks = ["bounded"]
+    else:
+        risks = [invalid_values[case]]
+    diagnostic = {
+        "state_summary": "stable",
+        "risks": risks,
+        "priorities": ["validation"],
+    }
+    if case == "key":
+        diagnostic[1] = "not a JSON object key"
+
+    with pytest.raises((TypeError, ValueError)):
+        make_client(session).generate_json(
+            "performance_proposer",
+            "Return JSON.",
+            {**safe_payload, "diagnostic": diagnostic},
+            lambda value: value,
+        )
+
+    assert session.calls == 0
+
+
+def test_outbound_json_boundary_rejects_custom_mapping_before_post(safe_payload):
+    class CustomMapping(dict):
+        pass
+
+    session = FakeSession(AssertionError("post must not run"))
+    diagnostic = CustomMapping(
+        state_summary="stable",
+        risks=["bounded"],
+        priorities=["validation"],
+    )
+
+    with pytest.raises(TypeError, match="unsupported CustomMapping"):
+        make_client(session).generate_json(
+            "performance_proposer",
+            "Return JSON.",
+            {**safe_payload, "diagnostic": diagnostic},
+            lambda value: value,
+        )
+
+    assert session.calls == 0
 
 
 def test_missing_api_key_is_authentication_preflight_and_makes_no_call():

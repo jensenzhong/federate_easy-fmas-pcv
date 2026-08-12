@@ -107,6 +107,47 @@ def _thaw_json(value: Any) -> Any:
     return value
 
 
+def _to_exact_json(value: Any, *, _active: set[int] | None = None) -> Any:
+    """Defensively copy an internal DTO into exact JSON container types."""
+
+    if type(value) in (type(None), bool, int, str):
+        return value
+    if type(value) is float:
+        if not math.isfinite(value):
+            raise ValueError("outbound JSON numbers must be finite")
+        return value
+
+    active = set() if _active is None else _active
+    if type(value) in (dict, MappingProxyType):
+        identity = id(value)
+        if identity in active:
+            raise ValueError("outbound JSON payload must not contain cycles")
+        active.add(identity)
+        try:
+            output: dict[str, Any] = {}
+            for key, item in value.items():
+                if type(key) is not str:
+                    raise TypeError("outbound JSON object keys must be exact strings")
+                output[key] = _to_exact_json(item, _active=active)
+            return output
+        finally:
+            active.remove(identity)
+
+    if type(value) in (list, tuple):
+        identity = id(value)
+        if identity in active:
+            raise ValueError("outbound JSON payload must not contain cycles")
+        active.add(identity)
+        try:
+            return [_to_exact_json(item, _active=active) for item in value]
+        finally:
+            active.remove(identity)
+
+    raise TypeError(
+        f"outbound JSON payload contains unsupported {type(value).__name__}"
+    )
+
+
 def _candidate_id_tuple(candidate_ids: Sequence[str]) -> tuple[str, ...]:
     if type(candidate_ids) not in (tuple, list):
         raise ValueError("candidate_ids must be an exact tuple or list")
@@ -617,9 +658,6 @@ class StrictDeepSeekClient:
         payload,
         response_validator: Callable[[dict[str, Any]], Any],
     ):
-        # This aggregate-only check intentionally precedes request construction.
-        assert_prompt_payload_safe(_base_prompt_payload(payload))
-        _assert_context_payload_safe(role, payload)
         if type(role) is not str or not role.strip():
             raise ValueError("role must be a non-empty exact string")
         if type(system_prompt) is not str or not system_prompt.strip():
@@ -627,7 +665,16 @@ class StrictDeepSeekClient:
         if not callable(response_validator):
             raise TypeError("response_validator must be callable")
 
-        request_hash = _canonical_json_hash(payload)
+        # Validators deliberately return immutable DTOs. Normalize those DTOs
+        # only at the outbound boundary, then apply the unchanged JSON/privacy
+        # contracts to the exact object that will be serialized and sent.
+        json_payload = _to_exact_json(payload)
+        if type(json_payload) is not dict:
+            raise TypeError("agent payload must convert to an exact JSON object")
+        assert_prompt_payload_safe(_base_prompt_payload(json_payload))
+        _assert_context_payload_safe(role, json_payload)
+
+        request_hash = _canonical_json_hash(json_payload)
         prompt_hash = sha256(system_prompt.encode("utf-8")).hexdigest()
         started = time.perf_counter()
         response_text = None
@@ -639,7 +686,7 @@ class StrictDeepSeekClient:
                 {
                     "role": "user",
                     "content": json.dumps(
-                        payload,
+                        json_payload,
                         ensure_ascii=False,
                         sort_keys=True,
                         separators=(",", ":"),
