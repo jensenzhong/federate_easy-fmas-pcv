@@ -879,6 +879,7 @@ class StrictDeepSeekClient:
                 },
             ],
             "temperature": 0.8,
+            "response_format": {"type": "json_object"},
             "stream": False,
         }
         try:

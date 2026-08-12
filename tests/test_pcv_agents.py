@@ -559,6 +559,7 @@ def test_success_makes_exactly_one_post_and_uses_strict_request(safe_payload):
         "Content-Type": "application/json",
     }
     assert request["json"]["model"] == "deepseek-chat"
+    assert request["json"]["response_format"] == {"type": "json_object"}
     assert request["json"]["stream"] is False
     assert len(request["json"]["messages"]) == 2
 
@@ -617,6 +618,34 @@ def test_strict_single_json_records_no_canonicalization(tmp_path, safe_payload):
     record = json.loads(path.read_text(encoding="utf-8"))
     assert record["canonicalization_applied"] is False
     assert record["canonicalization_rule"] is None
+
+
+@pytest.mark.parametrize(
+    "response_text",
+    [
+        '```json\n{"state_summary":"stable","risks":[],"priorities":[]}\n```',
+        (
+            "I will now return the requested aggregate-only JSON.\n"
+            '{"state_summary":"stable","risks":[],"priorities":[]}'
+        ),
+    ],
+)
+def test_json_output_mode_still_fails_closed_if_provider_returns_outer_text(
+    safe_payload,
+    response_text,
+):
+    session = FakeSession(FakeResponse(content=response_text))
+
+    with pytest.raises(DeepSeekCallError) as error:
+        make_client(session).generate_json(
+            "diagnostic",
+            "Return raw JSON.",
+            safe_payload,
+            validate_diagnostic_response,
+        )
+
+    assert session.calls == 1
+    assert error.value.category == "schema"
 
 
 def test_real_identical_coordinator_key_is_collapsed_once_and_audited(
