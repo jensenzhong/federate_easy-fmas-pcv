@@ -1,6 +1,7 @@
 import hashlib
 import builtins
 import json
+import math
 from pathlib import Path
 from threading import Thread
 
@@ -607,6 +608,106 @@ def test_proposer_validator_returns_validated_candidate_actions():
     assert isinstance(result, tuple)
     assert len(result) == 1
     assert isinstance(result[0], CandidateAction)
+
+
+def test_proposer_validator_normalizes_three_decimal_llm_rounding_without_mutating_raw():
+    raw_weights = {"client-a": 0.333, "client-b": 0.333, "client-c": 0.333}
+    value = {"candidates": [proposal(weights=raw_weights)]}
+
+    result = validate_proposer_response(
+        value,
+        client_ids=("client-a", "client-b", "client-c"),
+        role="performance_proposer",
+    )
+
+    normalized = result[0].weights
+    assert sum(normalized.values()) == pytest.approx(1.0, abs=1e-15)
+    assert normalized["client-a"] / normalized["client-b"] == 1.0
+    assert raw_weights == {"client-a": 0.333, "client-b": 0.333, "client-c": 0.333}
+
+
+def test_proposer_rounding_normalization_does_not_change_raw_response_telemetry(tmp_path):
+    raw_response = {
+        "candidates": [
+            proposal(
+                weights={"client-a": 0.333, "client-b": 0.333, "client-c": 0.333}
+            )
+        ]
+    }
+    telemetry = AppendOnlyTelemetry(tmp_path / "calls.jsonl")
+    session = FakeSession(FakeResponse(content=json.dumps(raw_response)))
+
+    result = make_client(session, telemetry=telemetry).generate_json(
+        "performance_proposer",
+        "Return JSON.",
+        {"round_index": 1, "clients": []},
+        lambda value: validate_proposer_response(
+            value,
+            client_ids=("client-a", "client-b", "client-c"),
+            role="performance_proposer",
+        ),
+    )
+
+    record = json.loads((tmp_path / "calls.jsonl").read_text(encoding="utf-8"))
+    assert record["parsed_response"] == raw_response
+    assert sum(result[0].weights.values()) == pytest.approx(1.0, abs=1e-15)
+
+
+@pytest.mark.parametrize(
+    "weights",
+    [
+        {"client-a": 0.33, "client-b": 0.33, "client-c": 0.33},
+        {"client-a": -0.001, "client-b": 0.501, "client-c": 0.5},
+        {"client-a": 0.04995, "client-b": 0.4745, "client-c": 0.4745},
+        {"client-a": 0.8001, "client-b": 0.1001, "client-c": 0.1001},
+        {"client-a": 0.5, "client-b": 0.5},
+        {"client-a": float("nan"), "client-b": 0.5, "client-c": 0.5},
+        {"client-a": float("inf"), "client-b": 0.0, "client-c": 0.0},
+        {"client-a": 10**1000, "client-b": 0.0, "client-c": 0.0},
+        {"client-a": 1e308, "client-b": 1e308, "client-c": 1e308},
+        {"client-a": 0.0, "client-b": 0.0, "client-c": 0.0},
+    ],
+)
+def test_proposer_validator_rejects_weights_outside_rounding_contract(weights):
+    with pytest.raises(ValueError):
+        validate_proposer_response(
+            {"candidates": [proposal(weights=weights)]},
+            client_ids=("client-a", "client-b", "client-c"),
+            role="performance_proposer",
+        )
+
+
+def test_proposer_weight_rounding_tolerance_has_closed_two_sided_boundary():
+    tolerance = 3 * 0.0005 + math.ulp(1.0)
+    lower = 1.0 - tolerance
+    upper = 1.0 + tolerance
+    for accepted_total in (lower, upper):
+        accepted = {
+            "client-a": 0.3,
+            "client-b": 0.3,
+            "client-c": accepted_total - 0.6,
+        }
+        validate_proposer_response(
+            {"candidates": [proposal(weights=accepted)]},
+            client_ids=("client-a", "client-b", "client-c"),
+            role="performance_proposer",
+        )
+
+    for rejected_total in (
+        math.nextafter(lower, 0.0),
+        math.nextafter(upper, math.inf),
+    ):
+        rejected = {
+            "client-a": 0.3,
+            "client-b": 0.3,
+            "client-c": rejected_total - 0.6,
+        }
+        with pytest.raises(ValueError, match="sum to one"):
+            validate_proposer_response(
+                {"candidates": [proposal(weights=rejected)]},
+                client_ids=("client-a", "client-b", "client-c"),
+                role="performance_proposer",
+            )
 
 
 @pytest.mark.parametrize(

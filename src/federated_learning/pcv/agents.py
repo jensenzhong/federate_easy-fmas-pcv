@@ -166,6 +166,50 @@ def _client_id_tuple(client_ids: Sequence[str]) -> tuple[str, ...]:
     return values
 
 
+def _normalize_candidate_weights(
+    value: Any,
+    *,
+    client_ids: tuple[str, ...],
+) -> dict[str, float]:
+    """Normalize only harmless three-decimal LLM rounding at ingress."""
+
+    if type(value) is not dict:
+        raise ValueError("candidate weights must be an exact JSON object")
+    if any(type(key) is not str for key in value):
+        raise ValueError("candidate weight client IDs must be exact strings")
+    if set(value) != set(client_ids):
+        raise ValueError("candidate weights must match client ids")
+
+    weights: dict[str, float] = {}
+    for client_id in client_ids:
+        weight = value[client_id]
+        if type(weight) not in (int, float):
+            raise ValueError("candidate weights must be numeric")
+        try:
+            weight_is_finite = math.isfinite(weight)
+            numeric_weight = float(weight)
+        except (OverflowError, ValueError) as exc:
+            raise ValueError("candidate weights must be finite") from exc
+        if not weight_is_finite:
+            raise ValueError("candidate weights must be finite")
+        if weight < 0.05 or weight > 0.80:
+            raise ValueError("candidate weight outside [0.05, 0.80]")
+        weights[client_id] = numeric_weight
+
+    try:
+        total = math.fsum(weights.values())
+    except OverflowError as exc:
+        raise ValueError("candidate weights must have a finite total") from exc
+    if total <= 0:
+        raise ValueError("candidate weights must have a positive total")
+    rounding_tolerance = len(client_ids) * 0.0005 + math.ulp(1.0)
+    lower = 1.0 - rounding_tolerance
+    upper = 1.0 + rounding_tolerance
+    if total < lower or total > upper:
+        raise ValueError("candidate weights must sum to one")
+    return {client_id: weight / total for client_id, weight in weights.items()}
+
+
 def validate_diagnostic_response(value: Any) -> Mapping[str, Any]:
     result = _exact_object(
         value,
@@ -193,6 +237,7 @@ def _candidate_from_json(
     *,
     client_ids: tuple[str, ...],
     expected_source: str | None,
+    normalize_llm_rounding: bool = False,
 ) -> CandidateAction:
     action = _exact_object(value, _ACTION_FIELDS, context="candidate action")
     if type(action["weights"]) is not dict:
@@ -201,9 +246,17 @@ def _candidate_from_json(
         raise ValueError("candidate weight client IDs must be exact strings")
     if expected_source is not None and action["source"] != expected_source:
         raise ValueError("candidate source must match its proposer role")
+    weights = (
+        _normalize_candidate_weights(
+            action["weights"],
+            client_ids=client_ids,
+        )
+        if normalize_llm_rounding
+        else action["weights"]
+    )
     candidate = CandidateAction(
         candidate_id=action["candidate_id"],
-        weights=action["weights"],
+        weights=weights,
         server_optimizer=action["server_optimizer"],
         server_lr_scale=action["server_lr_scale"],
         update_clip_norm=action["update_clip_norm"],
@@ -238,6 +291,7 @@ def validate_proposer_response(
             candidate,
             client_ids=clients,
             expected_source=role,
+            normalize_llm_rounding=True,
         )
         for candidate in candidates_json
     )
