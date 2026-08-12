@@ -216,6 +216,24 @@ def test_staged_sa_real_response_shape_reaches_coordinator_without_mutating_dto(
     assert diagnostic["risks"] == ("large relative update",)
 
 
+def test_single_proposer_prompt_requires_every_action_to_repeat_all_fields():
+    prompt = (PROMPT_DIR / "single_proposer.md").read_text(encoding="utf-8")
+
+    for field in (
+        "candidate_id",
+        "weights",
+        "server_optimizer",
+        "server_lr_scale",
+        "update_clip_norm",
+        "source",
+        "rationale",
+    ):
+        assert f"`{field}`" in prompt
+    assert "applies separately to the first and second action" in prompt
+    assert '`"source":"performance_proposer"`' in prompt
+    assert "inside every action" in prompt
+
+
 def test_staged_fmas_real_dto_shapes_reach_all_later_roles_as_json(
     safe_payload,
 ):

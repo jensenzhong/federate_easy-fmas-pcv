@@ -13,3 +13,11 @@ lie in [0.05, 0.80]. `server_optimizer` is exactly `fedavg` or `fedyogi`.
 `update_clip_norm` is exactly null, 0.5, 1.0, or 2.0. `source` is exactly
 `performance_proposer`. Do not add fields, clients, actions, tools, data, or
 values outside this closed schema.
+
+Before returning, check every action in `candidates` independently. Each action
+must contain all seven fields exactly once: `candidate_id`, `weights`,
+`server_optimizer`, `server_lr_scale`, `update_clip_norm`, `source`, and
+`rationale`. This rule applies separately to the first and second action: never
+omit a field because it appeared in another action, and always repeat
+`"source":"performance_proposer"` inside every action. Do not return an action
+with a missing field.
