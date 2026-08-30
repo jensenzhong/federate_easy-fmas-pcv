@@ -6,6 +6,7 @@ import argparse
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
@@ -28,26 +29,44 @@ from src.federated_learning.pcv.engine import (
 from src.federated_learning.pcv.runtime import execute_strict_training
 
 
-CONFIG_PATH = Path("configs/fedyogi_calibration_seed42.yaml")
+CONFIG_PATH = Path("configs/fedyogi_calibration_seed42_v2.yaml")
 _APPROVED = {
-    "schema_version": 1,
+    "schema_version": 2,
+    "calibration_id": "fedyogi_lr_refinement_v2",
+    "supersedes": {
+        "summary": (
+            "audits/fedyogi_calibration_seed42_v1_summary.json"
+        ),
+        "sha256": (
+            "0d1ed24b032f13065b83ab9e3d00417a099bbc57c407578b3f71eeabd8137d30"
+        ),
+    },
+    "approval": "user_approved_2026-08-30",
     "phase": "development",
     "method": "FEDYOGI_STRICT",
     "training_seed": 42,
     "num_rounds": 20,
     "partition_manifest": "results/manifests/strict_partition_v1.csv",
     "selection_partition": "controller_validation",
-    "output_root": "results/development/seed42/baseline_calibration",
+    "output_root": "results/development/seed42/baseline_calibration_v2",
+    "eligibility_policy": {
+        "required_completed_rounds": 20,
+        "max_round_mape": 2.0,
+        "max_final_to_best_mape_ratio": 1.5,
+        "ratio_denominator_floor": 1.0e-12,
+    },
+    "readiness_policy": {
+        "min_best_mape_improvement_from_first": 0.05,
+    },
     "selection_rule": ["mape", "rmse", "mae", "server_lr"],
     "failure_policy": {
-        "approval": "user_approved_2026-08-30",
         "nonfinite_prediction": (
             "disqualify_without_retry_or_grid_replacement"
         ),
         "all_other_failures": "abort_calibration",
     },
     "grid": {
-        "server_lr": [0.01, 0.1, 0.5],
+        "server_lr": [0.01, 0.02, 0.03, 0.05, 0.075, 0.1],
         "beta1": 0.9,
         "beta2": 0.99,
         "tau": 0.001,
@@ -70,6 +89,8 @@ class CalibrationEvidence:
     run_directory: Path
     status: str = "complete"
     failure: Mapping[str, Any] | None = None
+    trajectory: tuple[float, ...] = ()
+    stability: Mapping[str, Any] | None = None
 
 
 def _sha256(path: Path) -> str:
@@ -104,6 +125,9 @@ def load_calibration_config(path: Path, *, project_root: Path = PROJECT_ROOT) ->
     loaded = yaml.safe_load(supplied.read_text(encoding="utf-8"))
     if type(loaded) is not dict or loaded != _APPROVED:
         raise ValueError("FedYogi calibration differs from the preregistered protocol")
+    parent = project_root / str(loaded["supersedes"]["summary"])
+    if _sha256(parent) != loaded["supersedes"]["sha256"]:
+        raise ValueError("FedYogi calibration v1 evidence hash mismatch")
     return loaded
 
 
@@ -150,6 +174,80 @@ def _effective_config_sha256(
         digest.update(len(content).to_bytes(8, "big"))
         digest.update(content)
     return digest.hexdigest()
+
+
+def _read_selected_mape_trajectory(
+    path: Path, *, expected_rounds: int
+) -> tuple[float, ...]:
+    if type(expected_rounds) is not int or expected_rounds < 0:
+        raise ValueError("expected_rounds must be a non-negative exact integer")
+    if path.is_symlink() or not path.is_file():
+        raise ValueError("round trajectory must be a regular file")
+    trajectory: list[float] = []
+    for expected_index, line in enumerate(
+        path.read_text(encoding="utf-8").splitlines(), start=1
+    ):
+        if not line:
+            raise ValueError("round trajectory contains an empty record")
+        try:
+            record = json.loads(line)
+        except json.JSONDecodeError as error:
+            raise ValueError("round trajectory contains invalid JSON") from error
+        if (
+            type(record) is not dict
+            or record.get("event") != "round_committed"
+            or type(record.get("round_index")) is not int
+            or record.get("round_index") != expected_index
+        ):
+            raise ValueError("round trajectory must be contiguous committed rounds")
+        mape = record.get("selected_mape")
+        if (
+            type(mape) not in (int, float)
+            or not math.isfinite(float(mape))
+            or float(mape) < 0.0
+        ):
+            raise ValueError("round trajectory MAPE must be finite and non-negative")
+        trajectory.append(float(mape))
+    if len(trajectory) != expected_rounds:
+        raise ValueError("round trajectory length differs from expected rounds")
+    return tuple(trajectory)
+
+
+def _assess_stability(
+    trajectory: tuple[float, ...], policy: Mapping[str, Any]
+) -> dict[str, Any]:
+    required_rounds = int(policy["required_completed_rounds"])
+    if len(trajectory) != required_rounds or not trajectory:
+        raise ValueError("stability assessment requires the complete trajectory")
+    best_mape = min(trajectory)
+    best_round_index = trajectory.index(best_mape) + 1
+    first_mape = trajectory[0]
+    final_mape = trajectory[-1]
+    max_mape = max(trajectory)
+    floor = float(policy["ratio_denominator_floor"])
+    final_to_best = final_mape / max(best_mape, floor)
+    improvement = (first_mape - best_mape) / max(first_mape, floor)
+    improvement = min(1.0, max(0.0, improvement))
+    checks = {
+        "completed_rounds": len(trajectory) == required_rounds,
+        "max_round_mape": max_mape <= float(policy["max_round_mape"]),
+        "final_to_best_mape_ratio": (
+            final_to_best
+            <= float(policy["max_final_to_best_mape_ratio"])
+        ),
+    }
+    return {
+        "round_count": len(trajectory),
+        "first_round_mape": first_mape,
+        "best_round_index": best_round_index,
+        "best_round_mape": best_mape,
+        "final_round_mape": final_mape,
+        "max_round_mape": max_mape,
+        "final_to_best_mape_ratio": final_to_best,
+        "best_improvement_from_first": improvement,
+        "checks": checks,
+        "eligible": all(checks.values()),
+    }
 
 
 def _approved_numeric_divergence(
@@ -212,8 +310,9 @@ def _run_unit(
         project_root=project_root, method_config=method_config
     )
     provenance = {
-        "schema_version": 1,
-        "audit": "baseline_fairness_fedyogi_calibration",
+        "schema_version": 2,
+        "audit": "baseline_fairness_fedyogi_calibration_v2",
+        "calibration_id": _APPROVED["calibration_id"],
         "method": "FEDYOGI_STRICT",
         "phase": "development",
         "training_seed": 42,
@@ -265,12 +364,17 @@ def _run_unit(
             for path in run_directory.iterdir()
         ):
             raise RuntimeError("forbidden calibration evidence was produced")
+        trajectory = _read_selected_mape_trajectory(
+            run_directory / "rounds.jsonl",
+            expected_rounds=int(failure["last_complete_round"]),
+        )
         return CalibrationEvidence(
             unit=unit,
             metrics=None,
             run_directory=run_directory,
             status="disqualified_numeric_divergence",
             failure=failure,
+            trajectory=trajectory,
         )
     required = {
         "provenance.json", "rounds.jsonl", "last_complete.pt",
@@ -280,7 +384,28 @@ def _run_unit(
         raise RuntimeError("calibration unit did not produce complete evidence")
     if any("locked_test" in path.name or "agent_call" in path.name for path in run_directory.iterdir()):
         raise RuntimeError("forbidden calibration evidence was produced")
-    return CalibrationEvidence(unit, dict(summary["best_validation"]), run_directory)
+    metrics = dict(summary["best_validation"])
+    trajectory = _read_selected_mape_trajectory(
+        run_directory / "rounds.jsonl",
+        expected_rounds=int(_APPROVED["num_rounds"]),
+    )
+    stability = _assess_stability(
+        trajectory, _APPROVED["eligibility_policy"]
+    )
+    if not math.isclose(
+        float(metrics["mape"]),
+        float(stability["best_round_mape"]),
+        rel_tol=0.0,
+        abs_tol=1.0e-12,
+    ):
+        raise RuntimeError("best checkpoint MAPE differs from round trajectory")
+    return CalibrationEvidence(
+        unit,
+        metrics,
+        run_directory,
+        trajectory=trajectory,
+        stability=stability,
+    )
 
 
 def run_calibration(
@@ -298,7 +423,9 @@ def run_calibration(
     root.parent.mkdir(parents=True, exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=f".{root.name}.", dir=root.parent))
     units = tuple(
-        CalibrationUnit(float(lr), f"fedyogi-lr-{str(lr).replace('.', 'p')}-seed42")
+        CalibrationUnit(
+            float(lr), f"fedyogi-v2-lr-{str(lr).replace('.', 'p')}-seed42"
+        )
         for lr in config["grid"]["server_lr"]
     )
     try:
@@ -312,10 +439,17 @@ def run_calibration(
         eligible = tuple(
             item
             for item in evidence
-            if item.status == "complete" and item.metrics is not None
+            if (
+                item.status == "complete"
+                and item.metrics is not None
+                and item.stability is not None
+                and item.stability.get("eligible") is True
+            )
         )
         if not eligible:
-            raise RuntimeError("calibration produced no eligible completed unit")
+            raise RuntimeError(
+                "calibration produced no stable eligible completed unit"
+            )
         selected = min(
             eligible,
             key=lambda item: (
@@ -323,11 +457,28 @@ def run_calibration(
                 float(item.metrics["mae"]), item.unit.server_lr,
             ),
         )
+        selected_improvement = float(
+            selected.stability["best_improvement_from_first"]
+        )
+        readiness_threshold = float(
+            config["readiness_policy"][
+                "min_best_mape_improvement_from_first"
+            ]
+        )
+        freeze_ready = selected_improvement >= readiness_threshold
         summary = {
-            "schema_version": 1,
+            "schema_version": 2,
             "status": "complete",
-            "calibration_outcome": "selected_with_disqualified_grid_points",
+            "calibration_id": config["calibration_id"],
+            "calibration_outcome": (
+                "selected_stable_improving_point"
+                if freeze_ready
+                else "selected_stable_but_stalled_point"
+            ),
+            "supersedes": dict(config["supersedes"]),
             "selection_partition": "controller_validation",
+            "eligibility_policy": dict(config["eligibility_policy"]),
+            "readiness_policy": dict(config["readiness_policy"]),
             "selection_rule": list(config["selection_rule"]),
             "failure_policy": dict(config["failure_policy"]),
             "snapshot": dict(snapshot),
@@ -336,7 +487,22 @@ def run_calibration(
                     "run_id": item.unit.run_id,
                     "server_lr": item.unit.server_lr,
                     "status": item.status,
-                    "eligible_for_selection": item.status == "complete",
+                    "eligible_for_selection": (
+                        item.status == "complete"
+                        and item.stability is not None
+                        and item.stability.get("eligible") is True
+                    ),
+                    "stability_eligible": (
+                        None
+                        if item.stability is None
+                        else item.stability.get("eligible") is True
+                    ),
+                    "selected_mape_by_round": list(item.trajectory),
+                    "stability": (
+                        None
+                        if item.stability is None
+                        else dict(item.stability)
+                    ),
                     "metrics": (
                         None if item.metrics is None else dict(item.metrics)
                     ),
@@ -348,6 +514,12 @@ def run_calibration(
             ],
             "selected_run_id": selected.unit.run_id,
             "selected_server_lr": selected.unit.server_lr,
+            "selected_readiness": {
+                "best_mape_improvement_from_first": selected_improvement,
+                "minimum_required": readiness_threshold,
+                "passed": freeze_ready,
+            },
+            "recommended_freeze_ready": freeze_ready,
             "locked_test_used": False,
             "deepseek_used": False,
         }
@@ -357,9 +529,9 @@ def run_calibration(
     except BaseException:
         try:
             _json_no_replace(staging / "FAILED.json", {
-                "schema_version": 1,
+                "schema_version": 2,
                 "status": "failed",
-                "audit": "baseline_fairness_fedyogi_calibration",
+                "audit": "baseline_fairness_fedyogi_calibration_v2",
                 "snapshot": dict(snapshot),
             })
             failed = staging.with_name(f"{root.name}.failed-{staging.name.rsplit('.', 1)[-1]}")

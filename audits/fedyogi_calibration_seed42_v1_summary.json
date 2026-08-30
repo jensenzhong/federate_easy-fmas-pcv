@@ -1,0 +1,72 @@
+{
+  "calibration_outcome": "selected_with_disqualified_grid_points",
+  "deepseek_used": false,
+  "failure_policy": {
+    "all_other_failures": "abort_calibration",
+    "approval": "user_approved_2026-08-30",
+    "nonfinite_prediction": "disqualify_without_retry_or_grid_replacement"
+  },
+  "locked_test_used": false,
+  "runs": [
+    {
+      "eligible_for_selection": true,
+      "failure": null,
+      "metrics": {
+        "mae": 2914992.3130425885,
+        "mape": 0.9987142704146724,
+        "r2": -1.8247612933406328,
+        "rmse": 3625243.142484344,
+        "sample_count": 103
+      },
+      "run_id": "fedyogi-lr-0p01-seed42",
+      "server_lr": 0.01,
+      "status": "complete"
+    },
+    {
+      "eligible_for_selection": true,
+      "failure": null,
+      "metrics": {
+        "mae": 2722581.0255389665,
+        "mape": 0.9026890664041931,
+        "r2": -1.67201608373513,
+        "rmse": 3525865.950486565,
+        "sample_count": 103
+      },
+      "run_id": "fedyogi-lr-0p1-seed42",
+      "server_lr": 0.1,
+      "status": "complete"
+    },
+    {
+      "eligible_for_selection": false,
+      "failure": {
+        "failed_round": 2,
+        "last_complete_round": 1,
+        "reason": "nonfinite_prediction"
+      },
+      "metrics": null,
+      "run_id": "fedyogi-lr-0p5-seed42",
+      "server_lr": 0.5,
+      "status": "disqualified_numeric_divergence"
+    }
+  ],
+  "schema_version": 1,
+  "selected_run_id": "fedyogi-lr-0p1-seed42",
+  "selected_server_lr": 0.1,
+  "selection_partition": "controller_validation",
+  "selection_rule": [
+    "mape",
+    "rmse",
+    "mae",
+    "server_lr"
+  ],
+  "snapshot": {
+    "base_config_sha256": "72e184db6e9fe616df93909cb28f1f173e8a238cc804767df74052f9aeb4239a",
+    "calibration_config_sha256": "eb97c388bdeff6e08c2426ecf4e865a82ad69f40c7642a2e3d33042a6869fdd7",
+    "git_commit": "7cea8c90691f77d189a9ef0431431700dc2f41fc",
+    "git_dirty": false,
+    "method_config_sha256": "55cb044cf2a20b421e4ac6ab1b01bca5f09eed914da4771c20d9ca4d999b225e",
+    "partition_sha256": "eb527a597c43ef8ef45ec24788c88aedcd13b413115a80a9db5aceb519151935",
+    "sealed_partition_metadata_sha256": "5623f91cbc76248db927d413e49774b6cbc62782bd55f684d0153875c1d3c455"
+  },
+  "status": "complete"
+}
