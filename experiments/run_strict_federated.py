@@ -71,7 +71,7 @@ COMMON_METHOD_CONFIG = {
     "best_candidate_tolerance": 0.002,
     "anchor_mape_tolerance": 0.001,
     "catastrophic_client_relative_mape": 0.05,
-    "fedyogi_server_lr": 0.01,
+    "fedyogi_server_lr": 0.1,
     "fedyogi_beta1": 0.9,
     "fedyogi_beta2": 0.99,
     "fedyogi_tau": 0.001,
