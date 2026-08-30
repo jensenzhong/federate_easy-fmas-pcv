@@ -200,7 +200,10 @@ def test_exact_nonfinite_prediction_is_disqualified_with_evidence(
             raise cause
         except ValueError as error:
             raise ExperimentPaused(
-                ExperimentRuntimeError(type(error).__name__, str(error)),
+                ExperimentRuntimeError(
+                    type(error).__name__,
+                    "round stopped after a sanitized runtime failure",
+                ),
                 report_path,
             ) from error
 
@@ -215,6 +218,59 @@ def test_exact_nonfinite_prediction_is_disqualified_with_evidence(
         "last_complete_round": 1,
         "reason": "nonfinite_prediction",
     }
+
+
+def test_sanitized_nonfinite_disqualification_requires_exact_original_cause(
+    tmp_path,
+):
+    run_directory = tmp_path / "fedyogi-lr-0p5-seed42"
+    run_directory.mkdir()
+    report = {
+        "status": "paused", "failed_round": 2,
+        "last_complete_round": 1,
+        "failure": {
+            "category": "runtime", "exception_type": "ValueError",
+            "role": "engine",
+        },
+    }
+    report_path = run_directory / "PAUSED.json"
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+    paused = ExperimentPaused(
+        ExperimentRuntimeError(
+            "ValueError", "round stopped after a sanitized runtime failure"
+        ),
+        report_path,
+    )
+    paused.__cause__ = ValueError("y_pred must contain only finite values")
+
+    assert calibration._approved_numeric_divergence(paused, run_directory) == {
+        "failed_round": 2,
+        "last_complete_round": 1,
+        "reason": "nonfinite_prediction",
+    }
+
+
+def test_other_value_error_is_not_disqualified_as_numeric_divergence(tmp_path):
+    run_directory = tmp_path / "fedyogi-lr-0p5-seed42"
+    run_directory.mkdir()
+    report_path = run_directory / "PAUSED.json"
+    report_path.write_text(json.dumps({
+        "status": "paused", "failed_round": 2,
+        "last_complete_round": 1,
+        "failure": {
+            "category": "runtime", "exception_type": "ValueError",
+            "role": "engine",
+        },
+    }), encoding="utf-8")
+    paused = ExperimentPaused(
+        ExperimentRuntimeError(
+            "ValueError", "round stopped after a sanitized runtime failure"
+        ),
+        report_path,
+    )
+    paused.__cause__ = ValueError("aggregate metrics must contain finite values")
+
+    assert calibration._approved_numeric_divergence(paused, run_directory) is None
 
 
 def test_disqualified_grid_point_is_recorded_but_not_selected(

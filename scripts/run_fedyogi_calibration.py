@@ -156,12 +156,13 @@ def _approved_numeric_divergence(
     paused: ExperimentPaused, run_directory: Path
 ) -> dict[str, int | str] | None:
     expected_message = "y_pred must contain only finite values"
+    expected_sanitized_detail = "round stopped after a sanitized runtime failure"
     failure = paused.failure
     cause = paused.__cause__
     if (
         type(failure) is not ExperimentRuntimeError
         or failure.exception_type != "ValueError"
-        or failure.detail != expected_message
+        or failure.detail != expected_sanitized_detail
         or type(cause) is not ValueError
         or str(cause) != expected_message
         or paused.report_persisted is not True
