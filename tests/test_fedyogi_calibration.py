@@ -1,3 +1,4 @@
+import hashlib
 import json
 from pathlib import Path
 import subprocess
@@ -98,6 +99,22 @@ def test_calibration_config_is_exactly_preregistered():
             "clip": None,
         },
     }
+
+
+def test_v3_freeze_evidence_is_exact_and_freeze_ready():
+    path = Path("audits/fedyogi_calibration_seed42_v3_summary.json")
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == (
+        "1eb133145293b65881342897fa468d277c56fc157665193ece3ea2e2d47af3f3"
+    )
+    summary = json.loads(path.read_text(encoding="utf-8"))
+    assert summary["snapshot"]["git_commit"] == (
+        "eb680c45c23aaa02a80118efde0be25c88568a78"
+    )
+    assert summary["selected_server_lr"] == 0.0175
+    assert summary["selected_run_id"] == "fedyogi-v3-lr-0p0175-seed42"
+    assert summary["recommended_freeze_ready"] is True
+    assert summary["locked_test_used"] is False
+    assert summary["deepseek_used"] is False
 
 
 def test_matrix_is_fixed_serial_and_no_api_or_locked_test(tmp_path, monkeypatch):
