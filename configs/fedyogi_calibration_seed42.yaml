@@ -11,6 +11,10 @@ selection_rule:
   - rmse
   - mae
   - server_lr
+failure_policy:
+  approval: user_approved_2026-08-30
+  nonfinite_prediction: disqualify_without_retry_or_grid_replacement
+  all_other_failures: abort_calibration
 grid:
   server_lr:
     - 0.01

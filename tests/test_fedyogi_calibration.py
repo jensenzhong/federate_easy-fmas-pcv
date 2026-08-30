@@ -7,6 +7,10 @@ import pytest
 import yaml
 
 from scripts import run_fedyogi_calibration as calibration
+from src.federated_learning.pcv.engine import (
+    ExperimentPaused,
+    ExperimentRuntimeError,
+)
 
 
 def test_calibration_script_is_directly_executable():
@@ -31,6 +35,13 @@ def test_calibration_config_is_exactly_preregistered():
         "selection_partition": "controller_validation",
         "output_root": "results/development/seed42/baseline_calibration",
         "selection_rule": ["mape", "rmse", "mae", "server_lr"],
+        "failure_policy": {
+            "approval": "user_approved_2026-08-30",
+            "nonfinite_prediction": (
+                "disqualify_without_retry_or_grid_replacement"
+            ),
+            "all_other_failures": "abort_calibration",
+        },
         "grid": {
             "server_lr": [0.01, 0.1, 0.5],
             "beta1": 0.9,
@@ -152,3 +163,104 @@ def test_failed_unit_does_not_occupy_final_output(tmp_path, monkeypatch):
     assert json.loads((failed[0] / "FAILED.json").read_text(encoding="utf-8"))[
         "status"
     ] == "failed"
+
+
+def test_exact_nonfinite_prediction_is_disqualified_with_evidence(
+    tmp_path, monkeypatch
+):
+    output = tmp_path / "staging"
+    output.mkdir()
+    unit = calibration.CalibrationUnit(0.5, "fedyogi-lr-0p5-seed42")
+    snapshot = {
+        "git_commit": "a" * 40, "git_dirty": False,
+        "calibration_config_sha256": "b" * 64,
+        "base_config_sha256": "c" * 64,
+        "method_config_sha256": "d" * 64,
+        "partition_sha256": "e" * 64,
+        "sealed_partition_metadata_sha256": "f" * 64,
+    }
+
+    def paused_training(context):
+        (context.run_directory / "rounds.jsonl").write_text(
+            '{"round_index":1}\n', encoding="utf-8"
+        )
+        (context.run_directory / "last_complete.pt").write_bytes(b"checkpoint")
+        report = {
+            "status": "paused", "failed_round": 2,
+            "last_complete_round": 1,
+            "failure": {
+                "category": "runtime", "exception_type": "ValueError",
+                "role": "engine",
+            },
+        }
+        report_path = context.run_directory / "PAUSED.json"
+        report_path.write_text(json.dumps(report), encoding="utf-8")
+        cause = ValueError("y_pred must contain only finite values")
+        try:
+            raise cause
+        except ValueError as error:
+            raise ExperimentPaused(
+                ExperimentRuntimeError(type(error).__name__, str(error)),
+                report_path,
+            ) from error
+
+    monkeypatch.setattr(calibration, "execute_strict_training", paused_training)
+    evidence = calibration._run_unit(
+        unit, project_root=Path.cwd(), output_root=output, snapshot=snapshot
+    )
+    assert evidence.status == "disqualified_numeric_divergence"
+    assert evidence.metrics is None
+    assert evidence.failure == {
+        "failed_round": 2,
+        "last_complete_round": 1,
+        "reason": "nonfinite_prediction",
+    }
+
+
+def test_disqualified_grid_point_is_recorded_but_not_selected(
+    tmp_path, monkeypatch
+):
+    config = calibration.load_calibration_config(
+        Path("configs/fedyogi_calibration_seed42.yaml")
+    )
+    monkeypatch.setattr(calibration, "_capture_snapshot", lambda *_: {
+        "git_commit": "a" * 40, "git_dirty": False,
+        "calibration_config_sha256": "b" * 64,
+        "base_config_sha256": "c" * 64,
+        "method_config_sha256": "d" * 64,
+        "partition_sha256": "e" * 64,
+        "sealed_partition_metadata_sha256": "f" * 64,
+    })
+
+    def fake_run(unit, *, output_root, **kwargs):
+        run_dir = output_root / unit.run_id
+        run_dir.mkdir()
+        if unit.server_lr == 0.5:
+            return calibration.CalibrationEvidence(
+                unit=unit, metrics=None, run_directory=run_dir,
+                status="disqualified_numeric_divergence",
+                failure={
+                    "failed_round": 2, "last_complete_round": 1,
+                    "reason": "nonfinite_prediction",
+                },
+            )
+        mape = {0.01: 0.998714, 0.1: 0.902689}[unit.server_lr]
+        return calibration.CalibrationEvidence(
+            unit=unit,
+            metrics={
+                "sample_count": 103, "mape": mape, "rmse": 1.0,
+                "mae": 1.0, "r2": 0.0,
+            },
+            run_directory=run_dir,
+        )
+
+    monkeypatch.setattr(calibration, "_run_unit", fake_run)
+    output = tmp_path / "baseline_calibration"
+    result = calibration.run_calibration(
+        config=config, project_root=Path.cwd(), output_root=output
+    )
+    assert result["selected_server_lr"] == 0.1
+    assert [item["status"] for item in result["runs"]] == [
+        "complete", "complete", "disqualified_numeric_divergence"
+    ]
+    assert result["failure_policy"] == config["failure_policy"]

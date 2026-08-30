@@ -21,6 +21,10 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from experiments.run_strict_federated import load_method_config
+from src.federated_learning.pcv.engine import (
+    ExperimentPaused,
+    ExperimentRuntimeError,
+)
 from src.federated_learning.pcv.runtime import execute_strict_training
 
 
@@ -35,6 +39,13 @@ _APPROVED = {
     "selection_partition": "controller_validation",
     "output_root": "results/development/seed42/baseline_calibration",
     "selection_rule": ["mape", "rmse", "mae", "server_lr"],
+    "failure_policy": {
+        "approval": "user_approved_2026-08-30",
+        "nonfinite_prediction": (
+            "disqualify_without_retry_or_grid_replacement"
+        ),
+        "all_other_failures": "abort_calibration",
+    },
     "grid": {
         "server_lr": [0.01, 0.1, 0.5],
         "beta1": 0.9,
@@ -55,8 +66,10 @@ class CalibrationUnit:
 @dataclass(frozen=True, slots=True)
 class CalibrationEvidence:
     unit: CalibrationUnit
-    metrics: Mapping[str, int | float]
+    metrics: Mapping[str, int | float] | None
     run_directory: Path
+    status: str = "complete"
+    failure: Mapping[str, Any] | None = None
 
 
 def _sha256(path: Path) -> str:
@@ -139,6 +152,46 @@ def _effective_config_sha256(
     return digest.hexdigest()
 
 
+def _approved_numeric_divergence(
+    paused: ExperimentPaused, run_directory: Path
+) -> dict[str, int | str] | None:
+    expected_message = "y_pred must contain only finite values"
+    failure = paused.failure
+    cause = paused.__cause__
+    if (
+        type(failure) is not ExperimentRuntimeError
+        or failure.exception_type != "ValueError"
+        or failure.detail != expected_message
+        or type(cause) is not ValueError
+        or str(cause) != expected_message
+        or paused.report_persisted is not True
+        or paused.report_error is not None
+        or paused.rollback_errors
+        or paused.report_path.parent.resolve(strict=False)
+        != run_directory.resolve(strict=False)
+        or not paused.report_path.is_file()
+    ):
+        return None
+    report = json.loads(paused.report_path.read_text(encoding="utf-8"))
+    report_failure = report.get("failure") if type(report) is dict else None
+    if (
+        type(report) is not dict
+        or report.get("status") != "paused"
+        or type(report.get("failed_round")) is not int
+        or type(report.get("last_complete_round")) is not int
+        or type(report_failure) is not dict
+        or report_failure.get("category") != "runtime"
+        or report_failure.get("exception_type") != "ValueError"
+        or report_failure.get("role") != "engine"
+    ):
+        return None
+    return {
+        "failed_round": report["failed_round"],
+        "last_complete_round": report["last_complete_round"],
+        "reason": "nonfinite_prediction",
+    }
+
+
 def _run_unit(
     unit: CalibrationUnit, *, project_root: Path, output_root: Path,
     snapshot: Mapping[str, Any],
@@ -194,7 +247,30 @@ def _run_unit(
         evaluation_provenance_path=None,
         manifest=SimpleNamespace(formal_frozen=False),
     )
-    summary = execute_strict_training(context)
+    try:
+        summary = execute_strict_training(context)
+    except ExperimentPaused as paused:
+        failure = _approved_numeric_divergence(paused, run_directory)
+        if failure is None:
+            raise
+        required = {
+            "provenance.json", "rounds.jsonl", "last_complete.pt",
+            paused.report_path.name,
+        }
+        if not required.issubset({path.name for path in run_directory.iterdir()}):
+            raise RuntimeError("divergent calibration unit lacks required evidence")
+        if any(
+            "locked_test" in path.name or "agent_call" in path.name
+            for path in run_directory.iterdir()
+        ):
+            raise RuntimeError("forbidden calibration evidence was produced")
+        return CalibrationEvidence(
+            unit=unit,
+            metrics=None,
+            run_directory=run_directory,
+            status="disqualified_numeric_divergence",
+            failure=failure,
+        )
     required = {
         "provenance.json", "rounds.jsonl", "last_complete.pt",
         "validation_metrics.json", "TRAINING_COMPLETE.json",
@@ -232,8 +308,15 @@ def run_calibration(
             )
             for unit in units
         ]
+        eligible = tuple(
+            item
+            for item in evidence
+            if item.status == "complete" and item.metrics is not None
+        )
+        if not eligible:
+            raise RuntimeError("calibration produced no eligible completed unit")
         selected = min(
-            evidence,
+            eligible,
             key=lambda item: (
                 float(item.metrics["mape"]), float(item.metrics["rmse"]),
                 float(item.metrics["mae"]), item.unit.server_lr,
@@ -242,12 +325,25 @@ def run_calibration(
         summary = {
             "schema_version": 1,
             "status": "complete",
+            "calibration_outcome": "selected_with_disqualified_grid_points",
             "selection_partition": "controller_validation",
             "selection_rule": list(config["selection_rule"]),
+            "failure_policy": dict(config["failure_policy"]),
             "snapshot": dict(snapshot),
             "runs": [
-                {"run_id": item.unit.run_id, "server_lr": item.unit.server_lr,
-                 "metrics": dict(item.metrics)} for item in evidence
+                {
+                    "run_id": item.unit.run_id,
+                    "server_lr": item.unit.server_lr,
+                    "status": item.status,
+                    "eligible_for_selection": item.status == "complete",
+                    "metrics": (
+                        None if item.metrics is None else dict(item.metrics)
+                    ),
+                    "failure": (
+                        None if item.failure is None else dict(item.failure)
+                    ),
+                }
+                for item in evidence
             ],
             "selected_run_id": selected.unit.run_id,
             "selected_server_lr": selected.unit.server_lr,
