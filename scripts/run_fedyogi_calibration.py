@@ -29,16 +29,16 @@ from src.federated_learning.pcv.engine import (
 from src.federated_learning.pcv.runtime import execute_strict_training
 
 
-CONFIG_PATH = Path("configs/fedyogi_calibration_seed42_v2.yaml")
+CONFIG_PATH = Path("configs/fedyogi_calibration_seed42_v3.yaml")
 _APPROVED = {
-    "schema_version": 2,
-    "calibration_id": "fedyogi_lr_refinement_v2",
+    "schema_version": 3,
+    "calibration_id": "fedyogi_lr_boundary_v3",
     "supersedes": {
         "summary": (
-            "audits/fedyogi_calibration_seed42_v1_summary.json"
+            "audits/fedyogi_calibration_seed42_v2_summary.json"
         ),
         "sha256": (
-            "0d1ed24b032f13065b83ab9e3d00417a099bbc57c407578b3f71eeabd8137d30"
+            "a1cc12f56146da893b386d75182fb0eb641fd4c2276a2272e2c70a47e682f7e8"
         ),
     },
     "approval": "user_approved_2026-08-30",
@@ -48,7 +48,7 @@ _APPROVED = {
     "num_rounds": 20,
     "partition_manifest": "results/manifests/strict_partition_v1.csv",
     "selection_partition": "controller_validation",
-    "output_root": "results/development/seed42/baseline_calibration_v2",
+    "output_root": "results/development/seed42/baseline_calibration_v3",
     "eligibility_policy": {
         "required_completed_rounds": 20,
         "max_round_mape": 2.0,
@@ -66,7 +66,7 @@ _APPROVED = {
         "all_other_failures": "abort_calibration",
     },
     "grid": {
-        "server_lr": [0.01, 0.02, 0.03, 0.05, 0.075, 0.1],
+        "server_lr": [0.0125, 0.015, 0.0175],
         "beta1": 0.9,
         "beta2": 0.99,
         "tau": 0.001,
@@ -127,7 +127,7 @@ def load_calibration_config(path: Path, *, project_root: Path = PROJECT_ROOT) ->
         raise ValueError("FedYogi calibration differs from the preregistered protocol")
     parent = project_root / str(loaded["supersedes"]["summary"])
     if _sha256(parent) != loaded["supersedes"]["sha256"]:
-        raise ValueError("FedYogi calibration v1 evidence hash mismatch")
+        raise ValueError("FedYogi superseded calibration evidence hash mismatch")
     return loaded
 
 
@@ -310,8 +310,8 @@ def _run_unit(
         project_root=project_root, method_config=method_config
     )
     provenance = {
-        "schema_version": 2,
-        "audit": "baseline_fairness_fedyogi_calibration_v2",
+        "schema_version": 3,
+        "audit": "baseline_fairness_fedyogi_calibration_v3",
         "calibration_id": _APPROVED["calibration_id"],
         "method": "FEDYOGI_STRICT",
         "phase": "development",
@@ -424,7 +424,7 @@ def run_calibration(
     staging = Path(tempfile.mkdtemp(prefix=f".{root.name}.", dir=root.parent))
     units = tuple(
         CalibrationUnit(
-            float(lr), f"fedyogi-v2-lr-{str(lr).replace('.', 'p')}-seed42"
+            float(lr), f"fedyogi-v3-lr-{str(lr).replace('.', 'p')}-seed42"
         )
         for lr in config["grid"]["server_lr"]
     )
@@ -467,7 +467,7 @@ def run_calibration(
         )
         freeze_ready = selected_improvement >= readiness_threshold
         summary = {
-            "schema_version": 2,
+            "schema_version": 3,
             "status": "complete",
             "calibration_id": config["calibration_id"],
             "calibration_outcome": (
@@ -529,9 +529,9 @@ def run_calibration(
     except BaseException:
         try:
             _json_no_replace(staging / "FAILED.json", {
-                "schema_version": 2,
+                "schema_version": 3,
                 "status": "failed",
-                "audit": "baseline_fairness_fedyogi_calibration_v2",
+                "audit": "baseline_fairness_fedyogi_calibration_v3",
                 "snapshot": dict(snapshot),
             })
             failed = staging.with_name(f"{root.name}.failed-{staging.name.rsplit('.', 1)[-1]}")

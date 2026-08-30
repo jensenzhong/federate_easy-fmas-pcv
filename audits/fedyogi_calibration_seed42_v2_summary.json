@@ -1,0 +1,369 @@
+{
+  "calibration_id": "fedyogi_lr_refinement_v2",
+  "calibration_outcome": "selected_stable_but_stalled_point",
+  "deepseek_used": false,
+  "eligibility_policy": {
+    "max_final_to_best_mape_ratio": 1.5,
+    "max_round_mape": 2.0,
+    "ratio_denominator_floor": 1e-12,
+    "required_completed_rounds": 20
+  },
+  "failure_policy": {
+    "all_other_failures": "abort_calibration",
+    "nonfinite_prediction": "disqualify_without_retry_or_grid_replacement"
+  },
+  "locked_test_used": false,
+  "readiness_policy": {
+    "min_best_mape_improvement_from_first": 0.05
+  },
+  "recommended_freeze_ready": false,
+  "runs": [
+    {
+      "eligible_for_selection": true,
+      "failure": null,
+      "metrics": {
+        "mae": 2914992.3130425885,
+        "mape": 0.9987142704146724,
+        "r2": -1.8247612933406328,
+        "rmse": 3625243.142484344,
+        "sample_count": 103
+      },
+      "run_id": "fedyogi-v2-lr-0p01-seed42",
+      "selected_mape_by_round": [
+        0.9999999845702611,
+        0.9999999823978369,
+        0.999999928591151,
+        0.9999996365940456,
+        0.9999985557494693,
+        0.9999956130049372,
+        0.999989523112082,
+        0.999979639496781,
+        0.9999671225168607,
+        0.9999535414948537,
+        0.9999402923747145,
+        0.9999282423919591,
+        0.9999165666369447,
+        0.9999017302405244,
+        0.9998749179635136,
+        0.9998230835113114,
+        0.9997244489763802,
+        0.9995400068230806,
+        0.9992248514610087,
+        0.9987142704146724
+      ],
+      "server_lr": 0.01,
+      "stability": {
+        "best_improvement_from_first": 0.0012857141754268806,
+        "best_round_index": 20,
+        "best_round_mape": 0.9987142704146724,
+        "checks": {
+          "completed_rounds": true,
+          "final_to_best_mape_ratio": true,
+          "max_round_mape": true
+        },
+        "eligible": true,
+        "final_round_mape": 0.9987142704146724,
+        "final_to_best_mape_ratio": 1.0,
+        "first_round_mape": 0.9999999845702611,
+        "max_round_mape": 0.9999999845702611,
+        "round_count": 20
+      },
+      "stability_eligible": true,
+      "status": "complete"
+    },
+    {
+      "eligible_for_selection": false,
+      "failure": null,
+      "metrics": {
+        "mae": 2501118.7882092623,
+        "mape": 0.8043112431660325,
+        "r2": -1.4840652799471044,
+        "rmse": 3399599.56690732,
+        "sample_count": 103
+      },
+      "run_id": "fedyogi-v2-lr-0p02-seed42",
+      "selected_mape_by_round": [
+        0.9999999858545605,
+        0.9999998555061997,
+        0.9999983485595199,
+        0.9999897515797171,
+        0.9999636607684808,
+        0.9999204225599367,
+        0.9998731544743762,
+        0.9998336955669564,
+        0.9997557736222915,
+        0.999412045151427,
+        0.9979443024929633,
+        0.9927455966017209,
+        0.9765861596430787,
+        0.9342858161569874,
+        0.8622470838766921,
+        0.8043112431660326,
+        0.9293231859601743,
+        1.312928097508292,
+        2.000067623548165,
+        3.0845598476800475
+      ],
+      "server_lr": 0.02,
+      "stability": {
+        "best_improvement_from_first": 0.19568874545663117,
+        "best_round_index": 16,
+        "best_round_mape": 0.8043112431660326,
+        "checks": {
+          "completed_rounds": true,
+          "final_to_best_mape_ratio": false,
+          "max_round_mape": false
+        },
+        "eligible": false,
+        "final_round_mape": 3.0845598476800475,
+        "final_to_best_mape_ratio": 3.8350326119254645,
+        "first_round_mape": 0.9999999858545605,
+        "max_round_mape": 3.0845598476800475,
+        "round_count": 20
+      },
+      "stability_eligible": false,
+      "status": "complete"
+    },
+    {
+      "eligible_for_selection": false,
+      "failure": null,
+      "metrics": {
+        "mae": 2561459.8714371766,
+        "mape": 0.8690910756845608,
+        "r2": -1.5289466078874603,
+        "rmse": 3430173.5448273225,
+        "sample_count": 103
+      },
+      "run_id": "fedyogi-v2-lr-0p03-seed42",
+      "selected_mape_by_round": [
+        0.9999999726047111,
+        0.9999990824707345,
+        0.9999870327840383,
+        0.9999222030470323,
+        0.9997933668801067,
+        0.9996654528008422,
+        0.9993852980561964,
+        0.9973984034346455,
+        0.9824476535231474,
+        0.9178990719357494,
+        0.8690910756845608,
+        1.4636072914643945,
+        3.2128311684539477,
+        6.516735065690719,
+        12.598492439610247,
+        23.8318934243228,
+        42.16470116201872,
+        72.68788716007225,
+        117.31272790074216,
+        171.25128283016878
+      ],
+      "server_lr": 0.03,
+      "stability": {
+        "best_improvement_from_first": 0.13090890050643744,
+        "best_round_index": 11,
+        "best_round_mape": 0.8690910756845608,
+        "checks": {
+          "completed_rounds": true,
+          "final_to_best_mape_ratio": false,
+          "max_round_mape": false
+        },
+        "eligible": false,
+        "final_round_mape": 171.25128283016878,
+        "final_to_best_mape_ratio": 197.04641736802847,
+        "first_round_mape": 0.9999999726047111,
+        "max_round_mape": 171.25128283016878,
+        "round_count": 20
+      },
+      "stability_eligible": false,
+      "status": "complete"
+    },
+    {
+      "eligible_for_selection": false,
+      "failure": null,
+      "metrics": {
+        "mae": 2623076.686908694,
+        "mape": 0.8700162279690552,
+        "r2": -1.5872772167829319,
+        "rmse": 3469506.8157911114,
+        "sample_count": 103
+      },
+      "run_id": "fedyogi-v2-lr-0p05-seed42",
+      "selected_mape_by_round": [
+        0.999999818649223,
+        0.9999875399067826,
+        0.9998364575602277,
+        0.9994115213081904,
+        0.9985894872095469,
+        0.9809415969734996,
+        0.8700162279690552,
+        2.676289105714608,
+        14.600151069280983,
+        55.51124513320461,
+        153.37162175413815,
+        314.5597512505751,
+        519.1794972531629,
+        780.7833566848198,
+        1125.2778821613335,
+        1630.5581590046288,
+        1999.8012662803706,
+        1935.7196753609892,
+        1390.0471235025584,
+        869.0136879991353
+      ],
+      "server_lr": 0.05,
+      "stability": {
+        "best_improvement_from_first": 0.12998361425279728,
+        "best_round_index": 7,
+        "best_round_mape": 0.8700162279690552,
+        "checks": {
+          "completed_rounds": true,
+          "final_to_best_mape_ratio": false,
+          "max_round_mape": false
+        },
+        "eligible": false,
+        "final_round_mape": 869.0136879991353,
+        "final_to_best_mape_ratio": 998.8476767010884,
+        "first_round_mape": 0.999999818649223,
+        "max_round_mape": 1999.8012662803706,
+        "round_count": 20
+      },
+      "stability_eligible": false,
+      "status": "complete"
+    },
+    {
+      "eligible_for_selection": false,
+      "failure": null,
+      "metrics": {
+        "mae": 2712467.9590401165,
+        "mape": 0.8983659111596967,
+        "r2": -1.659532992157997,
+        "rmse": 3517620.2602903177,
+        "sample_count": 103
+      },
+      "run_id": "fedyogi-v2-lr-0p075-seed42",
+      "selected_mape_by_round": [
+        0.9999986802834531,
+        0.9998875924496886,
+        0.9992744384192533,
+        0.9951437619025014,
+        0.8983659111596967,
+        6.2062559311530565,
+        71.71306649392443,
+        403.1815867634167,
+        1441.0228353016726,
+        2875.9555891191244,
+        3618.9311019590123,
+        3630.8486637244396,
+        4039.408338256151,
+        4651.461394186861,
+        4961.69658744499,
+        4470.696328429778,
+        3269.986001586224,
+        2024.3215035146877,
+        1129.047786921572,
+        669.9368016422737
+      ],
+      "server_lr": 0.075,
+      "stability": {
+        "best_improvement_from_first": 0.10163290325038053,
+        "best_round_index": 5,
+        "best_round_mape": 0.8983659111596967,
+        "checks": {
+          "completed_rounds": true,
+          "final_to_best_mape_ratio": false,
+          "max_round_mape": false
+        },
+        "eligible": false,
+        "final_round_mape": 669.9368016422737,
+        "final_to_best_mape_ratio": 745.7282086510331,
+        "first_round_mape": 0.9999986802834531,
+        "max_round_mape": 4961.69658744499,
+        "round_count": 20
+      },
+      "stability_eligible": false,
+      "status": "complete"
+    },
+    {
+      "eligible_for_selection": false,
+      "failure": null,
+      "metrics": {
+        "mae": 2722581.0255389665,
+        "mape": 0.9026890664041931,
+        "r2": -1.67201608373513,
+        "rmse": 3525865.950486565,
+        "sample_count": 103
+      },
+      "run_id": "fedyogi-v2-lr-0p1-seed42",
+      "selected_mape_by_round": [
+        0.9999936193275765,
+        0.9993559059440171,
+        0.997145604287097,
+        0.9026890664041933,
+        8.96769441419996,
+        186.85515799981331,
+        1777.355533956996,
+        6044.969360568452,
+        11915.658820779929,
+        12734.529472733953,
+        7810.795102814995,
+        5285.549118601696,
+        4962.631145042331,
+        4735.316101431143,
+        3462.736233881711,
+        2170.649270266238,
+        1412.7259566013377,
+        1106.4340385641449,
+        1059.4331121954967,
+        1288.2773550278112
+      ],
+      "server_lr": 0.1,
+      "stability": {
+        "best_improvement_from_first": 0.09730517379582224,
+        "best_round_index": 4,
+        "best_round_mape": 0.9026890664041933,
+        "checks": {
+          "completed_rounds": true,
+          "final_to_best_mape_ratio": false,
+          "max_round_mape": false
+        },
+        "eligible": false,
+        "final_round_mape": 1288.2773550278112,
+        "final_to_best_mape_ratio": 1427.155155605889,
+        "first_round_mape": 0.9999936193275765,
+        "max_round_mape": 12734.529472733953,
+        "round_count": 20
+      },
+      "stability_eligible": false,
+      "status": "complete"
+    }
+  ],
+  "schema_version": 2,
+  "selected_readiness": {
+    "best_mape_improvement_from_first": 0.0012857141754268806,
+    "minimum_required": 0.05,
+    "passed": false
+  },
+  "selected_run_id": "fedyogi-v2-lr-0p01-seed42",
+  "selected_server_lr": 0.01,
+  "selection_partition": "controller_validation",
+  "selection_rule": [
+    "mape",
+    "rmse",
+    "mae",
+    "server_lr"
+  ],
+  "snapshot": {
+    "base_config_sha256": "72e184db6e9fe616df93909cb28f1f173e8a238cc804767df74052f9aeb4239a",
+    "calibration_config_sha256": "01c4104235e1623d34f2a29e09deca47d05bf36f39d35b9c6d61e6d34848a8e7",
+    "git_commit": "3a82fb3966c88e4d69c4bab76814c772ed7f5549",
+    "git_dirty": false,
+    "method_config_sha256": "a243cd33bc8ace0ff2905b9e7cdf168a51f95cf1b7c277893c39b29b6c7da4b9",
+    "partition_sha256": "eb527a597c43ef8ef45ec24788c88aedcd13b413115a80a9db5aceb519151935",
+    "sealed_partition_metadata_sha256": "5623f91cbc76248db927d413e49774b6cbc62782bd55f684d0153875c1d3c455"
+  },
+  "status": "complete",
+  "supersedes": {
+    "sha256": "0d1ed24b032f13065b83ab9e3d00417a099bbc57c407578b3f71eeabd8137d30",
+    "summary": "audits/fedyogi_calibration_seed42_v1_summary.json"
+  }
+}

@@ -1,0 +1,38 @@
+schema_version: 3
+calibration_id: fedyogi_lr_boundary_v3
+supersedes:
+  summary: audits/fedyogi_calibration_seed42_v2_summary.json
+  sha256: a1cc12f56146da893b386d75182fb0eb641fd4c2276a2272e2c70a47e682f7e8
+approval: user_approved_2026-08-30
+phase: development
+method: FEDYOGI_STRICT
+training_seed: 42
+num_rounds: 20
+partition_manifest: results/manifests/strict_partition_v1.csv
+selection_partition: controller_validation
+output_root: results/development/seed42/baseline_calibration_v3
+eligibility_policy:
+  required_completed_rounds: 20
+  max_round_mape: 2.0
+  max_final_to_best_mape_ratio: 1.5
+  ratio_denominator_floor: 1.0e-12
+readiness_policy:
+  min_best_mape_improvement_from_first: 0.05
+selection_rule:
+  - mape
+  - rmse
+  - mae
+  - server_lr
+failure_policy:
+  nonfinite_prediction: disqualify_without_retry_or_grid_replacement
+  all_other_failures: abort_calibration
+grid:
+  server_lr:
+    - 0.0125
+    - 0.015
+    - 0.0175
+  beta1: 0.9
+  beta2: 0.99
+  tau: 0.001
+  max_coordinate_step_ratio: null
+  clip: null

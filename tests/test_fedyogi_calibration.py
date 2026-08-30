@@ -52,17 +52,17 @@ def test_calibration_script_is_directly_executable():
 
 def test_calibration_config_is_exactly_preregistered():
     config = calibration.load_calibration_config(
-        Path("configs/fedyogi_calibration_seed42_v2.yaml")
+        Path("configs/fedyogi_calibration_seed42_v3.yaml")
     )
     assert config == {
-        "schema_version": 2,
-        "calibration_id": "fedyogi_lr_refinement_v2",
+        "schema_version": 3,
+        "calibration_id": "fedyogi_lr_boundary_v3",
         "supersedes": {
             "summary": (
-                "audits/fedyogi_calibration_seed42_v1_summary.json"
+                "audits/fedyogi_calibration_seed42_v2_summary.json"
             ),
             "sha256": (
-                "0d1ed24b032f13065b83ab9e3d00417a099bbc57c407578b3f71eeabd8137d30"
+                "a1cc12f56146da893b386d75182fb0eb641fd4c2276a2272e2c70a47e682f7e8"
             ),
         },
         "approval": "user_approved_2026-08-30",
@@ -72,7 +72,7 @@ def test_calibration_config_is_exactly_preregistered():
         "num_rounds": 20,
         "partition_manifest": "results/manifests/strict_partition_v1.csv",
         "selection_partition": "controller_validation",
-        "output_root": "results/development/seed42/baseline_calibration_v2",
+        "output_root": "results/development/seed42/baseline_calibration_v3",
         "eligibility_policy": {
             "required_completed_rounds": 20,
             "max_round_mape": 2.0,
@@ -90,7 +90,7 @@ def test_calibration_config_is_exactly_preregistered():
             "all_other_failures": "abort_calibration",
         },
         "grid": {
-            "server_lr": [0.01, 0.02, 0.03, 0.05, 0.075, 0.1],
+            "server_lr": [0.0125, 0.015, 0.0175],
             "beta1": 0.9,
             "beta2": 0.99,
             "tau": 0.001,
@@ -102,7 +102,7 @@ def test_calibration_config_is_exactly_preregistered():
 
 def test_matrix_is_fixed_serial_and_no_api_or_locked_test(tmp_path, monkeypatch):
     config = calibration.load_calibration_config(
-        Path("configs/fedyogi_calibration_seed42_v2.yaml")
+        Path("configs/fedyogi_calibration_seed42_v3.yaml")
     )
     calls = []
 
@@ -135,10 +135,10 @@ def test_matrix_is_fixed_serial_and_no_api_or_locked_test(tmp_path, monkeypatch)
         "partition_sha256": "e" * 64,
         "sealed_partition_metadata_sha256": "f" * 64,
     })
-    output = tmp_path / "baseline_calibration_v2"
+    output = tmp_path / "baseline_calibration_v3"
     result = calibration.run_calibration(config=config, project_root=Path.cwd(), output_root=output)
-    assert calls == [0.01, 0.02, 0.03, 0.05, 0.075, 0.1]
-    assert result["selected_server_lr"] == 0.01
+    assert calls == [0.0125, 0.015, 0.0175]
+    assert result["selected_server_lr"] == 0.0125
     assert result["selection_rule"] == ["mape", "rmse", "mae", "server_lr"]
     assert not list(output.rglob("*locked_test*"))
     assert not list(output.rglob("*agent_call*"))
@@ -146,7 +146,7 @@ def test_matrix_is_fixed_serial_and_no_api_or_locked_test(tmp_path, monkeypatch)
 
 def test_calibration_refuses_dirty_git_and_existing_output(tmp_path, monkeypatch):
     config = calibration.load_calibration_config(
-        Path("configs/fedyogi_calibration_seed42_v2.yaml")
+        Path("configs/fedyogi_calibration_seed42_v3.yaml")
     )
     monkeypatch.setattr(calibration, "_capture_snapshot", lambda *_: {
         "git_commit": "a" * 40, "git_dirty": True,
@@ -174,7 +174,7 @@ def test_calibration_refuses_dirty_git_and_existing_output(tmp_path, monkeypatch
 
 def test_noncanonical_config_copy_is_rejected(tmp_path):
     config = calibration.load_calibration_config(
-        Path("configs/fedyogi_calibration_seed42_v2.yaml")
+        Path("configs/fedyogi_calibration_seed42_v3.yaml")
     )
     supplied = tmp_path / "approved-copy.yaml"
     supplied.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
@@ -184,7 +184,7 @@ def test_noncanonical_config_copy_is_rejected(tmp_path):
 
 def test_failed_unit_does_not_occupy_final_output(tmp_path, monkeypatch):
     config = calibration.load_calibration_config(
-        Path("configs/fedyogi_calibration_seed42_v2.yaml")
+        Path("configs/fedyogi_calibration_seed42_v3.yaml")
     )
     snapshot = {
         "git_commit": "a" * 40, "git_dirty": False,
@@ -199,13 +199,13 @@ def test_failed_unit_does_not_occupy_final_output(tmp_path, monkeypatch):
         calibration, "_run_unit",
         lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("unit failed")),
     )
-    output = tmp_path / "baseline_calibration_v2"
+    output = tmp_path / "baseline_calibration_v3"
     with pytest.raises(RuntimeError, match="unit failed"):
         calibration.run_calibration(
             config=config, project_root=Path.cwd(), output_root=output
         )
     assert not output.exists()
-    failed = list(tmp_path.glob("baseline_calibration_v2.failed-*"))
+    failed = list(tmp_path.glob("baseline_calibration_v3.failed-*"))
     assert len(failed) == 1
     assert json.loads((failed[0] / "FAILED.json").read_text(encoding="utf-8"))[
         "status"
@@ -217,7 +217,9 @@ def test_exact_nonfinite_prediction_is_disqualified_with_evidence(
 ):
     output = tmp_path / "staging"
     output.mkdir()
-    unit = calibration.CalibrationUnit(0.1, "fedyogi-v2-lr-0p1-seed42")
+    unit = calibration.CalibrationUnit(
+        0.0175, "fedyogi-v3-lr-0p0175-seed42"
+    )
     snapshot = {
         "git_commit": "a" * 40, "git_dirty": False,
         "calibration_config_sha256": "b" * 64,
@@ -228,6 +230,11 @@ def test_exact_nonfinite_prediction_is_disqualified_with_evidence(
     }
 
     def paused_training(context):
+        assert context.method_config["fedyogi_beta1"] == 0.9
+        assert context.method_config["fedyogi_beta2"] == 0.99
+        assert context.method_config["fedyogi_tau"] == 0.001
+        assert context.method_config["fedyogi_max_coordinate_step_ratio"] is None
+        assert context.method_config["fedyogi_anchor_clip_norm"] is None
         (context.run_directory / "rounds.jsonl").write_text(
             '{"event":"round_committed","round_index":1,'
             '"selected_mape":1.0}\n', encoding="utf-8"
@@ -325,7 +332,7 @@ def test_other_value_error_is_not_disqualified_as_numeric_divergence(tmp_path):
 def test_run_unit_rethrows_nonapproved_pause(tmp_path, monkeypatch):
     output = tmp_path / "staging"
     output.mkdir()
-    unit = calibration.CalibrationUnit(0.03, "fedyogi-v2-lr-0p03-seed42")
+    unit = calibration.CalibrationUnit(0.015, "fedyogi-v3-lr-0p015-seed42")
     snapshot = {
         "git_commit": "a" * 40, "git_dirty": False,
         "calibration_config_sha256": "b" * 64,
@@ -358,7 +365,7 @@ def test_unstable_better_point_is_not_selected(
     tmp_path, monkeypatch
 ):
     config = calibration.load_calibration_config(
-        Path("configs/fedyogi_calibration_seed42_v2.yaml")
+        Path("configs/fedyogi_calibration_seed42_v3.yaml")
     )
     monkeypatch.setattr(calibration, "_capture_snapshot", lambda *_: {
         "git_commit": "a" * 40, "git_dirty": False,
@@ -373,19 +380,18 @@ def test_unstable_better_point_is_not_selected(
         run_dir = output_root / unit.run_id
         run_dir.mkdir()
         mape = {
-            0.01: 0.99, 0.02: 0.80, 0.03: 0.70,
-            0.05: 0.60, 0.075: 0.50, 0.1: 0.40,
+            0.0125: 0.85, 0.015: 0.75, 0.0175: 0.65,
         }[unit.server_lr]
         return _complete_evidence(
-            unit, run_dir, mape=mape, eligible=unit.server_lr != 0.1
+            unit, run_dir, mape=mape, eligible=unit.server_lr != 0.0175
         )
 
     monkeypatch.setattr(calibration, "_run_unit", fake_run)
-    output = tmp_path / "baseline_calibration_v2"
+    output = tmp_path / "baseline_calibration_v3"
     result = calibration.run_calibration(
         config=config, project_root=Path.cwd(), output_root=output
     )
-    assert result["selected_server_lr"] == 0.075
+    assert result["selected_server_lr"] == 0.015
     assert result["recommended_freeze_ready"] is True
     assert result["runs"][-1]["status"] == "complete"
     assert result["runs"][-1]["stability_eligible"] is False
@@ -491,7 +497,7 @@ def test_zero_error_trajectory_has_zero_improvement():
 
 def test_stable_but_stalled_selection_is_not_freeze_ready(tmp_path, monkeypatch):
     config = calibration.load_calibration_config(
-        Path("configs/fedyogi_calibration_seed42_v2.yaml")
+        Path("configs/fedyogi_calibration_seed42_v3.yaml")
     )
     monkeypatch.setattr(calibration, "_capture_snapshot", lambda *_: {
         "git_commit": "a" * 40, "git_dirty": False,
@@ -511,16 +517,16 @@ def test_stable_but_stalled_selection_is_not_freeze_ready(tmp_path, monkeypatch)
     result = calibration.run_calibration(
         config=config,
         project_root=Path.cwd(),
-        output_root=tmp_path / "baseline_calibration_v2",
+        output_root=tmp_path / "baseline_calibration_v3",
     )
-    assert result["selected_server_lr"] == 0.01
+    assert result["selected_server_lr"] == 0.0125
     assert result["recommended_freeze_ready"] is False
     assert result["calibration_outcome"] == "selected_stable_but_stalled_point"
 
 
 def test_all_unstable_points_abort_without_final_output(tmp_path, monkeypatch):
     config = calibration.load_calibration_config(
-        Path("configs/fedyogi_calibration_seed42_v2.yaml")
+        Path("configs/fedyogi_calibration_seed42_v3.yaml")
     )
     monkeypatch.setattr(calibration, "_capture_snapshot", lambda *_: {
         "git_commit": "a" * 40, "git_dirty": False,
@@ -537,10 +543,10 @@ def test_all_unstable_points_abort_without_final_output(tmp_path, monkeypatch):
         return _complete_evidence(unit, run_dir, mape=0.4, eligible=False)
 
     monkeypatch.setattr(calibration, "_run_unit", fake_run)
-    output = tmp_path / "baseline_calibration_v2"
+    output = tmp_path / "baseline_calibration_v3"
     with pytest.raises(RuntimeError, match="no stable eligible"):
         calibration.run_calibration(
             config=config, project_root=Path.cwd(), output_root=output
         )
     assert not output.exists()
-    assert len(list(tmp_path.glob("baseline_calibration_v2.failed-*"))) == 1
+    assert len(list(tmp_path.glob("baseline_calibration_v3.failed-*"))) == 1
