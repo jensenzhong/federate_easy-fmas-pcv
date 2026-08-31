@@ -2049,3 +2049,13 @@ def test_proposer_prompts_require_json_numeric_literals(role):
     assert "1.0/3.0" in content
     assert "percentages" in content
     assert "formulas" in content
+
+
+def test_critic_prompt_requires_exact_candidate_id_copying():
+    content = (PROMPT_DIR / "critic.md").read_text(encoding="utf-8")
+
+    assert "character-for-character" in content
+    assert "Never renumber" in content
+    assert "candidate-3" in content
+    assert "unless that exact string already appears" in content
+    assert "aliases" in content
