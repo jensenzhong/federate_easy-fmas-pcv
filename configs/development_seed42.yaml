@@ -7,7 +7,7 @@ output_root: results/development/seed42
 deepseek:
   model: deepseek-v4-flash
   base_url: https://api.deepseek.com
-  timeout_seconds: 60
+  timeout_seconds: 120
 development_gate:
   baseline_selection: lowest_mape_of_strict_baselines
   relative_mape_improvement_min: 0.0

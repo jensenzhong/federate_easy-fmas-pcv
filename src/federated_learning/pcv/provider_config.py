@@ -9,7 +9,7 @@ from typing import Any
 DEEPSEEK_MODEL = "deepseek-v4-flash"
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 DEEPSEEK_TEMPERATURE = 0.8
-DEEPSEEK_TIMEOUT_SECONDS = 60
+DEEPSEEK_TIMEOUT_SECONDS = 120
 
 
 def deepseek_protocol_config() -> dict[str, Any]:

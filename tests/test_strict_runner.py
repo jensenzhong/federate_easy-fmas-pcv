@@ -507,7 +507,7 @@ def test_training_runtime_uses_exact_deepseek_settings_from_provenance():
                 "model": "deepseek-v4-flash",
                 "base_url": "https://api.deepseek.com",
                 "temperature": 0.8,
-                "timeout_seconds": 60,
+                "timeout_seconds": 120,
             }
         }
     )
@@ -515,7 +515,7 @@ def test_training_runtime_uses_exact_deepseek_settings_from_provenance():
     assert settings == {
         "model": "deepseek-v4-flash",
         "base_url": "https://api.deepseek.com",
-        "timeout_seconds": 60,
+        "timeout_seconds": 120,
     }
 
 
@@ -528,7 +528,7 @@ def test_training_runtime_rejects_old_deepseek_model_provenance():
                     "model": "deepseek-chat",
                     "base_url": "https://api.deepseek.com",
                     "temperature": 0.8,
-                    "timeout_seconds": 60,
+                    "timeout_seconds": 120,
                 }
             }
         )
