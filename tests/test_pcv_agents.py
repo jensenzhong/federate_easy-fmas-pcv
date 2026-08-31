@@ -2059,3 +2059,13 @@ def test_critic_prompt_requires_exact_candidate_id_copying():
     assert "candidate-3" in content
     assert "unless that exact string already appears" in content
     assert "aliases" in content
+
+
+def test_coordinator_prompt_forbids_duplicate_json_keys():
+    content = (PROMPT_DIR / "coordinator.md").read_text(encoding="utf-8")
+    folded = content.casefold()
+
+    assert "exactly once" in content
+    assert "duplicate json keys" in folded
+    assert "single `risk_acknowledgement` string" in content
+    assert "Never repeat `risk_acknowledgement`" in content
