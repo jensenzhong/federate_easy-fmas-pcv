@@ -237,6 +237,17 @@ def test_single_proposer_prompt_requires_every_action_to_repeat_all_fields():
     assert "code fences" in prompt
 
 
+def test_single_proposer_prompt_explicitly_forbids_zero_weight_clients():
+    prompt = (PROMPT_DIR / "single_proposer.md").read_text(encoding="utf-8")
+
+    assert "A weight of 0 or any value below 0.05 is invalid" in prompt
+    assert "never exclude, drop, or omit a provided client" in prompt
+    assert "use exactly 0.05 as its minimum weight" in prompt
+    assert "numerically verify every client weight" in prompt
+    assert "numerically verify that the weights sum to" in prompt
+    assert "1.0 for each candidate independently" in prompt
+
+
 def test_staged_fmas_real_dto_shapes_reach_all_later_roles_as_json(
     safe_payload,
 ):
@@ -1163,6 +1174,60 @@ def test_proposer_validator_rejects_weights_outside_rounding_contract(weights):
             client_ids=("client-a", "client-b", "client-c"),
             role="performance_proposer",
         )
+
+
+def test_real_single_proposer_zero_weight_failure_is_not_semantically_repaired(
+    tmp_path, safe_payload,
+):
+    raw_response = {
+        "diagnostic": {
+            "state_summary": "round seven aggregate telemetry",
+            "risks": ["high validation error"],
+            "priorities": ["stabilize aggregate update"],
+        },
+        "candidates": [
+            proposal(
+                candidate_id="perf_round7_fedavg_lr075",
+                weights={"client-a": 0.5, "client-b": 0.5, "client-c": 0.0},
+                server_optimizer="fedavg",
+                server_lr_scale=0.75,
+                update_clip_norm=1.0,
+            )
+        ],
+    }
+    payload = {
+        "round_index": 7,
+        "clients": [
+            *safe_payload["clients"],
+            {
+                "client_id": "client-c",
+                "sample_count": 10,
+                "train_loss": 0.25,
+                "val_mape": 0.35,
+                "val_rmse": 1.15,
+                "update_norm": 0.45,
+                "cosine_to_mean": 0.7,
+                "cosine_to_previous": 0.6,
+            },
+        ],
+    }
+    telemetry = AppendOnlyTelemetry(tmp_path / "calls.jsonl")
+    session = FakeSession(FakeResponse(content=json.dumps(raw_response)))
+    agent = StagedDeepSeekAgent(make_client(session, telemetry=telemetry), PROMPT_DIR)
+
+    with pytest.raises(DeepSeekCallError) as error:
+        agent.call(role="single_proposer", payload=payload)
+
+    assert error.value.category == "schema"
+    assert error.value.role == "single_proposer"
+    record = json.loads((tmp_path / "calls.jsonl").read_text(encoding="utf-8"))
+    assert record["failure_detail"] == "candidate weight outside [0.05, 0.80]"
+    assert record["canonicalization_applied"] is False
+    assert record["parsed_response"]["candidates"][0]["weights"] == {
+        "client-a": 0.5,
+        "client-b": 0.5,
+        "client-c": 0.0,
+    }
 
 
 def test_proposer_weight_rounding_tolerance_has_closed_two_sided_boundary():
