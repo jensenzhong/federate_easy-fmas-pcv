@@ -1,6 +1,6 @@
 # FMAS-PCV Project Status
 
-> Last verified: 2026-08-10
+> Last verified: 2026-08-31
 
 ## Current State
 
@@ -45,27 +45,18 @@ accepted by the canonical formal runner.
 
 ## Verification Evidence
 
-Current offline verification after the provider-model switch:
+Current offline verification after the JSON numeric-literal prompt fix:
 
-- Full repository: `758 passed`, plus 69 existing SciPy precision-loss warnings.
-- Focused strict runner/development/agent checks: `200 passed`.
-- Plaintext API-key scans: no matches.
+- Full repository: `766 passed`, 69 subtests passed, plus 69 existing SciPy
+  precision-loss warnings.
+- Focused agent, development-runner, protocol, and engine checks: `313 passed`.
+- Independent prompt-contract review: PASS; the reviewer reran
+  `tests/test_pcv_agents.py` with `138 passed`.
+- The fix changes only proposer output formatting instructions. It does not change
+  candidate semantics, client telemetry, the data partition, metrics, gates, or the
+  locked-test boundary.
 
-The earlier successful DeepSeek preflight is retained as historical evidence only:
-
-- date: 2026-08-10
-- model: `deepseek-chat`
-- endpoint: `https://api.deepseek.com/chat/completions`
-- role: `preflight`
-- real request count: exactly one
-- validated response: `{"status":"ready","model":"deepseek-chat"}`
-- training/test execution: none
-- credential material in telemetry: none detected
-
-The immutable preflight provenance and sanitized call telemetry are stored under
-`results/development/seed42/deepseek-preflight/`.
-
-The current approved provider contract is now:
+The approved provider contract remains:
 
 - model: `deepseek-v4-flash`
 - endpoint: `https://api.deepseek.com/chat/completions`
@@ -73,28 +64,32 @@ The current approved provider contract is now:
 - credential source: process-only `DEEPSEEK_API_KEY`
 - retry/fallback: disabled in the strict runner
 
-The first preflight at commit `859a404` used the superseded model and failed its
-strict response schema. It remains preserved as failure evidence and is not valid
-for the new provider contract. A fresh real preflight is required after the model
-switch is committed.
+The successful preflight at commit `440aa5f` is retained as historical evidence, but
+its proposer prompt hashes predate the numeric-literal fix. A fresh single real
+preflight is therefore required on the replacement clean commit.
 
 ## Active Gate
 
-`study_manifest.yaml` still has `formal_frozen: false`. The partial seed-42 matrix
-from commit `c0902ff` was preserved under `results/development/seed42/invalidated/`
-after the single-proposer prompt contract changed. No replacement matrix is active.
-After a successful `deepseek-v4-flash` preflight, the fixed nine-run order remains
-three non-LLM runs, three `SA_PCV_FEDYOGI` repetitions, and three
-`FMAS_PCV_FEDYOGI` repetitions on one clean commit.
+`study_manifest.yaml` still has `formal_frozen: false`. On commit `440aa5f`, the
+replacement matrix completed FedAvg, FedYogi, DPCV, and all three SA repetitions.
+FMAS repetition 1 then stopped before completing round 1 because the real
+`balance_proposer` response used the invalid JSON expression `1.0/3.0` as a weight.
+No retry, fallback, fake response, or arithmetic interpretation was performed.
+
+The minimal approved fix requires every proposer to return JSON numeric literals and
+explicitly prohibits fractions, arithmetic expressions, percentages, formulas, quoted
+numbers, NaN, and Infinity. The parser remains strict and unchanged.
+
+Because the prompt hashes and Git commit change, the partial `440aa5f` matrix must be
+preserved as invalidated evidence. After a successful fresh preflight, the fixed
+nine-run order remains three non-LLM runs, three `SA_PCV_FEDYOGI` repetitions, and
+three `FMAS_PCV_FEDYOGI` repetitions on one clean commit.
 
 The predeclared trajectory gate requires validation MAPE not to degrade relative to the
 strongest strict baseline, RMSE increase at most 5%, and R2 difference at least -0.02.
 At least two of the three FMAS repetitions must pass. These are development screening
-criteria, not statistical-significance or equivalence claims.
-
-Real training requires one final approval after displaying the exact matrix, clean Git
-commit, development-config hash, partition hash, prompt hashes, and output root. Locked-test
-evaluation remains prohibited until a later formal-freeze gate.
+criteria, not statistical-significance or equivalence claims. Locked-test evaluation
+remains prohibited until a later formal-freeze gate.
 
 ## Offline Verification Command
 
@@ -102,6 +97,7 @@ evaluation remains prohibited until a later formal-freeze gate.
 python -m pytest -q --basetemp=.pytest_release
 ```
 
-The current offline baseline is `669 passed` plus the same 69 existing SciPy warnings.
+The current offline baseline is `766 passed`, 69 subtests passed, plus the same 69
+existing SciPy warnings.
 The real preflight is an auditable one-time operation and should not be repeated merely
 to increase API-call counts.

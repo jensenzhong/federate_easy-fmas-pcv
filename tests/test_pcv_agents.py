@@ -2030,3 +2030,22 @@ def test_prompt_files_are_complete_hashable_and_do_not_request_private_data():
             "predictions",
         ):
             assert forbidden not in requested_inputs
+
+
+@pytest.mark.parametrize(
+    "role",
+    [
+        "performance_proposer",
+        "stability_proposer",
+        "balance_proposer",
+        "single_proposer",
+    ],
+)
+def test_proposer_prompts_require_json_numeric_literals(role):
+    content = (PROMPT_DIR / f"{role}.md").read_text(encoding="utf-8")
+
+    assert "JSON numeric literals" in content
+    assert "1/3" in content
+    assert "1.0/3.0" in content
+    assert "percentages" in content
+    assert "formulas" in content

@@ -17,6 +17,10 @@ never exclude, drop, or omit a provided client. If you want to minimize one
 client's influence, use exactly 0.05 as its minimum weight and redistribute the
 remaining weight across the other provided clients while preserving a total of
 1.0. `server_optimizer` is exactly `fedavg` or `fedyogi`.
+All weights and numeric fields must be JSON numeric literals, for example
+0.3333333333333333. Never return arithmetic expressions such as 1/3 or
+1.0/3.0, percentages such as 33.33%, formulas, quoted numbers, NaN, or
+Infinity.
 `server_lr_scale` is exactly 0.50, 0.75, 1.00, or 1.25.
 `update_clip_norm` is exactly null, 0.5, 1.0, or 2.0. `source` is exactly
 `performance_proposer`. Do not add fields, clients, actions, tools, data, or
