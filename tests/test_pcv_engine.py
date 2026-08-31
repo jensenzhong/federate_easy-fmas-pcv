@@ -541,6 +541,30 @@ def test_fedavg_commit_clears_fedyogi_moments_and_records_reset(tmp_path):
     assert result.selected_candidate_id == "anchor_fedavg"
 
 
+def test_fedavg_candidate_preview_applies_lr_scale_and_clip(tmp_path):
+    engine = _engine(tmp_path)
+    candidate = CandidateAction(
+        candidate_id="damped_fedavg",
+        weights={"client_01": 0.2, "client_02": 0.3, "client_03": 0.5},
+        server_optimizer="fedavg",
+        server_lr_scale=0.5,
+        update_clip_norm=0.25,
+        source="stability_proposer",
+        rationale="exercise registered FedAvg controls",
+    )
+    local_updates = {
+        client_id: {"weight": torch.tensor([[value]])}
+        for client_id, value in zip(CLIENTS, (3.0, 4.0, 5.0))
+    }
+
+    preview = engine._preview_candidates([candidate], local_updates)[candidate.candidate_id]
+
+    assert preview.telemetry["effective_server_lr"] == pytest.approx(0.5)
+    assert preview.telemetry["update_clipped"] is True
+    assert preview.telemetry["update_norm"] == pytest.approx(0.25)
+    torch.testing.assert_close(preview.model_state["weight"], torch.tensor([[1.25]]))
+
+
 def test_fedyogi_commit_uses_selected_preview_without_polluting_optimizer_config(tmp_path):
     optimizer = FedYogiServerOptimizer(server_lr=0.2, update_clip_norm=2.0)
     engine = _engine(tmp_path, "FEDYOGI_STRICT", server_optimizer=optimizer)

@@ -802,6 +802,7 @@ class PCVEngine:
                     _clone_tensor_state(self.global_state),
                     averaged,
                     server_lr_scale=candidate.server_lr_scale,
+                    update_clip_norm_override=candidate.update_clip_norm,
                 )
                 optimizer_state = _clone(base_optimizer_state)
                 optimizer_state["m"] = {}

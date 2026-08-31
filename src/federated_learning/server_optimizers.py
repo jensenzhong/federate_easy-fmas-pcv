@@ -60,25 +60,48 @@ class FedAvgServerOptimizer:
         current_state: StateDict,
         weighted_average_state: StateDict,
         server_lr_scale: float = 1.0,
+        update_clip_norm_override: float | None = None,
     ) -> Tuple[StateDict, dict]:
-        return self.step(current_state, weighted_average_state, server_lr_scale=server_lr_scale)
+        return self.step(
+            current_state,
+            weighted_average_state,
+            server_lr_scale=server_lr_scale,
+            update_clip_norm_override=update_clip_norm_override,
+        )
 
     def step(
         self,
         current_state: StateDict,
         weighted_average_state: StateDict,
         server_lr_scale: float = 1.0,
+        update_clip_norm_override: float | None = None,
     ) -> Tuple[StateDict, dict]:
-        updated = _clone_state(weighted_average_state)
-        update_norm = _state_delta_norm(updated, current_state)
+        effective_lr = float(server_lr_scale)
+        proposed: StateDict = {}
+        for key, current_value in current_state.items():
+            target_value = weighted_average_state[key]
+            if torch.is_floating_point(current_value):
+                proposed[key] = (
+                    target_value.detach().clone()
+                    if effective_lr == 1.0
+                    else current_value + (target_value - current_value) * effective_lr
+                )
+            else:
+                proposed[key] = target_value.detach().clone()
+        updated, clipped, update_norm = _clip_state_update(
+            current_state,
+            proposed,
+            update_clip_norm_override,
+        )
+        aggregation_delta_norm = _state_delta_norm(weighted_average_state, current_state)
         return updated, {
             "server_optimizer": self.name,
             "server_lr": 1.0,
-            "server_lr_scale": float(server_lr_scale),
-            "effective_server_lr": 1.0,
-            "aggregation_delta_norm": update_norm,
+            "server_lr_scale": effective_lr,
+            "effective_server_lr": effective_lr,
+            "aggregation_delta_norm": aggregation_delta_norm,
             "update_norm": update_norm,
-            "update_clipped": False,
+            "update_clipped": clipped,
         }
 
 

@@ -17,6 +17,47 @@ class ServerOptimizerTests(unittest.TestCase):
         self.assertEqual(info["server_optimizer"], "fedavg")
         self.assertAlmostEqual(info["update_norm"], torch.linalg.vector_norm(target["w"] - current["w"]).item())
 
+    def test_fedavg_applies_lr_scale_and_clip_override(self):
+        from src.federated_learning.server_optimizers import FedAvgServerOptimizer
+
+        optimizer = FedAvgServerOptimizer()
+        current = {"w": torch.tensor([0.0, 0.0])}
+        target = {"w": torch.tensor([3.0, 4.0])}
+
+        updated, info = optimizer.step(
+            current,
+            target,
+            server_lr_scale=0.5,
+            update_clip_norm_override=1.0,
+        )
+
+        torch.testing.assert_close(updated["w"], torch.tensor([0.6, 0.8]))
+        self.assertAlmostEqual(info["aggregation_delta_norm"], 5.0)
+        self.assertAlmostEqual(info["effective_server_lr"], 0.5)
+        self.assertAlmostEqual(info["update_norm"], 1.0)
+        self.assertTrue(info["update_clipped"])
+
+    def test_fedavg_default_path_exactly_clones_target_state(self):
+        from src.federated_learning.server_optimizers import FedAvgServerOptimizer
+
+        optimizer = FedAvgServerOptimizer()
+        current = {
+            "w": torch.tensor([1e20, 3.1415927], dtype=torch.float32),
+            "num_batches_tracked": torch.tensor(7, dtype=torch.long),
+        }
+        target = {
+            "w": torch.tensor([1.0, -2.7182817], dtype=torch.float32),
+            "num_batches_tracked": torch.tensor(11, dtype=torch.long),
+        }
+
+        updated, info = optimizer.step(current, target)
+
+        self.assertTrue(torch.equal(updated["w"], target["w"]))
+        self.assertTrue(torch.equal(updated["num_batches_tracked"], target["num_batches_tracked"]))
+        self.assertIsNot(updated["w"], target["w"])
+        self.assertEqual(info["effective_server_lr"], 1.0)
+        self.assertFalse(info["update_clipped"])
+
     def test_central_aggregation_preserves_non_floating_buffers(self):
         from src.federated_learning.mas_agents import CentralAgent
 
