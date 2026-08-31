@@ -1,0 +1,234 @@
+{
+  "schema_version": 1,
+  "audit_id": "baseline_fairness_seed42_556120b",
+  "generated_at": "2026-09-01T02:17:40.2177767+08:00",
+  "scope": {
+    "phase": "development",
+    "training_seed": 42,
+    "git_commit": "556120ba03668d49f42563febf02ad4a8c4387a8",
+    "development_gate": "results/development/seed42/development_gate.json",
+    "development_gate_sha256": "3eac5cb5c13cebb2618067fd8fbad52eb83b36e2ff5d4913196f5c947f7801c7",
+    "partition_sha256": "eb527a597c43ef8ef45ec24788c88aedcd13b413115a80a9db5aceb519151935",
+    "sealed_partition_metadata_sha256": "5623f91cbc76248db927d413e49774b6cbc62782bd55f684d0153875c1d3c455",
+    "base_config_sha256": "a2d8fb6aa2f641bc4d30b0f8d42204a94310cf5568f23b8efcf88c17328ec53b"
+  },
+  "overall_status": "PASS",
+  "fedavg_implementation": "PASS",
+  "fedyogi_formula": "PASS",
+  "fedyogi_update_direction": "PASS",
+  "fedyogi_hyperparameter_fairness": "PASS",
+  "convergence_diagnosis": {
+    "classification": "delayed_convergence_with_final_round_regression",
+    "exploded": false,
+    "stalled_for_all_rounds": false,
+    "best_round": 19,
+    "best_validation_mape": 0.7777662209201127,
+    "final_round_validation_mape": 0.8468310831173113,
+    "summary": "FedYogi improved slowly through round 13, accelerated during rounds 14-19, and regressed slightly at round 20. No implementation defect or numeric explosion was found."
+  },
+  "initialization_parity": "PASS",
+  "data_partition_parity": "PASS",
+  "preprocessing_parity": "PASS",
+  "training_budget_parity": "PASS",
+  "checkpoint_selection_parity": "PASS",
+  "metric_parity": "PASS",
+  "r2_gate_verification": {
+    "status": "PASS",
+    "aggregation": "global_from_additive_sufficient_statistics",
+    "formula": "1 - SSE / (sum_y2 - sum_y^2 / n)",
+    "r2_difference_min": -0.02,
+    "floating_point_boundary_issue_found": false,
+    "historical_fmas_rep1_failure": {
+      "applies_to_current_matrix": false,
+      "cause": "global_r2_guardrail",
+      "r2_difference": -0.038625,
+      "client_level_guardrail": false,
+      "location": "results/development/invalidated/seed42-timeout60-c55fbe0/invalidated/pre-calibration-fedyogi-lr-0p01-20260830/development_gate.json"
+    }
+  },
+  "locked_test_contamination": {
+    "status": "PASS",
+    "found": false,
+    "locked_test_unlocked": false,
+    "locked_test_artifacts_found": 0,
+    "forbidden_structured_keys_found": 0,
+    "notes": "Prompts and two responses contain only prohibitive statements that locked-test metrics are unavailable; no values, rows, labels, predictions, residuals, hashes, or row identifiers were present."
+  },
+  "dpcv_vs_fedyogi_trajectory": {
+    "status": "PASS",
+    "fedavg_anchor_selections": 17,
+    "fedavg_anchor_ratio": 0.85,
+    "fedyogi_anchor_selections": 1,
+    "fedyogi_anchor_ratio": 0.05,
+    "other_candidate_selections": 2,
+    "other_candidate_ratio": 0.1,
+    "server_lr_scale_values": [1.0],
+    "clipping_applied_rounds": 0,
+    "interpretation": "DPCV primarily bypasses the slow standalone FedYogi trajectory by following FedAvg, then applies limited validation-guided local corrections. It does not repair and continue the standalone FedYogi moment trajectory."
+  },
+  "comparability_gate": {
+    "status": "PASS",
+    "common_conditions": {
+      "clients": "same",
+      "partition": "same fixed 70/15/15 manifest",
+      "preprocessing": "same train-only implementation",
+      "model": "same",
+      "initialization_rule": "same",
+      "training_seed": 42,
+      "local_optimizer": "Adam",
+      "client_learning_rate": 0.0005,
+      "local_epochs": 20,
+      "batch_size": 32,
+      "client_participation": "all clients every round",
+      "rounds": 20,
+      "checkpoint_metric": "aggregated_client_val_mape",
+      "metric_implementation": "same",
+      "locked_test_status": "locked"
+    },
+    "allowed_method_specific_treatments": [
+      "aggregation rule",
+      "FedYogi server optimizer",
+      "deterministic PCV",
+      "single-agent PCV",
+      "multi-agent PCV"
+    ]
+  },
+  "development_gate": {
+    "status": "PASS",
+    "baseline_method": "FEDAVG_STRICT",
+    "passing_fmas_repetitions": 3,
+    "required_passing_fmas_repetitions": 2
+  },
+  "results": [
+    {
+      "run_id": "fedavg-strict-seed42-rep0",
+      "method": "FEDAVG_STRICT",
+      "rep": 0,
+      "best_round": 16,
+      "mape": 0.42458753853945325,
+      "rmse": 1727490.885518766,
+      "mae": 1149675.2775110991,
+      "r2": 0.35858516027170484,
+      "gate": "baseline"
+    },
+    {
+      "run_id": "fedyogi-strict-seed42-rep0",
+      "method": "FEDYOGI_STRICT",
+      "rep": 0,
+      "best_round": 19,
+      "mape": 0.7777662209201127,
+      "rmse": 3354404.302934561,
+      "mae": 2447969.1157291126,
+      "r2": -1.4184565385339534,
+      "gate": "baseline"
+    },
+    {
+      "run_id": "dpcv-fedyogi-seed42-rep0",
+      "method": "DPCV_FEDYOGI",
+      "rep": 0,
+      "best_round": 17,
+      "mape": 0.42440692094235294,
+      "rmse": 1698443.972279842,
+      "mae": 1133954.9256074748,
+      "r2": 0.3799739673157484,
+      "gate": "not_applicable_to_llm_repetition_gate"
+    },
+    {
+      "run_id": "sa-pcv-fedyogi-seed42-rep1",
+      "method": "SA_PCV_FEDYOGI",
+      "rep": 1,
+      "best_round": 16,
+      "mape": 0.41760793668746876,
+      "rmse": 1796915.4050633719,
+      "mae": 1186509.1959938204,
+      "r2": 0.30599477834329003,
+      "gate": "FAIL_R2"
+    },
+    {
+      "run_id": "sa-pcv-fedyogi-seed42-rep2",
+      "method": "SA_PCV_FEDYOGI",
+      "rep": 2,
+      "best_round": 16,
+      "mape": 0.4104323106830761,
+      "rmse": 1715671.7446222906,
+      "mae": 1125749.754229187,
+      "r2": 0.36733199499310654,
+      "gate": "PASS"
+    },
+    {
+      "run_id": "sa-pcv-fedyogi-seed42-rep3",
+      "method": "SA_PCV_FEDYOGI",
+      "rep": 3,
+      "best_round": 17,
+      "mape": 0.3989775279685508,
+      "rmse": 1804722.3202553994,
+      "mae": 1179102.8893472187,
+      "r2": 0.29995130010702675,
+      "gate": "FAIL_R2"
+    },
+    {
+      "run_id": "fmas-pcv-fedyogi-seed42-rep1",
+      "method": "FMAS_PCV_FEDYOGI",
+      "rep": 1,
+      "best_round": 16,
+      "mape": 0.40056842720187813,
+      "rmse": 1698328.0456520452,
+      "mae": 1106435.1990025844,
+      "r2": 0.38005860369504874,
+      "gate": "PASS"
+    },
+    {
+      "run_id": "fmas-pcv-fedyogi-seed42-rep2",
+      "method": "FMAS_PCV_FEDYOGI",
+      "rep": 2,
+      "best_round": 16,
+      "mape": 0.4193748602170189,
+      "rmse": 1732950.8884927297,
+      "mae": 1144870.4149170362,
+      "r2": 0.35452417046314755,
+      "gate": "PASS"
+    },
+    {
+      "run_id": "fmas-pcv-fedyogi-seed42-rep3",
+      "method": "FMAS_PCV_FEDYOGI",
+      "rep": 3,
+      "best_round": 16,
+      "mape": 0.40819424929562065,
+      "rmse": 1709328.0225122273,
+      "mae": 1110741.4669200059,
+      "r2": 0.37200194434833433,
+      "gate": "PASS"
+    }
+  ],
+  "bugs_found": [],
+  "fixes_applied": [],
+  "affected_methods": [],
+  "invalidated_runs": [
+    "results/development/invalidated/seed42-coordinator-duplicate-key-79b299c",
+    "results/development/invalidated/seed42-critic-candidate-id-3ab68e9",
+    "results/development/invalidated/seed42-fedavg-controls-noop-acc032e",
+    "results/development/invalidated/seed42-json-numeric-literal-440aa5f",
+    "results/development/invalidated/seed42-timeout60-c55fbe0"
+  ],
+  "preserved_incidents": [
+    "results/development/incidents/seed42-sa-rep2-connection-556120b-attempt1",
+    "results/development/seed42/sa-pcv-fedyogi-seed42-rep3/PAUSED.json"
+  ],
+  "reruns_performed": [
+    "fedavg-strict-seed42-rep0",
+    "fedyogi-strict-seed42-rep0",
+    "dpcv-fedyogi-seed42-rep0",
+    "sa-pcv-fedyogi-seed42-rep1",
+    "sa-pcv-fedyogi-seed42-rep2",
+    "sa-pcv-fedyogi-seed42-rep3",
+    "fmas-pcv-fedyogi-seed42-rep1",
+    "fmas-pcv-fedyogi-seed42-rep2",
+    "fmas-pcv-fedyogi-seed42-rep3"
+  ],
+  "rerun_required": false,
+  "disclosures": [
+    "FedYogi learning-rate calibration proceeded through user-approved v1, v2, and v3 controller-validation stages. It must be reported as sequential boundary calibration, not as one preregistered grid.",
+    "Development TRAINING_COMPLETE records bind validation result hashes but not checkpoint hashes. Independent checkpoint recomputation matched all nine published validation files; the formal locked-test path binds checkpoint hashes."
+  ],
+  "recommended_freeze_ready": true
+}

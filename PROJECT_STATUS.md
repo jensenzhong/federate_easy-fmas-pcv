@@ -1,12 +1,13 @@
 # FMAS-PCV Project Status
 
-> Last verified: 2026-08-31
+> Last verified: 2026-09-01
 
 ## Current State
 
 The strict-federated FMAS-PCV implementation and canonical runner are complete.
-Development remains deliberately single-seed, and the formal protocol is not frozen yet.
-No development or formal performance claim has been made.
+The complete seed 42 development matrix passed its development gate on commit
+`556120ba03668d49f42563febf02ad4a8c4387a8`. The formal protocol is not frozen yet,
+and no multi-seed or locked-test claim has been made.
 
 The only paper-line methods are:
 
@@ -64,34 +65,32 @@ The approved provider contract remains:
 - credential source: process-only `DEEPSEEK_API_KEY`
 - retry/fallback: disabled in the strict runner
 
-The successful preflight at commit `79b299c` is retained as historical evidence, but
-its coordinator prompt hash predates the unique-key fix. A fresh single real preflight
-is therefore required on the replacement clean commit.
+The historical preflight at commit `79b299c` is retained as superseded evidence. The
+replacement preflight and both diagnostic schema soaks passed on the final prompt
+contract before the current matrix was launched. The completed matrix used real
+DeepSeek calls throughout; no additional preflight is required before freeze.
 
-## Active Gate
+## Development Gate
 
-`study_manifest.yaml` still has `formal_frozen: false`. On commit `79b299c`, the real
-preflight passed and FedAvg, FedYogi, and DPCV completed. SA repetition 1 completed
-round 7, then stopped in round 8 because the real coordinator returned two conflicting
-`risk_acknowledgement` keys in one JSON object. No retry, fallback, fake response,
-duplicate-key merge, or semantic repair was performed.
-
-The minimal approved fix requires exactly three unique coordinator keys and combines
-all risk text into one `risk_acknowledgement` string. The strict JSON parser and
-candidate-selection criteria remain unchanged.
-
-Because the coordinator prompt hash and Git commit change, the partial `79b299c`
-matrix must be preserved as invalidated evidence. After a successful fresh preflight,
-a user-requested full 20-round `SA_PCV_FEDYOGI` repetition-1 schema-soak will run first
-under a diagnostic-only run ID. It cannot enter the development gate. Only after it
-passes will the fixed formal-development order run three non-LLM methods, three SA
-repetitions, and three FMAS repetitions on one clean commit.
+`study_manifest.yaml` still has `formal_frozen: false`. The current matrix contains all
+nine required runs: FedAvg, FedYogi, DPCV, three SA repetitions, and three FMAS
+repetitions. Every run completed 20 rounds on the same clean commit.
 
 The predeclared trajectory gate requires validation MAPE not to degrade relative to the
 strongest strict baseline, RMSE increase at most 5%, and R2 difference at least -0.02.
-At least two of the three FMAS repetitions must pass. These are development screening
-criteria, not statistical-significance or equivalence claims. Locked-test evaluation
-remains prohibited until a later formal-freeze gate.
+All three FMAS repetitions passed, exceeding the required two of three. The published
+gate is `results/development/seed42/development_gate.json` with SHA-256
+`3eac5cb5c13cebb2618067fd8fbad52eb83b36e2ff5d4913196f5c947f7801c7`.
+
+The Baseline Fairness & Protocol Audit is PASS. Its machine-readable record is
+`audits/baseline_fairness_audit.json`, and the concise report is
+`docs/baseline_fairness_audit.md`. FedYogi implementation, R2 aggregation, checkpoint
+selection, comparability, and the Locked Test boundary all passed independent review.
+No audit-triggered rerun is required.
+
+These remain development screening results, not statistical-significance or
+equivalence claims. Locked-test evaluation remains prohibited until formal freeze and
+separate approval.
 
 ## Offline Verification Command
 
