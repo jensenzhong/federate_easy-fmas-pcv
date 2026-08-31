@@ -9,7 +9,7 @@ config_sha256: null
 prompt_hashes: {}
 git_commit: null
 deepseek:
-  model: deepseek-chat
+  model: deepseek-v4-flash
   base_url: https://api.deepseek.com
   temperature: 0.8
   timeout_seconds: 60

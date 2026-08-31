@@ -45,15 +45,13 @@ accepted by the canonical formal runner.
 
 ## Verification Evidence
 
-Offline verification completed before the first network request:
+Current offline verification after the provider-model switch:
 
-- Full repository: `641 passed`, plus 69 existing SciPy precision-loss warnings.
-- Focused privacy/API/partition/runner checks: `247 passed`.
+- Full repository: `758 passed`, plus 69 existing SciPy precision-loss warnings.
+- Focused strict runner/development/agent checks: `200 passed`.
 - Plaintext API-key scans: no matches.
-- Independent specification review: compliant.
-- Independent quality review: no remaining Critical or Important findings.
 
-The user-approved real DeepSeek preflight then completed successfully:
+The earlier successful DeepSeek preflight is retained as historical evidence only:
 
 - date: 2026-08-10
 - model: `deepseek-chat`
@@ -67,12 +65,27 @@ The user-approved real DeepSeek preflight then completed successfully:
 The immutable preflight provenance and sanitized call telemetry are stored under
 `results/development/seed42/deepseek-preflight/`.
 
+The current approved provider contract is now:
+
+- model: `deepseek-v4-flash`
+- endpoint: `https://api.deepseek.com/chat/completions`
+- scope: every real preflight, SA, and FMAS request
+- credential source: process-only `DEEPSEEK_API_KEY`
+- retry/fallback: disabled in the strict runner
+
+The first preflight at commit `859a404` used the superseded model and failed its
+strict response schema. It remains preserved as failure evidence and is not valid
+for the new provider contract. A fresh real preflight is required after the model
+switch is committed.
+
 ## Active Gate
 
-`study_manifest.yaml` still has `formal_frozen: false`. The seed-42 launcher and
-validation-only development gate are implemented and independently reviewed, but the
-nine-run matrix has not started yet. Its fixed order is three non-LLM runs, three
-`SA_PCV_FEDYOGI` repetitions, and three `FMAS_PCV_FEDYOGI` repetitions.
+`study_manifest.yaml` still has `formal_frozen: false`. The partial seed-42 matrix
+from commit `c0902ff` was preserved under `results/development/seed42/invalidated/`
+after the single-proposer prompt contract changed. No replacement matrix is active.
+After a successful `deepseek-v4-flash` preflight, the fixed nine-run order remains
+three non-LLM runs, three `SA_PCV_FEDYOGI` repetitions, and three
+`FMAS_PCV_FEDYOGI` repetitions on one clean commit.
 
 The predeclared trajectory gate requires validation MAPE not to degrade relative to the
 strongest strict baseline, RMSE increase at most 5%, and R2 difference at least -0.02.

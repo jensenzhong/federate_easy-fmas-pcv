@@ -262,7 +262,7 @@ scene_c:
     default_provider: "deepseek"  # 默认LLM提供商，可切换：deepseek, qwen, openai
     providers:
       deepseek:
-        model_name: "deepseek-chat"                  # DeepSeek模型
+        model_name: "deepseek-v4-flash"              # DeepSeek模型
         base_url: "https://api.deepseek.com"         # DeepSeek兼容OpenAI的Base URL
         api_key_env: "DEEPSEEK_API_KEY"              # 环境变量读取API密钥
       qwen:

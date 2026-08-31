@@ -38,9 +38,13 @@ from .client_evaluation import (
 from .checkpoint import restore_training_checkpoint
 from .engine import PCVEngine
 from .protocol import ClientDataVault, LocalTrainingResult
+from .provider_config import deepseek_client_settings_from_provenance
 from .schemas import CandidateAction, ClientTelemetry
 from .telemetry import AppendOnlyTelemetry
 from .voting import aggregate_candidate_votes
+
+
+_deepseek_settings_from_provenance = deepseek_client_settings_from_provenance
 
 
 @dataclass(frozen=True, slots=True)
@@ -707,6 +711,7 @@ def execute_strict_training(context) -> dict[str, Any]:
     )
     train_clients, collect_telemetry, evaluate_candidates = _training_callbacks(bundle)
 
+    provenance = json.loads(context.provenance_path.read_text(encoding="utf-8"))
     agent = None
     if context.api_key is not None:
         import requests
@@ -715,17 +720,17 @@ def execute_strict_training(context) -> dict[str, Any]:
             context.run_directory / "agent_calls.jsonl",
             known_secrets=(context.api_key,),
         )
+        deepseek_settings = _deepseek_settings_from_provenance(provenance)
         client = StrictDeepSeekClient(
             api_key=context.api_key,
-            model_name="deepseek-chat",
-            base_url="https://api.deepseek.com",
-            timeout_seconds=60,
+            model_name=deepseek_settings["model"],
+            base_url=deepseek_settings["base_url"],
+            timeout_seconds=deepseek_settings["timeout_seconds"],
             session=requests.Session(),
             telemetry=call_telemetry,
         )
         agent = StagedDeepSeekAgent(client, project_root / "configs/prompts")
 
-    provenance = json.loads(context.provenance_path.read_text(encoding="utf-8"))
     start_round, resume_state = restore_engine_checkpoint(
         context=context,
         bundle=bundle,

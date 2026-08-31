@@ -23,8 +23,18 @@ from typing import Any
 
 import yaml
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.federated_learning.pcv.provider_config import (
+    DEEPSEEK_BASE_URL,
+    DEEPSEEK_MODEL,
+    DEEPSEEK_TIMEOUT_SECONDS,
+    deepseek_provenance,
+)
+
+
 PAUSED_EXIT_CODE = 2
 
 _APPROVED_CONFIG: dict[str, Any] = {
@@ -35,9 +45,9 @@ _APPROVED_CONFIG: dict[str, Any] = {
     "base_config": "configs/config.yaml",
     "output_root": "results/development/seed42",
     "deepseek": {
-        "model": "deepseek-chat",
-        "base_url": "https://api.deepseek.com",
-        "timeout_seconds": 60,
+        "model": DEEPSEEK_MODEL,
+        "base_url": DEEPSEEK_BASE_URL,
+        "timeout_seconds": DEEPSEEK_TIMEOUT_SECONDS,
     },
     "development_gate": {
         "baseline_selection": "lowest_mape_of_strict_baselines",
@@ -425,13 +435,7 @@ def _load_run_evidence(
     ):
         raise ValueError("run provenance prompt hashes mismatch")
     uses_llm = bool(expected_roles)
-    expected_deepseek = {
-        "enabled": uses_llm,
-        "model": "deepseek-chat" if uses_llm else None,
-        "base_url": "https://api.deepseek.com" if uses_llm else None,
-        "temperature": 0.8 if uses_llm else None,
-        "timeout_seconds": 60 if uses_llm else None,
-    }
+    expected_deepseek = deepseek_provenance(enabled=uses_llm)
     if not _exact_value_equal(provenance["deepseek"], expected_deepseek):
         raise ValueError("run provenance DeepSeek settings mismatch")
 

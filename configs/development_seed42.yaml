@@ -5,7 +5,7 @@ partition_manifest: results/manifests/strict_partition_v1.csv
 base_config: configs/config.yaml
 output_root: results/development/seed42
 deepseek:
-  model: deepseek-chat
+  model: deepseek-v4-flash
   base_url: https://api.deepseek.com
   timeout_seconds: 60
 development_gate:

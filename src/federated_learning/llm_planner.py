@@ -34,7 +34,7 @@ class LLMClient:
     def __init__(
         self,
         api_key: str,
-        model_name: str = "deepseek-chat",
+        model_name: str = "deepseek-v4-flash",
         base_url: str = "https://api.deepseek.com",
         timeout: int = 60,
         max_retries: int = 3
@@ -44,7 +44,7 @@ class LLMClient:
 
         Args:
             api_key: API密钥
-            model_name: 模型名称（如 deepseek-chat, deepseek-coder）
+            model_name: 模型名称（当前冻结为 deepseek-v4-flash）
             base_url: API基础URL
             timeout: 请求超时时间（秒）
             max_retries: 最大重试次数

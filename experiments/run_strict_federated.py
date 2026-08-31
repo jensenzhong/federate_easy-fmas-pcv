@@ -40,6 +40,12 @@ from src.federated_learning.pcv.protocol import (  # noqa: E402
     TestPartitionLocked,
     require_test_unlock,
 )
+from src.federated_learning.pcv.provider_config import (  # noqa: E402
+    DEEPSEEK_MODEL,
+    deepseek_client_settings_from_provenance,
+    deepseek_protocol_config,
+    deepseek_provenance,
+)
 from src.federated_learning.pcv.telemetry import AppendOnlyTelemetry  # noqa: E402
 from src.study_manifest import (  # noqa: E402
     FORMAL_METHOD_ORDER,
@@ -507,12 +513,7 @@ def validate_formal_freeze(
     }
     if payload.get("prompt_hashes") != expected_prompts:
         raise RuntimeError("formal freeze prompt hashes mismatch")
-    if payload.get("deepseek") != {
-        "model": "deepseek-chat",
-        "base_url": "https://api.deepseek.com",
-        "temperature": 0.8,
-        "timeout_seconds": 60,
-    }:
+    if payload.get("deepseek") != deepseek_protocol_config():
         raise RuntimeError("formal freeze DeepSeek parameters mismatch")
 
 
@@ -669,13 +670,7 @@ def prepare_run(
             method_path,
         ),
         "prompt_hashes": _prompt_hashes(method_config, project_root),
-        "deepseek": {
-            "enabled": args.method in LLM_METHODS,
-            "model": "deepseek-chat" if args.method in LLM_METHODS else None,
-            "base_url": "https://api.deepseek.com" if args.method in LLM_METHODS else None,
-            "temperature": 0.8 if args.method in LLM_METHODS else None,
-            "timeout_seconds": 60 if args.method in LLM_METHODS else None,
-        },
+        "deepseek": deepseek_provenance(enabled=args.method in LLM_METHODS),
         "resume_requested": args.resume_checkpoint is not None,
         "locked_test_unlocked": args.phase == "formal_evaluate" and args.unlock_test,
     }
@@ -719,7 +714,7 @@ def prepare_run(
 def _validate_preflight_response(value: Any) -> dict[str, str]:
     if type(value) is not dict or set(value) != {"status", "model"}:
         raise ValueError("preflight response must contain exact status/model fields")
-    if value != {"status": "ready", "model": "deepseek-chat"}:
+    if value != {"status": "ready", "model": DEEPSEEK_MODEL}:
         raise ValueError("preflight response values do not match the contract")
     return dict(value)
 
@@ -735,19 +730,23 @@ def run_preflight(context: RunContext, *, session: Any = None) -> dict[str, str]
         context.run_directory / "deepseek_calls.jsonl",
         known_secrets=(context.api_key,),
     )
+    provenance = json.loads(context.provenance_path.read_text(encoding="utf-8"))
+    settings = deepseek_client_settings_from_provenance(provenance)
     client = StrictDeepSeekClient(
         api_key=context.api_key,
-        model_name="deepseek-chat",
-        base_url="https://api.deepseek.com",
-        timeout_seconds=60,
+        model_name=settings["model"],
+        base_url=settings["base_url"],
+        timeout_seconds=settings["timeout_seconds"],
         session=session,
         telemetry=telemetry,
     )
     return client.generate_json(
         "preflight",
         (
-            "Return exactly one JSON object and no other text: "
-            '{"status":"ready","model":"deepseek-chat"}'
+            "The user message is a protocol-safe placeholder, not an answer "
+            "template. Do not echo or transform the user message. Return exactly "
+            "one JSON object and no other text: "
+            f'{{"status":"ready","model":"{DEEPSEEK_MODEL}"}}'
         ),
         {"round_index": 0, "clients": []},
         _validate_preflight_response,

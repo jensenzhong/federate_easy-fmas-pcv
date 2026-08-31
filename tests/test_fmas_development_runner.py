@@ -2,6 +2,8 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import subprocess
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -26,6 +28,25 @@ EXPECTED = [
     ("FMAS_PCV_FEDYOGI", 2),
     ("FMAS_PCV_FEDYOGI", 3),
 ]
+
+
+def test_launcher_help_runs_through_the_real_script_entrypoint():
+    project_root = Path(__file__).resolve().parents[1]
+    completed = subprocess.run(
+        [sys.executable, "scripts/run_fmas_development.py", "--help"],
+        cwd=project_root,
+        check=False,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=30,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert "Run the approved strict-federated seed-42 development matrix" in (
+        completed.stdout
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -53,7 +74,7 @@ def _write_config(root: Path, *, seed: int = 42, phase: str = "development") -> 
                 "base_config: configs/config.yaml",
                 "output_root: results/development/seed42",
                 "deepseek:",
-                "  model: deepseek-chat",
+                "  model: deepseek-v4-flash",
                 "  base_url: https://api.deepseek.com",
                 "  timeout_seconds: 60",
                 "development_gate:",
@@ -188,7 +209,7 @@ def _completion(
         },
         "deepseek": {
             "enabled": bool(ROLE_NAMES[run.method]),
-            "model": "deepseek-chat" if ROLE_NAMES[run.method] else None,
+            "model": "deepseek-v4-flash" if ROLE_NAMES[run.method] else None,
             "base_url": "https://api.deepseek.com" if ROLE_NAMES[run.method] else None,
             "temperature": 0.8 if ROLE_NAMES[run.method] else None,
             "timeout_seconds": 60 if ROLE_NAMES[run.method] else None,

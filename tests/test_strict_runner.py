@@ -445,7 +445,7 @@ class _PreflightResponse:
             "choices": [
                 {
                     "message": {
-                        "content": '{"status":"ready","model":"deepseek-chat"}'
+                        "content": '{"status":"ready","model":"deepseek-v4-flash"}'
                     }
                 }
             ]
@@ -484,9 +484,11 @@ def test_preflight_is_exactly_one_aggregate_free_call_and_never_records_key(tmp_
         preflight_session=session,
     )
 
-    assert result == {"status": "ready", "model": "deepseek-chat"}
+    assert result == {"status": "ready", "model": "deepseek-v4-flash"}
     assert len(session.calls) == 1
     _, request = session.calls[0]
+    assert request["json"]["model"] == "deepseek-v4-flash"
+    assert "Do not echo" in request["json"]["messages"][0]["content"]
     user_payload = json.loads(request["json"]["messages"][1]["content"])
     assert user_payload == {"round_index": 0, "clients": []}
     all_output = "".join(
@@ -495,6 +497,41 @@ def test_preflight_is_exactly_one_aggregate_free_call_and_never_records_key(tmp_
         if path.is_file() and path.suffix in {".json", ".jsonl"}
     )
     assert "fake-test-key" not in all_output
+
+
+def test_training_runtime_uses_exact_deepseek_settings_from_provenance():
+    settings = runtime_module._deepseek_settings_from_provenance(
+        {
+            "deepseek": {
+                "enabled": True,
+                "model": "deepseek-v4-flash",
+                "base_url": "https://api.deepseek.com",
+                "temperature": 0.8,
+                "timeout_seconds": 60,
+            }
+        }
+    )
+
+    assert settings == {
+        "model": "deepseek-v4-flash",
+        "base_url": "https://api.deepseek.com",
+        "timeout_seconds": 60,
+    }
+
+
+def test_training_runtime_rejects_old_deepseek_model_provenance():
+    with pytest.raises(ValueError, match="frozen protocol"):
+        runtime_module._deepseek_settings_from_provenance(
+            {
+                "deepseek": {
+                    "enabled": True,
+                    "model": "deepseek-chat",
+                    "base_url": "https://api.deepseek.com",
+                    "temperature": 0.8,
+                    "timeout_seconds": 60,
+                }
+            }
+        )
 
 
 def test_missing_llm_key_stops_with_a_persisted_pause_report_and_no_call(tmp_path):
