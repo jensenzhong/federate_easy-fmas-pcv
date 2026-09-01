@@ -1,31 +1,52 @@
 schema_version: 1
 project_key: fmas_pcv_strict_federated
-stage: development
+stage: formal_ready
 development_seed: 42
 split_seed: 20260730
-formal_seeds: [314, 2718, 2025, 3407, 9001]
-formal_frozen: false
-paper_eligible_freeze_ids: []
+formal_seeds:
+- 314
+- 2718
+- 2025
+- 3407
+- 9001
+formal_frozen: true
+paper_eligible_freeze_ids:
+- db79caaed2765507
 data_protocol:
-  train_ratio: 0.70
+  train_ratio: 0.7
   controller_validation_ratio: 0.15
   locked_test_ratio: 0.15
   target_quantile_bins: 5
   preprocessing_fit_partition: train
 methods:
-  FEDAVG_STRICT: {role: baseline, formal: true, uses_llm: false}
-  FEDYOGI_STRICT: {role: baseline, formal: true, uses_llm: false}
-  DPCV_FEDYOGI: {role: ablation, formal: true, uses_llm: false}
-  SA_PCV_FEDYOGI: {role: ablation, formal: true, uses_llm: true}
-  FMAS_PCV_FEDYOGI: {role: primary, formal: true, uses_llm: true}
+  FEDAVG_STRICT:
+    role: baseline
+    formal: true
+    uses_llm: false
+  FEDYOGI_STRICT:
+    role: baseline
+    formal: true
+    uses_llm: false
+  DPCV_FEDYOGI:
+    role: ablation
+    formal: true
+    uses_llm: false
+  SA_PCV_FEDYOGI:
+    role: ablation
+    formal: true
+    uses_llm: true
+  FMAS_PCV_FEDYOGI:
+    role: primary
+    formal: true
+    uses_llm: true
 legacy_methods:
-  - C
-  - MAS_ADAPTIVE
-  - VG_FEDYOGI_TR
-  - MAS_VG_FEDYOGI_TR
-  - COHERENCE_FEDYOGI_TR
-  - LLM_GCA_FEDYOGI_TR
-  - STRICT_COHERENCE_FEDYOGI_TR
-  - LLM_STRICT_GCA_FEDYOGI_TR
-  - VP_GCA_FEDYOGI_TR
-  - LLM_VP_GCA_FEDYOGI_TR
+- C
+- MAS_ADAPTIVE
+- VG_FEDYOGI_TR
+- MAS_VG_FEDYOGI_TR
+- COHERENCE_FEDYOGI_TR
+- LLM_GCA_FEDYOGI_TR
+- STRICT_COHERENCE_FEDYOGI_TR
+- LLM_STRICT_GCA_FEDYOGI_TR
+- VP_GCA_FEDYOGI_TR
+- LLM_VP_GCA_FEDYOGI_TR

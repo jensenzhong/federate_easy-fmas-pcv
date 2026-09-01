@@ -1,0 +1,196 @@
+{
+  "formal_protocol": {
+    "analysis": {
+      "alpha": 0.05,
+      "comparison_family": [
+        "FMAS_PCV_FEDYOGI_vs_FEDAVG_STRICT",
+        "FMAS_PCV_FEDYOGI_vs_FEDYOGI_STRICT",
+        "FMAS_PCV_FEDYOGI_vs_DPCV_FEDYOGI",
+        "FMAS_PCV_FEDYOGI_vs_SA_PCV_FEDYOGI"
+      ],
+      "formal_seed_count": 5,
+      "llm_repetition_aggregation": "mean_within_training_seed",
+      "multiple_comparison_correction": "holm",
+      "paired_observation_unit": "training_seed",
+      "primary_metric": "mape",
+      "primary_strict_baseline": "FEDAVG_STRICT",
+      "secondary_metrics": [
+        "rmse",
+        "mae",
+        "r2"
+      ],
+      "stable_improvement_min_seed_wins": 4
+    },
+    "deepseek": {
+      "base_url": "https://api.deepseek.com",
+      "model": "deepseek-v4-flash",
+      "temperature": 0.8,
+      "timeout_seconds": 120
+    },
+    "failure_policy": {
+      "automatic_retry": false,
+      "fallback_model": null,
+      "locked_test_policy": "separate_formal_evaluate_after_complete_training_batch",
+      "resume_requires_explicit_user_approval": true
+    },
+    "formal_methods": [
+      "FEDAVG_STRICT",
+      "FEDYOGI_STRICT",
+      "DPCV_FEDYOGI",
+      "SA_PCV_FEDYOGI",
+      "FMAS_PCV_FEDYOGI"
+    ],
+    "formal_seeds": [
+      314,
+      2718,
+      2025,
+      3407,
+      9001
+    ],
+    "method_repetitions": {
+      "DPCV_FEDYOGI": [
+        0
+      ],
+      "FEDAVG_STRICT": [
+        0
+      ],
+      "FEDYOGI_STRICT": [
+        0
+      ],
+      "FMAS_PCV_FEDYOGI": [
+        1,
+        2,
+        3
+      ],
+      "SA_PCV_FEDYOGI": [
+        1,
+        2,
+        3
+      ]
+    },
+    "partition_manifest": "results/manifests/strict_partition_v1.csv",
+    "schema_version": 1,
+    "training": {
+      "checkpoint_selection": "lowest_aggregated_client_val_mape",
+      "client_participation": "all_clients_every_round",
+      "local_epochs": 20,
+      "metric_schema": [
+        "sample_count",
+        "mape",
+        "rmse",
+        "mae",
+        "r2"
+      ],
+      "rounds": 20
+    }
+  },
+  "freeze_id": "db79caaed2765507",
+  "payload": {
+    "analysis": {
+      "alpha": 0.05,
+      "comparison_family": [
+        "FMAS_PCV_FEDYOGI_vs_FEDAVG_STRICT",
+        "FMAS_PCV_FEDYOGI_vs_FEDYOGI_STRICT",
+        "FMAS_PCV_FEDYOGI_vs_DPCV_FEDYOGI",
+        "FMAS_PCV_FEDYOGI_vs_SA_PCV_FEDYOGI"
+      ],
+      "formal_seed_count": 5,
+      "llm_repetition_aggregation": "mean_within_training_seed",
+      "multiple_comparison_correction": "holm",
+      "paired_observation_unit": "training_seed",
+      "primary_metric": "mape",
+      "primary_strict_baseline": "FEDAVG_STRICT",
+      "secondary_metrics": [
+        "rmse",
+        "mae",
+        "r2"
+      ],
+      "stable_improvement_min_seed_wins": 4
+    },
+    "baseline_fairness_audit_sha256": "4f093df4774ee23bc7c4af5f37d37609faf04995fdb6e8182d0d2610ebb9ad8c",
+    "deepseek": {
+      "base_url": "https://api.deepseek.com",
+      "model": "deepseek-v4-flash",
+      "temperature": 0.8,
+      "timeout_seconds": 120
+    },
+    "development_config_sha256": "060a0f3e19496e335ec3bad517357aa03209e667da53a09abeff6c68c046cb81",
+    "development_gate_sha256": "3eac5cb5c13cebb2618067fd8fbad52eb83b36e2ff5d4913196f5c947f7801c7",
+    "execution_config_sha256": "b858c4d1f75b221f70e69983f34cbb10d8041379b282ad2727d16c989dca5c99",
+    "failure_policy": {
+      "automatic_retry": false,
+      "fallback_model": null,
+      "locked_test_policy": "separate_formal_evaluate_after_complete_training_batch",
+      "resume_requires_explicit_user_approval": true
+    },
+    "formal_config_sha256": "f8ee629917df267899b96d68dcb1db3695a8f3eece084ea475580346ac7c34a7",
+    "formal_methods": [
+      "FEDAVG_STRICT",
+      "FEDYOGI_STRICT",
+      "DPCV_FEDYOGI",
+      "SA_PCV_FEDYOGI",
+      "FMAS_PCV_FEDYOGI"
+    ],
+    "formal_seeds": [
+      314,
+      2718,
+      2025,
+      3407,
+      9001
+    ],
+    "git_commit": "71e0ea154b2a9f6653c2c5cd3a71e824fc1a1242",
+    "method_config_sha256s": {
+      "DPCV_FEDYOGI": "c92450cb9e24a7745f2028a5a32f80a18631cf69d3685ec809df08dfc4282e27",
+      "FEDAVG_STRICT": "ef6f410de9fdd1c0c1d233b527233b9e77ad8a06602a8158a1230102426ae829",
+      "FEDYOGI_STRICT": "4919084217c05b7e8b7f72fd51b8a0d0781688ae486114634769d6ad3dd24aeb",
+      "FMAS_PCV_FEDYOGI": "a0f1566d26f55e98855e648f4966b3b0382ed1db05e7fde1dfd09877e6f9295c",
+      "SA_PCV_FEDYOGI": "c012f0fe5d53ec95693e4f34c33347c821a8984e18afe39a8519a075932a5d98"
+    },
+    "method_repetitions": {
+      "DPCV_FEDYOGI": [
+        0
+      ],
+      "FEDAVG_STRICT": [
+        0
+      ],
+      "FEDYOGI_STRICT": [
+        0
+      ],
+      "FMAS_PCV_FEDYOGI": [
+        1,
+        2,
+        3
+      ],
+      "SA_PCV_FEDYOGI": [
+        1,
+        2,
+        3
+      ]
+    },
+    "partition_sha256": "eb527a597c43ef8ef45ec24788c88aedcd13b413115a80a9db5aceb519151935",
+    "prompt_sha256s": {
+      "balance_proposer": "939acc9bd26d018046025fffd0485a94af0e0a50b93b53efaafe3576285541e3",
+      "coordinator": "75fd26e07ae3d68e1adc987fa16183352536284db05dace897cf25ee25fd7611",
+      "critic": "f4d23a635196c3bab37e7ffd97835d96c86fd288df4845b03c6952b45df4b18b",
+      "diagnostic": "eb98d35934c40ee85e3fd3d84b9e6b0dfaaf6b3d371d268bd3c3843e56dbc1db",
+      "performance_proposer": "4bb5cc647d1bd66c0f564a3e0fad2239cf12fe2644d820c27ed50192c1634bd1",
+      "single_proposer": "cc72eb45a6d5de1614bfd3a316083d6f2f6cb350f8455b569bcd5cb0a21b29af",
+      "stability_proposer": "2d30313dc5446a4630a4d1dd41bf9563368178b9d73134e43ca9aa2e0598fbfd"
+    },
+    "sealed_partition_metadata_sha256": "5623f91cbc76248db927d413e49774b6cbc62782bd55f684d0153875c1d3c455",
+    "training": {
+      "checkpoint_selection": "lowest_aggregated_client_val_mape",
+      "client_participation": "all_clients_every_round",
+      "local_epochs": 20,
+      "metric_schema": [
+        "sample_count",
+        "mape",
+        "rmse",
+        "mae",
+        "r2"
+      ],
+      "rounds": 20
+    }
+  },
+  "schema_version": 1
+}

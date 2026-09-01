@@ -1,15 +1,62 @@
 schema_version: 1
-formal_frozen: false
-freeze_id: null
-formal_seeds: [314, 2718, 2025, 3407, 9001]
+formal_frozen: true
+freeze_id: db79caaed2765507
+formal_seeds:
+- 314
+- 2718
+- 2025
+- 3407
+- 9001
 partition_manifest: results/manifests/strict_partition_v1.csv
-partition_sha256: null
-sealed_partition_metadata_sha256: null
-config_sha256: null
-prompt_hashes: {}
-git_commit: null
+partition_sha256: eb527a597c43ef8ef45ec24788c88aedcd13b413115a80a9db5aceb519151935
+sealed_partition_metadata_sha256: 5623f91cbc76248db927d413e49774b6cbc62782bd55f684d0153875c1d3c455
+config_sha256: b858c4d1f75b221f70e69983f34cbb10d8041379b282ad2727d16c989dca5c99
+prompt_hashes:
+  balance_proposer: 939acc9bd26d018046025fffd0485a94af0e0a50b93b53efaafe3576285541e3
+  coordinator: 75fd26e07ae3d68e1adc987fa16183352536284db05dace897cf25ee25fd7611
+  critic: f4d23a635196c3bab37e7ffd97835d96c86fd288df4845b03c6952b45df4b18b
+  diagnostic: eb98d35934c40ee85e3fd3d84b9e6b0dfaaf6b3d371d268bd3c3843e56dbc1db
+  performance_proposer: 4bb5cc647d1bd66c0f564a3e0fad2239cf12fe2644d820c27ed50192c1634bd1
+  single_proposer: cc72eb45a6d5de1614bfd3a316083d6f2f6cb350f8455b569bcd5cb0a21b29af
+  stability_proposer: 2d30313dc5446a4630a4d1dd41bf9563368178b9d73134e43ca9aa2e0598fbfd
+git_commit: 71e0ea154b2a9f6653c2c5cd3a71e824fc1a1242
 deepseek:
   model: deepseek-v4-flash
   base_url: https://api.deepseek.com
   temperature: 0.8
   timeout_seconds: 120
+method_repetitions:
+  FEDAVG_STRICT:
+  - 0
+  FEDYOGI_STRICT:
+  - 0
+  DPCV_FEDYOGI:
+  - 0
+  SA_PCV_FEDYOGI:
+  - 1
+  - 2
+  - 3
+  FMAS_PCV_FEDYOGI:
+  - 1
+  - 2
+  - 3
+development_gate_sha256: 3eac5cb5c13cebb2618067fd8fbad52eb83b36e2ff5d4913196f5c947f7801c7
+baseline_fairness_audit_sha256: 4f093df4774ee23bc7c4af5f37d37609faf04995fdb6e8182d0d2610ebb9ad8c
+analysis:
+  primary_metric: mape
+  secondary_metrics:
+  - rmse
+  - mae
+  - r2
+  primary_strict_baseline: FEDAVG_STRICT
+  llm_repetition_aggregation: mean_within_training_seed
+  paired_observation_unit: training_seed
+  stable_improvement_min_seed_wins: 4
+  formal_seed_count: 5
+  multiple_comparison_correction: holm
+  alpha: 0.05
+  comparison_family:
+  - FMAS_PCV_FEDYOGI_vs_FEDAVG_STRICT
+  - FMAS_PCV_FEDYOGI_vs_FEDYOGI_STRICT
+  - FMAS_PCV_FEDYOGI_vs_DPCV_FEDYOGI
+  - FMAS_PCV_FEDYOGI_vs_SA_PCV_FEDYOGI
