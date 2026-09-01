@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from contextlib import contextmanager
+import base64
 from collections.abc import Mapping, Sequence
 import hashlib
 import json
@@ -41,6 +41,8 @@ from src.study_manifest import load_study_manifest
 
 
 _COMMIT = re.compile(r"[0-9a-f]{40}\Z")
+_FREEZE_ID = re.compile(r"[0-9a-f]{16}\Z")
+_LOCK_NAME = ".freeze.lock"
 _DEVELOPMENT_RUNS = (
     ("FEDAVG_STRICT", 0, "fedavg-strict-seed42-rep0"),
     ("FEDYOGI_STRICT", 0, "fedyogi-strict-seed42-rep0"),
@@ -54,21 +56,121 @@ _DEVELOPMENT_RUNS = (
 )
 
 
-@contextmanager
-def _freeze_lock(project_root: Path):
-    path = project_root / "results/manifests/.freeze.lock"
+def _sha256_bytes(content: bytes) -> str:
+    return hashlib.sha256(content).hexdigest()
+
+
+def _transaction_journal(
+    *,
+    freeze_id: str,
+    source_commit: str,
+    manifest_path: Path,
+    frozen_path: Path,
+    original_manifest: bytes,
+    original_frozen: bytes,
+    final_manifest: bytes,
+    final_frozen: bytes,
+    freeze_manifest: bytes,
+) -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "pid": os.getpid(),
+        "freeze_id": freeze_id,
+        "source_commit": source_commit,
+        "manifest_path": manifest_path.name,
+        "frozen_path": frozen_path.relative_to(manifest_path.parent).as_posix(),
+        "original_manifest_base64": base64.b64encode(original_manifest).decode("ascii"),
+        "original_frozen_base64": base64.b64encode(original_frozen).decode("ascii"),
+        "original_manifest_sha256": _sha256_bytes(original_manifest),
+        "original_frozen_sha256": _sha256_bytes(original_frozen),
+        "final_manifest_sha256": _sha256_bytes(final_manifest),
+        "final_frozen_sha256": _sha256_bytes(final_frozen),
+        "freeze_manifest_sha256": _sha256_bytes(freeze_manifest),
+    }
+
+
+def _acquire_freeze_lock(path: Path, journal: Mapping[str, Any]) -> None:
     try:
         descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     except FileExistsError as error:
         raise RuntimeError("another freeze transaction is active or requires recovery") from error
     try:
-        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-            stream.write(json.dumps({"pid": os.getpid()}, sort_keys=True))
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(canonical_json_bytes(dict(journal)) + b"\n")
             stream.flush()
             os.fsync(stream.fileno())
-        yield
-    finally:
+    except BaseException:
         path.unlink(missing_ok=True)
+        raise
+
+
+def _read_transaction_journal(path: Path) -> dict[str, Any]:
+    journal = _read_json(path, label="freeze transaction journal")
+    expected = {
+        "schema_version", "pid", "freeze_id", "source_commit", "manifest_path",
+        "frozen_path", "original_manifest_base64", "original_frozen_base64",
+        "original_manifest_sha256", "original_frozen_sha256",
+        "final_manifest_sha256", "final_frozen_sha256", "freeze_manifest_sha256",
+    }
+    if (
+        set(journal) != expected
+        or journal.get("schema_version") != 1
+        or not _FREEZE_ID.fullmatch(str(journal.get("freeze_id", "")))
+        or not _COMMIT.fullmatch(str(journal.get("source_commit", "")))
+        or journal.get("manifest_path") != "study_manifest.yaml"
+        or journal.get("frozen_path") != "configs/formal_frozen.yaml"
+    ):
+        raise RuntimeError("freeze transaction journal is invalid")
+    return journal
+
+
+def _decode_original(journal: Mapping[str, Any], field: str, sha_field: str) -> bytes:
+    try:
+        content = base64.b64decode(journal[field], validate=True)
+    except (KeyError, TypeError, ValueError) as error:
+        raise RuntimeError("freeze transaction backup is invalid") from error
+    if _sha256_bytes(content) != journal.get(sha_field):
+        raise RuntimeError("freeze transaction backup hash mismatch")
+    return content
+
+
+def recover_freeze_transaction(
+    *, project_root: Path = PROJECT_ROOT
+) -> tuple[str, str]:
+    """Explicitly finish or roll back a preserved interrupted freeze transaction."""
+
+    root = Path(project_root).resolve(strict=True)
+    lock_path = root / "results/manifests" / _LOCK_NAME
+    journal = _read_transaction_journal(lock_path)
+    freeze_id = journal["freeze_id"]
+    manifest_path = root / journal["manifest_path"]
+    frozen_path = root / journal["frozen_path"]
+    freeze_manifest_path = root / "results/manifests" / f"{freeze_id}.json"
+    if os.path.lexists(freeze_manifest_path):
+        if (
+            file_sha256(freeze_manifest_path) != journal["freeze_manifest_sha256"]
+            or file_sha256(manifest_path) != journal["final_manifest_sha256"]
+            or file_sha256(frozen_path) != journal["final_frozen_sha256"]
+        ):
+            raise RuntimeError("published freeze transaction is inconsistent")
+        lock_path.unlink()
+        return "committed", freeze_id
+
+    original_manifest = _decode_original(
+        journal, "original_manifest_base64", "original_manifest_sha256"
+    )
+    original_frozen = _decode_original(
+        journal, "original_frozen_base64", "original_frozen_sha256"
+    )
+    _replace_bytes(manifest_path, original_manifest)
+    _replace_bytes(frozen_path, original_frozen)
+    if (
+        file_sha256(manifest_path) != journal["original_manifest_sha256"]
+        or file_sha256(frozen_path) != journal["original_frozen_sha256"]
+    ):
+        raise RuntimeError("freeze transaction rollback verification failed")
+    lock_path.unlink()
+    return "rolled_back", freeze_id
 
 
 def _git_state(project_root: Path) -> tuple[str, bool]:
@@ -122,10 +224,13 @@ def _validate_git_lineage(project_root: Path, *, gate_commit: str, source_commit
     allowed_exact = {
         ".gitignore",
         "PROJECT_STATUS.md",
+        "study_manifest.yaml",
+        "configs/formal_frozen.yaml",
         "experiments/run_strict_federated.py",
         "scripts/freeze_fmas_protocol.py",
         "scripts/run_fmas_formal.py",
         "scripts/statistical_analysis.py",
+        "src/federated_learning/pcv/agents.py",
         "src/formal_protocol.py",
         "src/study_manifest.py",
     }
@@ -136,6 +241,7 @@ def _validate_git_lineage(project_root: Path, *, gate_commit: str, source_commit
         and not path.startswith("audits/")
         and not path.startswith("docs/")
         and not path.startswith("tests/")
+        and not re.fullmatch(r"results/manifests/[0-9a-f]{16}\.json", path)
     ]
     if forbidden:
         raise ValueError(
@@ -307,15 +413,59 @@ def _publish_no_replace(path: Path, content: bytes) -> None:
             os.fsync(stream.fileno())
         os.link(temporary, path)
     finally:
-        temporary.unlink(missing_ok=True)
+        try:
+            temporary.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+
+def _validate_supersede_request(
+    *,
+    project_root: Path,
+    manifest: Any,
+    supersede_freeze_id: str | None,
+) -> None:
+    if manifest.stage == "development":
+        if (
+            manifest.formal_frozen is not False
+            or manifest.paper_eligible_freeze_ids
+            or supersede_freeze_id is not None
+        ):
+            raise ValueError("study manifest is not in the unfrozen development state")
+        return
+    if (
+        manifest.stage != "formal_ready"
+        or manifest.formal_frozen is not True
+        or len(manifest.paper_eligible_freeze_ids) != 1
+        or supersede_freeze_id != manifest.paper_eligible_freeze_ids[0]
+        or not _FREEZE_ID.fullmatch(str(supersede_freeze_id or ""))
+    ):
+        raise ValueError("frozen studies require the exact active freeze id to supersede")
+    old_record_path = project_root / "results/manifests" / f"{supersede_freeze_id}.json"
+    old_record = _read_json(old_record_path, label="superseded freeze manifest")
+    old_payload = old_record.get("payload")
+    old_frozen = yaml.safe_load(
+        (project_root / "configs/formal_frozen.yaml").read_text(encoding="utf-8")
+    )
+    if (
+        old_record.get("freeze_id") != supersede_freeze_id
+        or type(old_payload) is not dict
+        or freeze_id_from_payload(old_payload) != supersede_freeze_id
+        or type(old_frozen) is not dict
+        or old_frozen.get("freeze_id") != supersede_freeze_id
+    ):
+        raise ValueError("superseded freeze evidence is incomplete or inconsistent")
 
 
 def _freeze_protocol_locked(
     *,
     development_gate_path: Path,
     project_root: Path = PROJECT_ROOT,
+    supersede_freeze_id: str | None = None,
 ) -> tuple[str, dict[str, Any]]:
     root = Path(project_root).resolve(strict=True)
+    if os.path.lexists(root / "results/manifests" / _LOCK_NAME):
+        raise RuntimeError("another freeze transaction is active or requires recovery")
     gate_path = Path(development_gate_path)
     if not gate_path.is_absolute():
         gate_path = root / gate_path
@@ -329,12 +479,11 @@ def _freeze_protocol_locked(
     frozen_path = root / "configs/formal_frozen.yaml"
     manifest = load_study_manifest(manifest_path)
     raw_manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
-    if (
-        manifest.stage != "development"
-        or manifest.formal_frozen is not False
-        or manifest.paper_eligible_freeze_ids
-    ):
-        raise ValueError("study manifest is not in the unfrozen development state")
+    _validate_supersede_request(
+        project_root=root,
+        manifest=manifest,
+        supersede_freeze_id=supersede_freeze_id,
+    )
     if (
         len(manifest.formal_seeds) != 5
         or len(set(manifest.formal_seeds)) != 5
@@ -359,6 +508,7 @@ def _freeze_protocol_locked(
         source_commit=commit,
         development_gate_path=gate_path,
         baseline_audit_path=audit_path,
+        supersedes_freeze_id=supersede_freeze_id,
     )
     freeze_id = freeze_id_from_payload(payload)
     freeze_manifest_path = root / "results/manifests" / f"{freeze_id}.json"
@@ -378,39 +528,63 @@ def _freeze_protocol_locked(
     }
     original_manifest = manifest_path.read_bytes()
     original_frozen = frozen_path.read_bytes()
+    final_manifest_bytes = _yaml_bytes(final_manifest)
+    final_frozen_bytes = _yaml_bytes(final_frozen)
+    freeze_manifest_bytes = (
+        json.dumps(
+            record,
+            ensure_ascii=False,
+            sort_keys=True,
+            indent=2,
+            allow_nan=False,
+        ).encode("utf-8")
+        + b"\n"
+    )
 
     if _git_state(root) != (commit, False):
         raise ValueError("freeze inputs changed during validation")
-    published = False
+    lock_path = root / "results/manifests" / _LOCK_NAME
+    journal = _transaction_journal(
+        freeze_id=freeze_id,
+        source_commit=commit,
+        manifest_path=manifest_path,
+        frozen_path=frozen_path,
+        original_manifest=original_manifest,
+        original_frozen=original_frozen,
+        final_manifest=final_manifest_bytes,
+        final_frozen=final_frozen_bytes,
+        freeze_manifest=freeze_manifest_bytes,
+    )
+    _acquire_freeze_lock(lock_path, journal)
     try:
-        _replace_bytes(manifest_path, _yaml_bytes(final_manifest))
-        _replace_bytes(frozen_path, _yaml_bytes(final_frozen))
+        _replace_bytes(manifest_path, final_manifest_bytes)
+        _replace_bytes(frozen_path, final_frozen_bytes)
         rebuilt_payload = build_freeze_payload(
             root,
             source_commit=commit,
             development_gate_path=gate_path,
             baseline_audit_path=audit_path,
+            supersedes_freeze_id=supersede_freeze_id,
         )
         if rebuilt_payload != payload:
             raise ValueError("freeze state changed protected execution semantics")
-        _publish_no_replace(
-            freeze_manifest_path,
-            json.dumps(
-                record,
-                ensure_ascii=False,
-                sort_keys=True,
-                indent=2,
-                allow_nan=False,
-            ).encode("utf-8")
-            + b"\n",
-        )
-        published = True
-    except BaseException:
-        _replace_bytes(manifest_path, original_manifest)
-        _replace_bytes(frozen_path, original_frozen)
-        if published:
-            freeze_manifest_path.unlink(missing_ok=True)
+        _publish_no_replace(freeze_manifest_path, freeze_manifest_bytes)
+    except BaseException as failure:
+        try:
+            _replace_bytes(manifest_path, original_manifest)
+            _replace_bytes(frozen_path, original_frozen)
+            if (
+                manifest_path.read_bytes() != original_manifest
+                or frozen_path.read_bytes() != original_frozen
+            ):
+                raise RuntimeError("rollback verification failed")
+            lock_path.unlink()
+        except BaseException as recovery_failure:
+            raise RuntimeError(
+                f"freeze transaction requires explicit recovery: {lock_path}"
+            ) from recovery_failure
         raise
+    lock_path.unlink()
     return freeze_id, record
 
 
@@ -418,30 +592,42 @@ def freeze_protocol(
     *,
     development_gate_path: Path,
     project_root: Path = PROJECT_ROOT,
+    supersede_freeze_id: str | None = None,
 ) -> tuple[str, dict[str, Any]]:
     root = Path(project_root).resolve(strict=True)
-    with _freeze_lock(root):
-        return _freeze_protocol_locked(
-            development_gate_path=development_gate_path,
-            project_root=root,
-        )
+    return _freeze_protocol_locked(
+        development_gate_path=development_gate_path,
+        project_root=root,
+        supersede_freeze_id=supersede_freeze_id,
+    )
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Freeze the approved FMAS-PCV protocol")
     parser.add_argument(
         "--development-gate",
-        required=True,
         type=Path,
     )
+    parser.add_argument("--supersede-freeze-id")
+    parser.add_argument("--recover-transaction", action="store_true")
     return parser
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
+        if args.recover_transaction:
+            if args.development_gate is not None or args.supersede_freeze_id is not None:
+                raise ValueError("transaction recovery cannot be combined with freeze arguments")
+            status, freeze_id = recover_freeze_transaction()
+            print(f"RECOVERY_STATUS={status}")
+            print(f"FREEZE_ID={freeze_id}")
+            return 0
+        if args.development_gate is None:
+            raise ValueError("--development-gate is required unless recovering")
         freeze_id, record = freeze_protocol(
             development_gate_path=args.development_gate,
+            supersede_freeze_id=args.supersede_freeze_id,
         )
     except (OSError, TypeError, ValueError, RuntimeError) as error:
         print(f"REFUSED: {error}", file=sys.stderr)
@@ -455,4 +641,9 @@ if __name__ == "__main__":
     raise SystemExit(main())
 
 
-__all__ = ["build_parser", "freeze_protocol", "main"]
+__all__ = [
+    "build_parser",
+    "freeze_protocol",
+    "main",
+    "recover_freeze_transaction",
+]

@@ -10,6 +10,7 @@ from scripts.statistical_analysis import (
     aggregate_formal_repetitions,
     analyze_fmas_formal_results,
     load_frozen_formal_results,
+    main,
 )
 from src.formal_protocol import METHOD_PROMPT_ROLES, METHOD_REPETITIONS, file_sha256
 from src.federated_learning.pcv.provider_config import deepseek_provenance
@@ -107,6 +108,83 @@ def test_loader_rejects_seed42_even_for_an_eligible_freeze(tmp_path):
     )
     with pytest.raises(ValueError, match="seed 42"):
         load_frozen_formal_results(tmp_path, manifest, "freeze-a")
+
+
+def test_duplicate_llm_repetition_is_rejected():
+    raw = _raw_results()
+    duplicate = raw[
+        (raw["method"] == "FMAS_PCV_FEDYOGI")
+        & (raw["training_seed"] == SEEDS[0])
+        & (raw["llm_rep"] == 1)
+    ]
+    raw = pd.concat([raw, duplicate], ignore_index=True)
+    with pytest.raises(ValueError, match="duplicate repetition"):
+        aggregate_formal_repetitions(raw)
+
+
+def test_negative_error_metric_is_rejected_before_aggregation():
+    raw = _raw_results()
+    raw.loc[0, "test_mape"] = -0.1
+    with pytest.raises(ValueError, match="non-negative"):
+        aggregate_formal_repetitions(raw)
+
+
+def test_four_of_five_wins_has_stable_claim_category():
+    per_seed = aggregate_formal_repetitions(_raw_results())
+    fmas_index = per_seed[per_seed["method"] == "FMAS_PCV_FEDYOGI"].index
+    fedavg = per_seed[per_seed["method"] == "FEDAVG_STRICT"].set_index(
+        "training_seed"
+    )["test_mape"]
+    values = [
+        fedavg.loc[seed] - 0.005 if index < 4 else fedavg.loc[seed] + 0.005
+        for index, seed in enumerate(SEEDS)
+    ]
+    per_seed.loc[fmas_index, "test_mape"] = values
+
+    report = analyze_fmas_formal_results(per_seed)
+
+    assert report["stable_improvement"] is True
+    assert report["significant_improvement"] is False
+    assert report["claim_status"] == "stable_improvement"
+
+
+def test_formal_cli_uses_frozen_loader_and_writes_hierarchical_outputs(
+    tmp_path, monkeypatch
+):
+    raw = _raw_results()
+    calls = []
+    manifest = replace(
+        load_study_manifest(Path("study_manifest.yaml")),
+        formal_frozen=True,
+        stage="formal_ready",
+        paper_eligible_freeze_ids=("freeze-a",),
+    )
+    monkeypatch.setattr(
+        "scripts.statistical_analysis.load_study_manifest", lambda path: manifest
+    )
+
+    def fake_loader(results_root, loaded_manifest, freeze_id):
+        calls.append((Path(results_root), loaded_manifest, freeze_id))
+        return raw
+
+    monkeypatch.setattr(
+        "scripts.statistical_analysis.load_frozen_formal_results", fake_loader
+    )
+    results_root = tmp_path / "results"
+
+    assert main(
+        [
+            "--freeze-id",
+            "freeze-a",
+            "--results-root",
+            str(results_root),
+        ]
+    ) == 0
+    assert calls and calls[0][2] == "freeze-a"
+    output = results_root / "paper" / "freeze-a" / "statistics"
+    assert (output / "formal_raw_runs.csv").is_file()
+    assert (output / "formal_per_seed.csv").is_file()
+    assert (output / "formal_analysis.json").is_file()
 
 
 def test_formal_cli_routes_to_frozen_batch_analysis(monkeypatch, tmp_path):
@@ -295,3 +373,17 @@ def test_frozen_loader_accepts_one_complete_45_run_evidence_chain(
     frame = load_frozen_formal_results(results_root, manifest, freeze_id)
     assert len(frame) == 45
     assert set(frame["training_seed"]) == set(SEEDS)
+
+    first = batch_records[0]
+    first_checkpoint = (
+        results_root
+        / "formal"
+        / freeze_id
+        / first["method"]
+        / str(first["training_seed"])
+        / str(first["llm_rep"])
+        / "last_complete.pt"
+    )
+    first_checkpoint.write_bytes(b"tampered-checkpoint")
+    with pytest.raises(ValueError, match="batch evidence"):
+        load_frozen_formal_results(results_root, manifest, freeze_id)

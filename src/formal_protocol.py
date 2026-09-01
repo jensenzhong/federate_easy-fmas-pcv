@@ -75,7 +75,10 @@ TRAINING_PROTOCOL = {
 }
 
 FAILURE_PROTOCOL = {
-    "automatic_retry": False,
+    "automatic_transport_retry": False,
+    "max_json_parse_regeneration_retries": 1,
+    "json_parse_regeneration_requires_identical_request": True,
+    "non_parse_failures_retry": False,
     "fallback_model": None,
     "resume_requires_explicit_user_approval": True,
     "locked_test_policy": "separate_formal_evaluate_after_complete_training_batch",
@@ -179,6 +182,7 @@ def build_freeze_payload(
     source_commit: str,
     development_gate_path: Path | None = None,
     baseline_audit_path: Path | None = None,
+    supersedes_freeze_id: str | None = None,
 ) -> dict[str, Any]:
     root = Path(project_root)
     gate_path = development_gate_path or root / DEVELOPMENT_GATE
@@ -186,6 +190,7 @@ def build_freeze_payload(
     manifest = load_study_manifest(root / "study_manifest.yaml")
     return {
         "git_commit": source_commit,
+        "supersedes_freeze_id": supersedes_freeze_id,
         "partition_sha256": file_sha256(root / PARTITION_MANIFEST),
         "sealed_partition_metadata_sha256": file_sha256(root / SEALED_PARTITION_METADATA),
         "development_config_sha256": file_sha256(root / DEVELOPMENT_CONFIG),
@@ -214,6 +219,7 @@ def formal_frozen_document(payload: Mapping[str, Any], freeze_id: str) -> dict[s
         "schema_version": 1,
         "formal_frozen": True,
         "freeze_id": freeze_id,
+        "supersedes_freeze_id": payload["supersedes_freeze_id"],
         "formal_seeds": list(payload["formal_seeds"]),
         "partition_manifest": PARTITION_MANIFEST,
         "partition_sha256": payload["partition_sha256"],
@@ -280,6 +286,17 @@ def validate_freeze_record(
         or any(payload.get(key) != value for key, value in current_protected.items())
         or type(payload.get("development_gate_sha256")) is not str
         or type(payload.get("baseline_fairness_audit_sha256")) is not str
+        or (
+            payload.get("supersedes_freeze_id") is not None
+            and (
+                type(payload["supersedes_freeze_id"]) is not str
+                or len(payload["supersedes_freeze_id"]) != 16
+                or any(
+                    character not in "0123456789abcdef"
+                    for character in payload["supersedes_freeze_id"]
+                )
+            )
+        )
     ):
         raise RuntimeError("formal freeze payload does not match current protected inputs")
     if record.get("formal_protocol") != formal_protocol_semantics(root):

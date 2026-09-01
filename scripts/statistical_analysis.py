@@ -654,10 +654,11 @@ def aggregate_formal_repetitions(raw: pd.DataFrame) -> pd.DataFrame:
     rows = []
     for (method, seed), group in raw.groupby(["method", "training_seed"], sort=False):
         expected_reps = set(METHOD_REPETITIONS.get(method, ()))
+        if group["llm_rep"].duplicated().any():
+            raise ValueError(f"duplicate repetition for {method} seed {seed}")
         if (
             not expected_reps
             or len(group) != len(expected_reps)
-            or group["llm_rep"].duplicated().any()
             or set(group["llm_rep"].astype(int)) != expected_reps
         ):
             raise ValueError(f"repetition coverage mismatch for {method} seed {seed}")
@@ -666,6 +667,10 @@ def aggregate_formal_repetitions(raw: pd.DataFrame) -> pd.DataFrame:
             values = group[metric].astype(float)
             if not np.isfinite(values).all():
                 raise ValueError(f"non-finite formal metric: {metric}")
+            if metric in {"test_mape", "test_rmse", "test_mae"} and (values < 0).any():
+                raise ValueError(f"formal metric must be non-negative: {metric}")
+            if metric == "test_r2" and (values > 1).any():
+                raise ValueError("formal R2 cannot exceed one")
             row[metric] = float(values.mean())
             row[f"{metric}_within_seed_std"] = float(values.std(ddof=1)) if len(values) > 1 else 0.0
         rows.append(row)

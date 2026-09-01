@@ -523,7 +523,7 @@ def test_malformed_or_non_object_content_is_schema_failure(
         client.generate_json(
             "critic", "Return JSON.", safe_payload, lambda value: value
         )
-    assert session.calls == 1
+    assert session.calls == 2
     assert error.value.category == "schema"
     assert error.value.role == "critic"
 
@@ -655,7 +655,7 @@ def test_json_output_mode_still_fails_closed_if_provider_returns_outer_text(
             validate_diagnostic_response,
         )
 
-    assert session.calls == 1
+    assert session.calls == 2
     assert error.value.category == "schema"
 
 
@@ -889,7 +889,7 @@ def test_duplicate_key_canonicalization_rejects_nonidentical_or_unsafe_values(
             validate_diagnostic_response,
         )
 
-    assert session.calls == 1
+    assert session.calls == 2
     assert error.value.category == "schema"
 
 
@@ -916,7 +916,7 @@ def test_signed_zero_duplicate_values_are_not_exactly_identical(
             lambda value: value,
         )
 
-    assert session.calls == 1
+    assert session.calls == 2
     assert error.value.category == "schema"
 
 
@@ -939,14 +939,19 @@ def test_exponent_overflow_fails_schema_and_audit_remains_serializable(
             validate_diagnostic_response,
         )
 
-    assert session.calls == 1
+    assert session.calls == 2
     assert error.value.category == "schema"
-    record = json.loads(path.read_text(encoding="utf-8"))
-    assert record["response_text"] == response_text
-    assert record["parsed_response"] is None
-    assert record["failure_category"] == "schema"
-    assert record["canonicalization_applied"] is False
-    assert record["canonicalization_rule"] is None
+    records = [
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert len(records) == 2
+    for attempt_index, record in enumerate(records, start=1):
+        assert record["response_text"] == response_text
+        assert record["parsed_response"] is None
+        assert record["failure_category"] == "schema"
+        assert record["canonicalization_applied"] is False
+        assert record["canonicalization_rule"] is None
+        assert record["attempt_index"] == attempt_index
 
 
 def test_canonicalized_object_that_fails_schema_is_audited_truthfully(
@@ -978,6 +983,88 @@ def test_canonicalized_object_that_fails_schema_is_audited_truthfully(
     assert record["canonicalization_rule"] == "complementary-json-objects-v1"
 
 
+def test_real_critic_trailing_quote_failure_regenerates_once_and_preserves_audit(
+    tmp_path,
+    safe_payload,
+):
+    candidate = _candidate_context()
+    payload = {**safe_payload, "diagnostic": {
+        "state_summary": "bounded",
+        "risks": ["spread"],
+        "priorities": ["monitor"],
+    }, "candidates": [candidate]}
+    malformed = (
+        '{"accepted_candidate_ids":["performance_01"],"rejected":[]}\"}'
+    )
+    valid = '{"accepted_candidate_ids":["performance_01"],"rejected":[]}'
+    path = tmp_path / "agent_calls.jsonl"
+    session = SequenceSession([malformed, valid])
+
+    result = make_client(
+        session,
+        telemetry=AppendOnlyTelemetry(path),
+    ).generate_json(
+        "critic",
+        "Return JSON.",
+        payload,
+        lambda value: validate_critic_response(
+            value,
+            candidate_ids=("performance_01",),
+        ),
+    )
+
+    assert tuple(result["accepted_candidate_ids"]) == ("performance_01",)
+    assert session.calls == 2
+    assert session.payloads[0] == session.payloads[1]
+    records = [
+        json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()
+    ]
+    assert len(records) == 2
+    assert records[0]["response_text"] == malformed
+    assert records[0]["failure_category"] == "schema"
+    assert records[0]["retryable_json_parse_failure"] is True
+    assert records[0]["attempt_index"] == 1
+    assert records[0]["schema_regeneration_retry"] is False
+    assert records[1]["response_text"] == valid
+    assert records[1]["failure_category"] is None
+    assert records[1]["attempt_index"] == 2
+    assert records[1]["schema_regeneration_retry"] is True
+
+
+def test_json_parse_regeneration_stops_after_one_retry(safe_payload):
+    session = SequenceSession(["not json", "still not json"])
+
+    with pytest.raises(DeepSeekCallError) as error:
+        make_client(session).generate_json(
+            "diagnostic",
+            "Return JSON.",
+            safe_payload,
+            validate_diagnostic_response,
+        )
+
+    assert session.calls == 2
+    assert error.value.category == "schema"
+    assert error.value.retryable_json_parse_failure is True
+
+
+def test_semantic_schema_failure_does_not_regenerate(safe_payload):
+    session = FakeSession(
+        FakeResponse(content='{"state_summary":"ok","risks":[]}')
+    )
+
+    with pytest.raises(DeepSeekCallError) as error:
+        make_client(session).generate_json(
+            "diagnostic",
+            "Return JSON.",
+            safe_payload,
+            validate_diagnostic_response,
+        )
+
+    assert session.calls == 1
+    assert error.value.category == "schema"
+    assert error.value.retryable_json_parse_failure is False
+
+
 @pytest.mark.parametrize(
     "content",
     [
@@ -1002,30 +1089,43 @@ def test_normalized_key_collisions_fail_closed_in_strict_and_fragment_objects(
             validate_diagnostic_response,
         )
 
-    assert session.calls == 1
+    assert session.calls == 2
     assert error.value.category == "schema"
 
 
 @pytest.mark.parametrize(
-    "content",
+    ("content", "expected_calls"),
     [
-        '{"state_summary":"ok"}\n["not an object"]\n'
-        '{"risks":[]}\n{"priorities":[]}',
-        '{"state_summary":"ok"}\ntrue\n{"risks":[]}\n{"priorities":[]}',
-        '{"state_summary":"ok"}\ngarbage\n{"risks":[]}\n{"priorities":[]}',
-        '{"state_summary":"ok"}\n{"state_summary":"again"}\n'
-        '{"risks":[]}\n{"priorities":[]}',
-        '{"state_summary":"ok","state_summary":"again"}\n'
-        '{"risks":[]}\n{"priorities":[]}',
-        '{"state_summary":"ok"}\n{"STATE_SUMMARY":"again"}\n'
-        '{"risks":[]}\n{"priorities":[]}',
-        '{"state_summary":"ok"}\n{"risks":[]}\n{"unknown":1}',
-        '{"state_summary":"ok"}\n{"risks":"wrong"}\n{"priorities":[]}',
+        (
+            '{"state_summary":"ok"}\n["not an object"]\n'
+            '{"risks":[]}\n{"priorities":[]}',
+            2,
+        ),
+        ('{"state_summary":"ok"}\ntrue\n{"risks":[]}\n{"priorities":[]}', 2),
+        ('{"state_summary":"ok"}\ngarbage\n{"risks":[]}\n{"priorities":[]}', 2),
+        (
+            '{"state_summary":"ok"}\n{"state_summary":"again"}\n'
+            '{"risks":[]}\n{"priorities":[]}',
+            2,
+        ),
+        (
+            '{"state_summary":"ok","state_summary":"again"}\n'
+            '{"risks":[]}\n{"priorities":[]}',
+            2,
+        ),
+        (
+            '{"state_summary":"ok"}\n{"STATE_SUMMARY":"again"}\n'
+            '{"risks":[]}\n{"priorities":[]}',
+            2,
+        ),
+        ('{"state_summary":"ok"}\n{"risks":[]}\n{"unknown":1}', 1),
+        ('{"state_summary":"ok"}\n{"risks":"wrong"}\n{"priorities":[]}', 1),
     ],
 )
-def test_json_object_canonicalization_fails_closed_without_retry(
+def test_json_object_canonicalization_uses_only_parse_retry(
     safe_payload,
     content,
+    expected_calls,
 ):
     session = FakeSession(FakeResponse(content=content))
 
@@ -1037,7 +1137,7 @@ def test_json_object_canonicalization_fails_closed_without_retry(
             validate_diagnostic_response,
         )
 
-    assert session.calls == 1
+    assert session.calls == expected_calls
     assert error.value.category == "schema"
 
 
@@ -1998,7 +2098,7 @@ def test_telemetry_failure_never_masks_primary_deepseek_failure(
         client.generate_json(
             "critic", "Return JSON.", safe_payload, lambda value: value
         )
-    assert session.calls == 1
+    assert session.calls == (2 if expected_category == "schema" else 1)
     assert error.value.category == expected_category
     assert error.value.role == "critic"
     assert "logger-secret" not in str(error.value)

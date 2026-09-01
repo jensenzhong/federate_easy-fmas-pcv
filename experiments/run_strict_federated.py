@@ -436,6 +436,7 @@ def validate_formal_freeze(
     payload = _read_yaml(project_root / "configs/formal_frozen.yaml")
     expected_fields = {
         "schema_version", "formal_frozen", "freeze_id", "formal_seeds",
+        "supersedes_freeze_id",
         "partition_manifest", "partition_sha256",
         "sealed_partition_metadata_sha256", "config_sha256", "prompt_hashes",
         "git_commit", "deepseek", "method_repetitions",

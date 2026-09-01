@@ -269,6 +269,72 @@ def _validate_training_run(
     }
 
 
+def _training_batch_record(
+    *,
+    freeze_id: str,
+    git_commit: str,
+    training_records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    records = [dict(record) for record in training_records]
+    expected_count = 5 * sum(
+        len(METHOD_REPETITIONS[method]) for method in FORMAL_METHOD_ORDER
+    )
+    identities = []
+    for record in records:
+        if (
+            set(record)
+            != {
+                "method",
+                "training_seed",
+                "llm_rep",
+                "completion_sha256",
+                "validation_sha256",
+                "checkpoint_sha256",
+            }
+            or any(
+                type(record.get(field)) is not str
+                or not re.fullmatch(r"[0-9a-f]{64}", record[field])
+                for field in (
+                    "completion_sha256",
+                    "validation_sha256",
+                    "checkpoint_sha256",
+                )
+            )
+        ):
+            raise ValueError("formal training batch contains an invalid run record")
+        identities.append(
+            (record["method"], record["training_seed"], record["llm_rep"])
+        )
+    if len(records) != expected_count or len(set(identities)) != expected_count:
+        raise ValueError("formal training batch requires 45 unique completed runs")
+    return {
+        "schema_version": 1,
+        "status": "complete",
+        "phase": "formal_train",
+        "freeze_id": freeze_id,
+        "git_commit": git_commit,
+        "run_count": len(records),
+        "runs": records,
+    }
+
+
+def _validate_training_batch_record(
+    value: Any,
+    *,
+    freeze_id: str,
+    git_commit: str,
+    training_records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    expected = _training_batch_record(
+        freeze_id=freeze_id,
+        git_commit=git_commit,
+        training_records=training_records,
+    )
+    if type(value) is not dict or value != expected:
+        raise ValueError("formal training batch does not match 45 validated runs")
+    return dict(value)
+
+
 def _validate_evaluation_run(
     run: FormalRun,
     run_directory: Path,
@@ -284,7 +350,7 @@ def _validate_evaluation_run(
         type(evaluation_name) is not str
         or not re.fullmatch(r"evaluation_provenance(?:\.\d{3})?\.json", evaluation_name)
     ):
-        raise ValueError("formal evaluation provenance is missing")
+        raise ValueError("formal evaluation provenance filename is invalid")
     evaluation_path = run_directory / evaluation_name
     evaluation = _read_json(evaluation_path, label="formal evaluation provenance")
     training_provenance = _read_json(
@@ -323,7 +389,7 @@ def _validate_evaluation_run(
         or evaluation.get("locked_test_unlocked") is not True
         or evaluation.get("training_checkpoint_sha256") != checkpoint_sha256
     ):
-        raise ValueError("locked-test identity mismatch")
+        raise ValueError("formal evaluation provenance or locked-test identity mismatch")
     _validate_metrics(locked["locked_test"])
     if (
         set(completion)
@@ -403,6 +469,15 @@ def _publish_json_no_replace(path: Path, record: Mapping[str, Any]) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def _publish_or_validate_json(path: Path, record: Mapping[str, Any], *, label: str) -> None:
+    if path.exists():
+        existing = _read_json(path, label=label)
+        if existing != dict(record):
+            raise ValueError(f"existing {label} does not match validated evidence")
+        return
+    _publish_json_no_replace(path, record)
+
+
 def run_formal_matrix(
     *,
     phase: str,
@@ -450,42 +525,33 @@ def run_formal_matrix(
     training_batch_path = root / "results/formal" / freeze_id / "TRAINING_BATCH_COMPLETE.json"
 
     if phase == "formal_train" and len(training_records) == len(matrix):
-        if training_batch_path.exists():
-            try:
-                existing_batch = _read_json(
-                    training_batch_path, label="formal training batch"
-                )
-            except (OSError, TypeError, ValueError):
-                return PAUSED_EXIT_CODE
-            expected_batch = {
-                "schema_version": 1,
-                "status": "complete",
-                "phase": "formal_train",
-                "freeze_id": freeze_id,
-                "git_commit": snapshot.git_commit,
-                "run_count": len(matrix),
-                "runs": training_records,
-            }
-            return 0 if existing_batch == expected_batch else PAUSED_EXIT_CODE
-        _publish_json_no_replace(
-            training_batch_path,
-            {
-                "schema_version": 1,
-                "status": "complete",
-                "phase": "formal_train",
-                "freeze_id": freeze_id,
-                "git_commit": snapshot.git_commit,
-                "run_count": len(matrix),
-                "runs": training_records,
-            },
+        expected_batch = _training_batch_record(
+            freeze_id=freeze_id,
+            git_commit=snapshot.git_commit,
+            training_records=training_records,
         )
+        try:
+            _publish_or_validate_json(
+                training_batch_path,
+                expected_batch,
+                label="formal training batch",
+            )
+        except (OSError, TypeError, ValueError):
+            return PAUSED_EXIT_CODE
         return 0
 
     if phase == "formal_evaluate":
         if len(training_records) != len(matrix) or not training_batch_path.is_file():
             return PAUSED_EXIT_CODE
         batch = _read_json(training_batch_path, label="formal training batch")
-        if batch.get("runs") != training_records or batch.get("run_count") != len(matrix):
+        try:
+            _validate_training_batch_record(
+                batch,
+                freeze_id=freeze_id,
+                git_commit=snapshot.git_commit,
+                training_records=training_records,
+            )
+        except (TypeError, ValueError):
             return PAUSED_EXIT_CODE
 
     for index, run in enumerate(matrix):
@@ -535,17 +601,14 @@ def run_formal_matrix(
             return PAUSED_EXIT_CODE
 
     if phase == "formal_train":
-        _publish_json_no_replace(
+        _publish_or_validate_json(
             training_batch_path,
-            {
-                "schema_version": 1,
-                "status": "complete",
-                "phase": "formal_train",
-                "freeze_id": freeze_id,
-                "git_commit": snapshot.git_commit,
-                "run_count": len(matrix),
-                "runs": training_records,
-            },
+            _training_batch_record(
+                freeze_id=freeze_id,
+                git_commit=snapshot.git_commit,
+                training_records=training_records,
+            ),
+            label="formal training batch",
         )
     else:
         evaluation_records = [
@@ -556,8 +619,11 @@ def run_formal_matrix(
             )
             for index, run in enumerate(matrix)
         ]
-        _publish_json_no_replace(
-            root / "results/formal" / freeze_id / "EVALUATION_BATCH_COMPLETE.json",
+        evaluation_batch_path = (
+            root / "results/formal" / freeze_id / "EVALUATION_BATCH_COMPLETE.json"
+        )
+        _publish_or_validate_json(
+            evaluation_batch_path,
             {
                 "schema_version": 1,
                 "status": "complete",
@@ -566,6 +632,7 @@ def run_formal_matrix(
                 "run_count": len(matrix),
                 "runs": evaluation_records,
             },
+            label="formal evaluation batch",
         )
     return 0
 

@@ -31,6 +31,7 @@ ROLE_NAMES = (
 _FRAGMENT_CANONICALIZATION_RULE = "complementary-json-objects-v1"
 _DUPLICATE_KEY_CANONICALIZATION_RULE = "identical-duplicate-key-v1"
 _PROPOSER_SOURCE_RULE = "fixed-proposer-source-v1"
+MAX_JSON_PARSE_REGENERATION_RETRIES = 1
 PROPOSER_ROLES = ROLE_NAMES[1:4]
 _ACTION_FIELDS = frozenset(
     {
@@ -62,10 +63,18 @@ _VOTE_FIELDS = frozenset(
 class DeepSeekCallError(RuntimeError):
     """Sanitized fail-stop error for one DeepSeek role call."""
 
-    def __init__(self, category: str, role: str, message: str):
+    def __init__(
+        self,
+        category: str,
+        role: str,
+        message: str,
+        *,
+        retryable_json_parse_failure: bool = False,
+    ):
         super().__init__(f"{category} failure in {role}: {message}")
         self.category = category
         self.role = role
+        self.retryable_json_parse_failure = retryable_json_parse_failure
 
 
 def _exact_object(value: Any, fields: frozenset[str], *, context: str) -> dict:
@@ -809,6 +818,8 @@ class StrictDeepSeekClient:
         failure_category: str | None,
         failure_detail: str | None,
         canonicalization_rule: str | None = None,
+        attempt_index: int = 1,
+        retryable_json_parse_failure: bool = False,
     ) -> None:
         if self.telemetry is None:
             return
@@ -829,6 +840,9 @@ class StrictDeepSeekClient:
                 "failure_detail": failure_detail,
                 "canonicalization_applied": canonicalization_rule is not None,
                 "canonicalization_rule": canonicalization_rule,
+                "attempt_index": attempt_index,
+                "schema_regeneration_retry": attempt_index > 1,
+                "retryable_json_parse_failure": retryable_json_parse_failure,
             },
             known_secrets=(self._api_key,),
         )
@@ -847,6 +861,8 @@ class StrictDeepSeekClient:
         started: float,
         failure_detail: str | None = None,
         canonicalization_rule: str | None = None,
+        attempt_index: int = 1,
+        retryable_json_parse_failure: bool = False,
     ) -> None:
         try:
             self._record(
@@ -859,12 +875,19 @@ class StrictDeepSeekClient:
                 failure_category=category,
                 failure_detail=failure_detail,
                 canonicalization_rule=canonicalization_rule,
+                attempt_index=attempt_index,
+                retryable_json_parse_failure=retryable_json_parse_failure,
             )
         except Exception:
             # Audit storage is best effort on the failure path. It must never
             # replace or reclassify the primary provider/transport failure.
             pass
-        raise DeepSeekCallError(category, role, message) from None
+        raise DeepSeekCallError(
+            category,
+            role,
+            message,
+            retryable_json_parse_failure=retryable_json_parse_failure,
+        ) from None
 
     def generate_json(
         self,
@@ -872,6 +895,35 @@ class StrictDeepSeekClient:
         system_prompt,
         payload,
         response_validator: Callable[[dict[str, Any]], Any],
+    ):
+        """Generate one strict response, with one parse-only regeneration."""
+
+        for attempt_index in range(1, MAX_JSON_PARSE_REGENERATION_RETRIES + 2):
+            try:
+                return self._generate_json_once(
+                    role,
+                    system_prompt,
+                    payload,
+                    response_validator,
+                    attempt_index=attempt_index,
+                )
+            except DeepSeekCallError as error:
+                retries_used = attempt_index - 1
+                if (
+                    not error.retryable_json_parse_failure
+                    or retries_used >= MAX_JSON_PARSE_REGENERATION_RETRIES
+                ):
+                    raise
+        raise RuntimeError("unreachable DeepSeek regeneration state")
+
+    def _generate_json_once(
+        self,
+        role,
+        system_prompt,
+        payload,
+        response_validator: Callable[[dict[str, Any]], Any],
+        *,
+        attempt_index: int,
     ):
         if type(role) is not str or not role.strip():
             raise ValueError("role must be a non-empty exact string")
@@ -936,6 +988,7 @@ class StrictDeepSeekClient:
                 parsed_response=None,
                 started=started,
                 failure_detail=str(error),
+                attempt_index=attempt_index,
             )
         except requests.HTTPError as error:
             status = getattr(getattr(error, "response", None), "status_code", None)
@@ -950,6 +1003,7 @@ class StrictDeepSeekClient:
                 parsed_response=None,
                 started=started,
                 failure_detail=str(error),
+                attempt_index=attempt_index,
             )
         except (requests.RequestException, ConnectionError, OSError) as error:
             self._fail(
@@ -962,6 +1016,7 @@ class StrictDeepSeekClient:
                 parsed_response=None,
                 started=started,
                 failure_detail=str(error),
+                attempt_index=attempt_index,
             )
         except Exception as error:
             self._fail(
@@ -974,6 +1029,7 @@ class StrictDeepSeekClient:
                 parsed_response=None,
                 started=started,
                 failure_detail=str(error),
+                attempt_index=attempt_index,
             )
 
         try:
@@ -1003,6 +1059,7 @@ class StrictDeepSeekClient:
                 parsed_response=None,
                 started=started,
                 failure_detail=str(error),
+                attempt_index=attempt_index,
             )
 
         try:
@@ -1010,6 +1067,25 @@ class StrictDeepSeekClient:
                 response_text,
                 applied_canonicalization_rules,
             )
+        except Exception as error:
+            self._fail(
+                "schema",
+                role,
+                "agent JSON could not be parsed",
+                request_hash=request_hash,
+                prompt_hash=prompt_hash,
+                response_text=response_text,
+                parsed_response=parsed_response,
+                started=started,
+                failure_detail=str(error),
+                canonicalization_rule=_canonicalization_label(
+                    applied_canonicalization_rules
+                ),
+                attempt_index=attempt_index,
+                retryable_json_parse_failure=True,
+            )
+
+        try:
             if role == "single_proposer" or role in PROPOSER_ROLES:
                 _canonicalize_proposer_source(
                     parsed_response,
@@ -1031,6 +1107,7 @@ class StrictDeepSeekClient:
                 canonicalization_rule=_canonicalization_label(
                     applied_canonicalization_rules
                 ),
+                attempt_index=attempt_index,
             )
 
         self._record(
@@ -1045,6 +1122,7 @@ class StrictDeepSeekClient:
             canonicalization_rule=_canonicalization_label(
                 applied_canonicalization_rules
             ),
+            attempt_index=attempt_index,
         )
         return validated
 
@@ -1301,6 +1379,7 @@ class MultiAgentOrchestrator:
 
 __all__ = [
     "DeepSeekCallError",
+    "MAX_JSON_PARSE_REGENERATION_RETRIES",
     "MultiAgentOrchestrator",
     "OrchestrationResult",
     "ROLE_NAMES",
