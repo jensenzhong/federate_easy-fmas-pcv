@@ -2,6 +2,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 .pytest_cache/
+.pytest_*/
 .mypy_cache/
 .ruff_cache/
 
@@ -25,3 +26,5 @@ Thumbs.db
 results/**/PAUSED.json
 results/**/.*.lock
 results/development/**
+results/formal/**
+results/paper/**

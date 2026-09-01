@@ -33,6 +33,14 @@ class StudyManifest:
 
 def load_study_manifest(path: Path) -> StudyManifest:
     raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if type(raw) is not dict:
+        raise ValueError("study manifest must contain one mapping")
+    if type(raw.get("formal_frozen")) is not bool:
+        raise ValueError("formal_frozen must be an exact boolean")
+    if type(raw.get("paper_eligible_freeze_ids")) is not list or any(
+        type(item) is not str or not item for item in raw["paper_eligible_freeze_ids"]
+    ):
+        raise ValueError("paper_eligible_freeze_ids must contain non-empty strings")
     methods = raw["methods"]
     missing = set(FORMAL_METHOD_ORDER) - set(methods)
     if missing:
@@ -41,14 +49,22 @@ def load_study_manifest(path: Path) -> StudyManifest:
     development_seed = int(raw["development_seed"])
     if development_seed in formal_seeds:
         raise ValueError("development seed must not appear in formal seeds")
+    stage = str(raw["stage"])
+    formal_frozen = raw["formal_frozen"]
+    freeze_ids = tuple(raw["paper_eligible_freeze_ids"])
+    if formal_frozen:
+        if stage != "formal_ready" or not freeze_ids:
+            raise ValueError("a frozen study must be formal_ready and paper eligible")
+    elif stage != "development" or freeze_ids:
+        raise ValueError("an unfrozen study must remain in development without freeze ids")
     return StudyManifest(
         schema_version=int(raw["schema_version"]),
-        stage=str(raw["stage"]),
+        stage=stage,
         development_seed=development_seed,
         split_seed=int(raw["split_seed"]),
         formal_seeds=formal_seeds,
-        formal_frozen=bool(raw["formal_frozen"]),
-        paper_eligible_freeze_ids=tuple(raw["paper_eligible_freeze_ids"]),
+        formal_frozen=formal_frozen,
+        paper_eligible_freeze_ids=freeze_ids,
         data_protocol=dict(raw["data_protocol"]),
         methods=methods,
     )

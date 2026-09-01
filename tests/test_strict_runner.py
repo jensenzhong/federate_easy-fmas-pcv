@@ -179,7 +179,12 @@ def _args(*extra):
 
 
 def test_unfrozen_manifest_refuses_every_formal_phase_before_output(tmp_path: Path):
-    manifest = load_study_manifest(Path("study_manifest.yaml"))
+    manifest = replace(
+        load_study_manifest(Path("study_manifest.yaml")),
+        stage="development",
+        formal_frozen=False,
+        paper_eligible_freeze_ids=(),
+    )
     for phase in ("formal_train", "formal_evaluate"):
         args = build_parser().parse_args(
             [
@@ -390,6 +395,9 @@ def test_formal_evaluation_adds_separate_audit_without_overwriting_training(
     )
     monkeypatch.setattr(runner_module, "load_study_manifest", lambda path: manifest)
     monkeypatch.setattr(runner_module, "validate_formal_freeze", lambda **kwargs: None)
+    monkeypatch.setattr(
+        runner_module, "_require_complete_training_batch", lambda *args, **kwargs: None
+    )
     train_args = build_parser().parse_args(
         [
             "--method", "FEDAVG_STRICT",

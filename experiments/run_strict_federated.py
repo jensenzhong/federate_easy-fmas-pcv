@@ -36,6 +36,7 @@ from src.federated_learning.pcv.engine import (  # noqa: E402
     ExperimentPaused,
     ExperimentRuntimeError,
 )
+from src.federated_learning.pcv.checkpoint import load_checkpoint  # noqa: E402
 from src.federated_learning.pcv.protocol import (  # noqa: E402
     TestPartitionLocked,
     require_test_unlock,
@@ -47,6 +48,16 @@ from src.federated_learning.pcv.provider_config import (  # noqa: E402
     deepseek_provenance,
 )
 from src.federated_learning.pcv.telemetry import AppendOnlyTelemetry  # noqa: E402
+from src.formal_protocol import (  # noqa: E402
+    ANALYSIS_PROTOCOL,
+    METHOD_CONFIG_PATHS,
+    METHOD_PROMPT_ROLES,
+    METHOD_REPETITIONS,
+    PARTITION_MANIFEST,
+    SEALED_PARTITION_METADATA,
+    frozen_execution_config_sha256 as _stable_execution_config_sha256,
+    validate_freeze_record,
+)
 from src.study_manifest import (  # noqa: E402
     FORMAL_METHOD_ORDER,
     StudyManifest,
@@ -57,13 +68,6 @@ from src.study_manifest import (  # noqa: E402
 FORMAL_METHODS = frozenset(FORMAL_METHOD_ORDER)
 LLM_METHODS = frozenset({"SA_PCV_FEDYOGI", "FMAS_PCV_FEDYOGI"})
 PHASES = ("development", "formal_train", "formal_evaluate")
-METHOD_CONFIG_PATHS = {
-    "FEDAVG_STRICT": "configs/methods/fedavg_strict.yaml",
-    "FEDYOGI_STRICT": "configs/methods/fedyogi_strict.yaml",
-    "DPCV_FEDYOGI": "configs/methods/dpcv_fedyogi.yaml",
-    "SA_PCV_FEDYOGI": "configs/methods/sa_pcv_fedyogi.yaml",
-    "FMAS_PCV_FEDYOGI": "configs/methods/fmas_pcv_fedyogi.yaml",
-}
 COMMON_METHOD_CONFIG = {
     "num_rounds": 20,
     "local_epochs": 20,
@@ -85,26 +89,11 @@ COMMON_METHOD_CONFIG = {
     "fedyogi_anchor_clip_norm": None,
 }
 METHOD_DIFFERENCES = {
-    "FEDAVG_STRICT": ("fedavg", "anchor_only", []),
-    "FEDYOGI_STRICT": ("fedyogi", "anchor_only", []),
-    "DPCV_FEDYOGI": ("fedyogi", "deterministic", []),
-    "SA_PCV_FEDYOGI": (
-        "fedyogi",
-        "single_agent",
-        ["single_proposer", "coordinator"],
-    ),
-    "FMAS_PCV_FEDYOGI": (
-        "fedyogi",
-        "multi_agent",
-        [
-            "diagnostic",
-            "performance_proposer",
-            "stability_proposer",
-            "balance_proposer",
-            "critic",
-            "coordinator",
-        ],
-    ),
+    "FEDAVG_STRICT": ("fedavg", "anchor_only"),
+    "FEDYOGI_STRICT": ("fedyogi", "anchor_only"),
+    "DPCV_FEDYOGI": ("fedyogi", "deterministic"),
+    "SA_PCV_FEDYOGI": ("fedyogi", "single_agent"),
+    "FMAS_PCV_FEDYOGI": ("fedyogi", "multi_agent"),
 }
 _SAFE_COMPONENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}\Z")
 _SENSITIVE_KEY_FRAGMENTS = (
@@ -198,7 +187,8 @@ def load_method_config(
     for key, expected in COMMON_METHOD_CONFIG.items():
         if type(config[key]) is not type(expected) or config[key] != expected:
             raise ValueError(f"method config mismatch for {method}.{key}")
-    optimizer, proposal_mode, roles = METHOD_DIFFERENCES[method]
+    optimizer, proposal_mode = METHOD_DIFFERENCES[method]
+    roles = list(METHOD_PROMPT_ROLES[method])
     if (
         config["server_optimizer"] != optimizer
         or config["proposal_mode"] != proposal_mode
@@ -392,26 +382,9 @@ def effective_config_sha256(base_config_path: Path, method_config_path: Path) ->
 
 
 def frozen_execution_config_sha256(project_root: Path) -> str:
-    """Hash every configuration file that can alter a formal execution."""
+    """Hash execution semantics while ignoring generated freeze-state fields."""
 
-    paths = [
-        project_root / "study_manifest.yaml",
-        project_root / "configs/config.yaml",
-        project_root / "configs/development_seed42.yaml",
-        *(
-            project_root / METHOD_CONFIG_PATHS[method]
-            for method in FORMAL_METHOD_ORDER
-        ),
-    ]
-    digest = sha256()
-    for path in paths:
-        label = path.relative_to(project_root).as_posix().encode("utf-8")
-        content = path.read_bytes()
-        digest.update(len(label).to_bytes(4, "big"))
-        digest.update(label)
-        digest.update(len(content).to_bytes(8, "big"))
-        digest.update(content)
-    return digest.hexdigest()
+    return _stable_execution_config_sha256(project_root)
 
 
 def _matches_frozen_source_commit(
@@ -462,17 +435,11 @@ def validate_formal_freeze(
         raise RuntimeError("formal execution requires a clean Git worktree")
     payload = _read_yaml(project_root / "configs/formal_frozen.yaml")
     expected_fields = {
-        "schema_version",
-        "formal_frozen",
-        "freeze_id",
-        "formal_seeds",
-        "partition_manifest",
-        "partition_sha256",
-        "sealed_partition_metadata_sha256",
-        "config_sha256",
-        "prompt_hashes",
-        "git_commit",
-        "deepseek",
+        "schema_version", "formal_frozen", "freeze_id", "formal_seeds",
+        "partition_manifest", "partition_sha256",
+        "sealed_partition_metadata_sha256", "config_sha256", "prompt_hashes",
+        "git_commit", "deepseek", "method_repetitions",
+        "development_gate_sha256", "baseline_fairness_audit_sha256", "analysis",
     }
     if set(payload) != expected_fields or payload.get("formal_frozen") is not True:
         raise RuntimeError("formal freeze payload is incomplete or inactive")
@@ -489,13 +456,13 @@ def validate_formal_freeze(
         freeze_id=args.freeze_id,
     ):
         raise RuntimeError("formal freeze Git commit mismatch")
-    partition_name = "results/manifests/strict_partition_v1.csv"
+    partition_name = PARTITION_MANIFEST
     if payload.get("partition_manifest") != partition_name or payload.get(
         "partition_sha256"
     ) != _file_sha256(project_root / partition_name):
         raise RuntimeError("formal freeze partition mismatch")
     if payload.get("sealed_partition_metadata_sha256") != _file_sha256(
-        project_root / "Data/strict_partition_v1/metadata.json"
+        project_root / SEALED_PARTITION_METADATA
     ):
         raise RuntimeError("formal freeze sealed partition mismatch")
     if payload.get("config_sha256") != frozen_execution_config_sha256(project_root):
@@ -504,7 +471,7 @@ def validate_formal_freeze(
         {
             role
             for method in FORMAL_METHOD_ORDER
-            for role in METHOD_DIFFERENCES[method][2]
+            for role in METHOD_PROMPT_ROLES[method]
         }
     )
     expected_prompts = {
@@ -515,6 +482,17 @@ def validate_formal_freeze(
         raise RuntimeError("formal freeze prompt hashes mismatch")
     if payload.get("deepseek") != deepseek_protocol_config():
         raise RuntimeError("formal freeze DeepSeek parameters mismatch")
+    if payload.get("method_repetitions") != METHOD_REPETITIONS:
+        raise RuntimeError("formal freeze repetition protocol mismatch")
+    if payload.get("analysis") != ANALYSIS_PROTOCOL:
+        raise RuntimeError("formal freeze analysis protocol mismatch")
+    validated = validate_freeze_record(
+        project_root,
+        freeze_id=args.freeze_id,
+        frozen_document=payload,
+    )
+    if validated.get("git_commit") != payload.get("git_commit"):
+        raise RuntimeError("formal freeze source commit mismatch")
 
 
 def _git_metadata(project_root: Path) -> tuple[str, bool]:
@@ -535,6 +513,157 @@ def _git_metadata(project_root: Path) -> tuple[str, bool]:
         ).stdout
     )
     return commit, dirty
+
+
+def _require_complete_training_batch(
+    results_root: Path,
+    freeze_id: str,
+    *,
+    project_root: Path,
+    manifest: StudyManifest,
+    git_commit: str,
+) -> None:
+    path = Path(results_root) / "formal" / freeze_id / "TRAINING_BATCH_COMPLETE.json"
+    if path.is_symlink() or not path.is_file():
+        raise RuntimeError("formal evaluation requires the complete training batch")
+    try:
+        record = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise RuntimeError("formal training batch manifest is unreadable") from error
+    expected_runs = [
+        (method, seed, rep)
+        for seed in manifest.formal_seeds
+        for method in FORMAL_METHOD_ORDER
+        for rep in METHOD_REPETITIONS[method]
+    ]
+    if (
+        type(record) is not dict
+        or set(record)
+        != {"schema_version", "status", "phase", "freeze_id", "git_commit", "run_count", "runs"}
+        or record.get("schema_version") != 1
+        or record.get("status") != "complete"
+        or record.get("phase") != "formal_train"
+        or record.get("freeze_id") != freeze_id
+        or record.get("git_commit") != git_commit
+        or record.get("run_count") != len(expected_runs)
+        or type(record.get("runs")) is not list
+        or len(record["runs"]) != len(expected_runs)
+    ):
+        raise RuntimeError("formal training batch manifest is incomplete")
+    for run_record, (method, seed, rep) in zip(
+        record["runs"], expected_runs, strict=True
+    ):
+        if (
+            type(run_record) is not dict
+            or set(run_record)
+            != {
+                "method", "training_seed", "llm_rep", "completion_sha256",
+                "validation_sha256", "checkpoint_sha256",
+            }
+            or run_record.get("method") != method
+            or run_record.get("training_seed") != seed
+            or run_record.get("llm_rep") != rep
+        ):
+            raise RuntimeError("formal training batch run identity mismatch")
+        run_root = Path(results_root) / "formal" / freeze_id / method / str(seed) / str(rep)
+        for field, filename in (
+            ("completion_sha256", "TRAINING_COMPLETE.json"),
+            ("validation_sha256", "validation_metrics.json"),
+            ("checkpoint_sha256", "last_complete.pt"),
+        ):
+            expected_sha = run_record.get(field)
+            if (
+                type(expected_sha) is not str
+                or not re.fullmatch(r"[0-9a-f]{64}", expected_sha)
+                or _file_sha256(run_root / filename) != expected_sha
+            ):
+                raise RuntimeError("formal training batch evidence hash mismatch")
+        try:
+            completion = json.loads(
+                (run_root / "TRAINING_COMPLETE.json").read_text(encoding="utf-8")
+            )
+            validation = json.loads(
+                (run_root / "validation_metrics.json").read_text(encoding="utf-8")
+            )
+            provenance = json.loads(
+                (run_root / "provenance.json").read_text(encoding="utf-8")
+            )
+            checkpoint = load_checkpoint(run_root / "last_complete.pt")
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError) as error:
+            raise RuntimeError("formal training batch evidence is unreadable") from error
+        method_path = project_root / METHOD_CONFIG_PATHS[method]
+        base_path = project_root / "configs/config.yaml"
+        method_config = load_method_config(method, project_root=project_root)
+        expected_prompts = _prompt_hashes(method_config, project_root)
+        checkpoint_prompts = expected_prompts or {"engine": "no-agent-prompts"}
+        pause_names = sorted(item.name for item in run_root.glob("PAUSED*.json"))
+        if (
+            type(completion) is not dict
+            or set(completion)
+            != {
+                "status", "phase", "method", "training_seed", "llm_rep",
+                "last_complete_round", "resolved_pause_reports", "resume_approved",
+                "provenance", "evaluation_provenance", "result_status",
+                "result_file", "result_sha256",
+            }
+            or completion.get("status") != "complete"
+            or completion.get("phase") != "formal_train"
+            or completion.get("method") != method
+            or completion.get("training_seed") != seed
+            or completion.get("llm_rep") != rep
+            or completion.get("last_complete_round") != 20
+            or completion.get("resolved_pause_reports") != pause_names
+            or type(completion.get("resume_approved")) is not bool
+            or completion.get("provenance") != "provenance.json"
+            or completion.get("evaluation_provenance") is not None
+            or completion.get("result_status") != "complete"
+            or completion.get("result_file") != "validation_metrics.json"
+            or type(validation) is not dict
+            or set(validation)
+            != {
+                "status", "phase", "method", "training_seed", "llm_rep",
+                "completed_rounds", "best_validation",
+            }
+            or validation.get("status") != "complete"
+            or validation.get("phase") != "formal_train"
+            or validation.get("method") != method
+            or validation.get("training_seed") != seed
+            or validation.get("llm_rep") != rep
+            or validation.get("completed_rounds") != 20
+            or type(provenance) is not dict
+            or provenance.get("schema_version") != 1
+            or provenance.get("method") != method
+            or provenance.get("phase") != "formal_train"
+            or provenance.get("training_seed") != seed
+            or provenance.get("llm_rep") != rep
+            or provenance.get("run_id") is not None
+            or provenance.get("freeze_id") != freeze_id
+            or provenance.get("git_commit") != git_commit
+            or provenance.get("git_dirty") is not False
+            or provenance.get("partition_sha256")
+            != _file_sha256(project_root / PARTITION_MANIFEST)
+            or provenance.get("sealed_partition_metadata_sha256")
+            != _file_sha256(project_root / SEALED_PARTITION_METADATA)
+            or provenance.get("method_config_sha256") != _file_sha256(method_path)
+            or provenance.get("base_config_sha256") != _file_sha256(base_path)
+            or provenance.get("effective_config_sha256")
+            != effective_config_sha256(base_path, method_path)
+            or provenance.get("prompt_hashes") != expected_prompts
+            or provenance.get("deepseek")
+            != deepseek_provenance(enabled=method in LLM_METHODS)
+            or provenance.get("locked_test_unlocked") is not False
+            or checkpoint.get("last_complete_round") != 20
+            or checkpoint.get("freeze_id") != freeze_id
+            or checkpoint.get("method") != method
+            or checkpoint.get("training_seed") != seed
+            or checkpoint.get("llm_rep") != rep
+            or checkpoint.get("partition_sha256")
+            != provenance.get("partition_sha256")
+            or checkpoint.get("config_sha256")
+            != provenance.get("effective_config_sha256")
+            or checkpoint.get("prompt_hashes") != checkpoint_prompts
+        ):
+            raise RuntimeError("formal training batch evidence identity mismatch")
 
 
 def _prompt_hashes(method_config: Mapping[str, Any], project_root: Path) -> dict[str, str]:
@@ -644,6 +773,14 @@ def prepare_run(
     method_config = load_method_config(args.method, project_root=project_root)
     if results_root is None:
         results_root = project_root / "results"
+    if args.phase == "formal_evaluate":
+        _require_complete_training_batch(
+            results_root,
+            args.freeze_id,
+            project_root=project_root,
+            manifest=manifest,
+            git_commit=git_commit,
+        )
     run_directory = _create_context_run_directory(args, results_root=results_root)
 
     partition_path = project_root / "results/manifests/strict_partition_v1.csv"

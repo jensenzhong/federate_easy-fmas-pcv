@@ -6,8 +6,10 @@
 
 The strict-federated FMAS-PCV implementation and canonical runner are complete.
 The complete seed 42 development matrix passed its development gate on commit
-`556120ba03668d49f42563febf02ad4a8c4387a8`. The formal protocol is not frozen yet,
-and no multi-seed or locked-test claim has been made.
+`556120ba03668d49f42563febf02ad4a8c4387a8`. Freeze generation, the exact 45-run
+formal matrix, immutable training/evaluation batch manifests, and frozen hierarchical
+statistics are implemented and verified. The formal protocol is not frozen yet, and no
+multi-seed or locked-test claim has been made.
 
 The only paper-line methods are:
 
@@ -48,7 +50,7 @@ accepted by the canonical formal runner.
 
 Current offline verification after the coordinator duplicate-key prompt fix:
 
-- Full repository: `768 passed`, 69 subtests passed, plus 69 existing SciPy
+- Full repository: `793 passed`, 69 subtests passed, plus 69 existing SciPy
   precision-loss warnings.
 - Focused agent, development-runner, protocol, and engine checks: `315 passed`.
 - Independent coordinator prompt-contract review: PASS; the reviewer reran
@@ -98,7 +100,9 @@ separate approval.
 python -m pytest -q --basetemp=.pytest_release
 ```
 
-The current offline baseline is `768 passed`, 69 subtests passed, plus the same 69
-existing SciPy warnings.
+The current offline baseline is `793 passed`, 69 subtests passed, plus the existing
+SciPy precision-loss warnings. The formal-infrastructure focused suite adds freeze,
+serial fail-stop, evidence-chain, partial-evaluation continuation, and five-seed
+hierarchical-statistics coverage.
 The real preflight is an auditable one-time operation and should not be repeated merely
 to increase API-call counts.
