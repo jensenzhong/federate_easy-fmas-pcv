@@ -7,6 +7,7 @@ import yaml
 
 import scripts.freeze_fmas_protocol as freeze_module
 from scripts.freeze_fmas_protocol import freeze_protocol, recover_freeze_transaction
+from src.federated_learning.pcv.agents import MAX_JSON_PARSE_REGENERATION_RETRIES
 from src.formal_protocol import (
     DEVELOPMENT_GATE,
     FAILURE_PROTOCOL,
@@ -104,7 +105,9 @@ def test_freeze_is_deterministic_and_preserves_execution_hash(clean_protocol):
 
 def test_freeze_hash_covers_the_approved_json_parse_regeneration_policy(clean_protocol):
     assert FAILURE_PROTOCOL["automatic_transport_retry"] is False
-    assert FAILURE_PROTOCOL["max_json_parse_regeneration_retries"] == 1
+    assert FAILURE_PROTOCOL["max_json_parse_regeneration_retries"] == (
+        MAX_JSON_PARSE_REGENERATION_RETRIES
+    )
     assert FAILURE_PROTOCOL["json_parse_regeneration_requires_identical_request"] is True
     assert FAILURE_PROTOCOL["non_parse_failures_retry"] is False
     payload = build_freeze_payload(clean_protocol, source_commit=COMMIT)

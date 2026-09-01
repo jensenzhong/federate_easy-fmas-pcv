@@ -236,7 +236,7 @@ def _validate_training_run(
         or completion.get("llm_rep") != run.llm_rep
         or completion.get("last_complete_round") != 20
         or completion.get("resolved_pause_reports") != pause_names
-        or type(completion.get("resume_approved")) is not bool
+        or completion.get("resume_approved") != bool(pause_names)
         or completion.get("provenance") != "provenance.json"
         or completion.get("evaluation_provenance") is not None
         or completion.get("result_status") != "complete"

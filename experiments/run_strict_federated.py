@@ -619,6 +619,8 @@ def _require_complete_training_batch(
             or completion.get("evaluation_provenance") is not None
             or completion.get("result_status") != "complete"
             or completion.get("result_file") != "validation_metrics.json"
+            or completion.get("result_sha256") != run_record["validation_sha256"]
+            or completion.get("resume_approved") != bool(pause_names)
             or type(validation) is not dict
             or set(validation)
             != {

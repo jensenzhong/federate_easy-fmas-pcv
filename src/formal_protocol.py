@@ -9,6 +9,7 @@ from typing import Any, Mapping
 
 import yaml
 
+from src.federated_learning.pcv.agents import MAX_JSON_PARSE_REGENERATION_RETRIES
 from src.federated_learning.pcv.provider_config import deepseek_protocol_config
 from src.study_manifest import FORMAL_METHOD_ORDER, load_study_manifest
 
@@ -76,7 +77,7 @@ TRAINING_PROTOCOL = {
 
 FAILURE_PROTOCOL = {
     "automatic_transport_retry": False,
-    "max_json_parse_regeneration_retries": 1,
+    "max_json_parse_regeneration_retries": MAX_JSON_PARSE_REGENERATION_RETRIES,
     "json_parse_regeneration_requires_identical_request": True,
     "non_parse_failures_retry": False,
     "fallback_model": None,
