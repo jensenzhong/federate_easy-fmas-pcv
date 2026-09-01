@@ -240,6 +240,34 @@ def test_evaluation_prescan_allows_prior_locked_result(tmp_path, monkeypatch):
     assert record["method"] == run.method
 
 
+@pytest.mark.parametrize(
+    ("pause_report", "resume_approved"),
+    [(False, 0), (True, 1)],
+)
+def test_training_completion_rejects_integer_resume_approval(
+    tmp_path,
+    monkeypatch,
+    pause_report,
+    resume_approved,
+):
+    run, snapshot, directory, _, _ = _training_fixture(tmp_path, monkeypatch)
+    completion_path = directory / "TRAINING_COMPLETE.json"
+    completion = json.loads(completion_path.read_text(encoding="utf-8"))
+    if pause_report:
+        _write_json(directory / "PAUSED.json", {"status": "resolved"})
+        completion["resolved_pause_reports"] = ["PAUSED.json"]
+    completion["resume_approved"] = resume_approved
+    _write_json(completion_path, completion)
+
+    with pytest.raises(ValueError, match="training completion identity"):
+        formal_module._validate_training_run(
+            run,
+            directory,
+            freeze_id=FREEZE_ID,
+            snapshot=snapshot,
+        )
+
+
 def test_training_batch_requires_exact_real_run_records():
     records = [
         {
