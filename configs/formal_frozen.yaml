@@ -1,7 +1,7 @@
 schema_version: 1
 formal_frozen: true
-freeze_id: cd01bf5cd32e78cc
-supersedes_freeze_id: db79caaed2765507
+freeze_id: 4bf1093923f49829
+supersedes_freeze_id: cd01bf5cd32e78cc
 formal_seeds:
 - 314
 - 2718
@@ -20,7 +20,7 @@ prompt_hashes:
   performance_proposer: 4bb5cc647d1bd66c0f564a3e0fad2239cf12fe2644d820c27ed50192c1634bd1
   single_proposer: cc72eb45a6d5de1614bfd3a316083d6f2f6cb350f8455b569bcd5cb0a21b29af
   stability_proposer: 2d30313dc5446a4630a4d1dd41bf9563368178b9d73134e43ca9aa2e0598fbfd
-git_commit: 8c9f133137d4141dcfecdc9cfe3217b7713235e1
+git_commit: e7d95a81fe559059686b062282ce9faa421a26f9
 deepseek:
   model: deepseek-v4-flash
   base_url: https://api.deepseek.com
