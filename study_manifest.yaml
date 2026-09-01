@@ -11,7 +11,7 @@ formal_seeds:
 - 9001
 formal_frozen: true
 paper_eligible_freeze_ids:
-- 4bf1093923f49829
+- c7ac3472ed21ec8a
 data_protocol:
   train_ratio: 0.7
   controller_validation_ratio: 0.15
